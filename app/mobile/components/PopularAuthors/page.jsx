@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import AuthorSkeleton from "/Kitobdosh next.js 14/app/mobile/components/AuthorSkeleton";
+import AuthorSkeleton from "../AuthorSkeleton";
 import AuthorCard from "../AuthorCard/AuthorCard";
 import useAutoScroll from "../hooks/useAutoScoll";
 
