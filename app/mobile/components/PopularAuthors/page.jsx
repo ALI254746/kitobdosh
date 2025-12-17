@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import AuthorSkeleton from "/Kitobdosh next.js 14/app/mobile/components/AuthorSkeleton";
-import AuthorCard from "/Kitobdosh next.js 14/app/mobile/components/AuthorCard/page";
+import AuthorCard from "../AuthorCard/AuthorCard";
 import useAutoScroll from "../hooks/useAutoScoll";
 
 export default function PopularAuthors() {
