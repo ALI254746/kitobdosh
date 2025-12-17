@@ -315,7 +315,7 @@ export default function SavatchaPage() {
       <div className="flex items-center justify-center my-8 px-8 opacity-60">
         <div className="h-[1px] bg-gray-300 flex-1"></div>
         <span className="px-4 text-xs font-medium text-gray-400 text-center italic">
-          "Kitoblar egasi emas, <br/>mehmoni bo‘lamiz"
+          &quot;Kitoblar egasi emas, <br/>mehmoni bo‘lamiz&quot;
         </span>
         <div className="h-[1px] bg-gray-300 flex-1"></div>
       </div>

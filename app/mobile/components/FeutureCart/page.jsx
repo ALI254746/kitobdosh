@@ -20,7 +20,7 @@ export default function FeaturedBookCard() {
             Barcha bestsellerlarga 20% chegirma
           </p>
           <button className="px-5 py-2 bg-white text-primary rounded-xl text-sm font-bold shadow-lg hover:bg-gray-50 transition-colors">
-            Ko'rish
+            Ko&apos;rish
           </button>
         </div>
 

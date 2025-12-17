@@ -40,7 +40,7 @@ export default function DiscountCard() {
               href="/books" // 👉 redirect qilinadigan sahifa
               className="px-5 py-2 bg-white text-blue-400 rounded-2xl text-sm font-bold shadow-lg hover:bg-gray-50 transition-colors inline-block"
             >
-              Ko'rish
+              Ko&apos;rish
             </Link>
           </div>
 

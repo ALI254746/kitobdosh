@@ -145,7 +145,7 @@ export default function MobileNavbar() {
                                 <div className="p-1">
                                     <button className="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium text-gray-700 dark:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-xl transition-colors text-left">
                                         <Globe size={18} className="text-gray-400 dark:text-slate-500" />
-                                        <span>Tilni o'zgartirish</span>
+                                        <span>Tilni o&apos;zgartirish</span>
                                     </button>
                                     <button 
                                         onClick={toggleTheme}
@@ -154,7 +154,7 @@ export default function MobileNavbar() {
                                         {theme === 'dark' ? (
                                             <>
                                                 <Sun size={18} className="text-gray-400 dark:text-slate-500" />
-                                                <span>Yorug' rejim</span>
+                                                <span>Yorug&apos; rejim</span>
                                             </>
                                         ) : (
                                             <>

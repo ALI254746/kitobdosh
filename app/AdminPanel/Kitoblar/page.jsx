@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { FaEye, FaEdit, FaTrash } from "react-icons/fa";
 const books = [
   {
@@ -80,13 +81,13 @@ export default function BooksPage() {
             </select>
 
             <select className="px-6 text-black  py-3 border border-gray-300 rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white hover:shadow-xl transition-all duration-200 cursor-pointer">
-              <option>Narx bo'yicha</option>
+              <option>Narx bo&apos;yicha</option>
               <option>Arzon → Qimmat</option>
               <option>Qimmat → Arzon</option>
             </select>
 
             <button className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow-lg hover:shadow-2xl hover:bg-blue-700 transition-all duration-200 transform hover:-translate-y-0.5 font-medium whitespace-nowrap">
-              <i className="fas fa-plus mr-2"></i>Kitob Qo'shish
+              <i className="fas fa-plus mr-2"></i>Kitob Qo&apos;shish
             </button>
           </div>
         </div>
@@ -134,11 +135,14 @@ export default function BooksPage() {
                   >
                     <td className="py-5 px-6">
                       <div className="flex items-center space-x-4">
-                        <img
-                          src={book.cover}
-                          alt={book.title}
-                          className="w-14 h-20 rounded-lg shadow-lg object-cover"
-                        />
+                        <div className="relative w-14 h-20">
+                          <Image
+                            src={book.cover}
+                            alt={book.title}
+                            fill
+                            className="rounded-lg shadow-lg object-cover"
+                          />
+                        </div>
                         <div>
                           <p className="font-bold text-gray-900">
                             {book.title}

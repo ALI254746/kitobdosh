@@ -241,7 +241,7 @@ const PromoCarousel = () => {
                         <span className="text-white/80 text-xs font-bold uppercase tracking-wider">Official Store</span>
                      </div>
                      <h3 className="text-white font-extrabold text-2xl leading-tight drop-shadow-md">{publishers[currentIndex].name}</h3>
-                     <p className="text-white/70 text-sm mt-1">Eng sara asarlar to'plami</p>
+                     <p className="text-white/70 text-sm mt-1">Eng sara asarlar to&apos;plami</p>
                  </div>
              </div>
          </motion.div>

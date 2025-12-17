@@ -190,7 +190,7 @@ const UsersStats = () => {
       <div className="min-h-screen bg-gray-100 text-gray-900 p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-            Foydalanuvchilar Ro'yxati
+            Foydalanuvchilar Ro&apos;yxati
           </h2>
 
           <div className="flex flex-col sm:flex-row gap-3">

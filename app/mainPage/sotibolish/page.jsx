@@ -48,7 +48,7 @@ function Page() {
                 </select>
 
                 <select className="px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option>Do'konlar</option>
+                  <option>Do&apos;konlar</option>
                   <option>BookCity</option>
                   <option>Kitoblar.uz</option>
                   <option>QamarBook</option>
@@ -64,7 +64,7 @@ function Page() {
                 <select className="px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                   <option>Saaralash</option>
                   <option>Arzonroq</option>
-                  <option>o'rtacha</option>
+                  <option>o&apos;rtacha</option>
                   <option>Yuqori</option>
                 </select>
 

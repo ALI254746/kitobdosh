@@ -163,7 +163,7 @@ export default function MessagesPage() {
                 </button>
 
                 <button className="flex-1 lg:w-full px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-medium">
-                  <FaTrash className="mr-2 inline" /> O'chirish
+                  <FaTrash className="mr-2 inline" /> O&apos;chirish
                 </button>
               </div>
             </div>

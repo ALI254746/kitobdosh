@@ -273,7 +273,7 @@ const TraceView = ({ currentRead }) => (
        <div className="flex justify-between items-center mb-4 relative z-10">
             <h3 className="text-xs font-extrabold text-[#52C6DA] uppercase tracking-widest flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#52C6DA] animate-pulse"></span>
-                Hozir qo'limda
+                Hozir qo&apos;limda
             </h3>
             <MoreHorizontal size={20} className="text-slate-400" />
        </div>
@@ -304,7 +304,7 @@ const TraceView = ({ currentRead }) => (
 
        <div className="mt-5 flex gap-3">
          <button className="flex-1 py-3 text-sm font-bold text-white bg-[#52C6DA] rounded-xl shadow-lg shadow-[#52C6DA]/30 hover:bg-[#4dbdd1] transition-all active:scale-95">
-            O'qishni davom etish
+            O&apos;qishni davom etish
          </button>
        </div>
     </div>
@@ -346,7 +346,7 @@ const TraceView = ({ currentRead }) => (
         <div className="relative opacity-50">
             <div className="absolute -left-[31px] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 z-10"></div>
             <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 border-dashed text-center">
-                <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Keyingi o'quvchi siz bo'lishingiz mumkin...</span>
+                <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Keyingi o&apos;quvchi siz bo&apos;lishingiz mumkin...</span>
             </div>
         </div>
       </div>

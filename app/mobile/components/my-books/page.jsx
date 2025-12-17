@@ -170,7 +170,7 @@ export default function MyBooksPage() {
             className="mb-8 pl-1"
         >
              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm leading-relaxed max-w-sm font-serif italic border-l-2 border-slate-200 dark:border-slate-700 pl-4">
-                "{MOCK_USER.bio}"
+                &quot;{MOCK_USER.bio}&quot;
             </p>
         </motion.div>
 
@@ -326,7 +326,7 @@ export default function MyBooksPage() {
 
                             <div className="mt-10 flex gap-4">
                                 <button className="flex-1 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:bg-[#52C6DA] dark:hover:bg-[#52C6DA] transition-colors rounded-sm">
-                                    O'qish
+                                    O&apos;qish
                                 </button>
                                 <button className="w-12 flex items-center justify-center border border-slate-200 dark:border-slate-700 hover:border-slate-900 dark:hover:border-white transition-colors rounded-sm text-slate-600 dark:text-slate-300">
                                     <MoreHorizontal size={20} />

@@ -223,7 +223,7 @@ export default function ProfilePage() {
                 <i className="far fa-envelope mr-2"></i>hojiakbar@gmail.com
               </p>
               <p className="text-blue-200 text-xs sm:text-sm">
-                <i className="far fa-calendar mr-2"></i>A'zo bo'lgan sana:
+                <i className="far fa-calendar mr-2"></i>A&apos;zo bo&apos;lgan sana:
                 Fevral 2025
               </p>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 sm:gap-4 mt-4 sm:mt-6">
@@ -287,7 +287,7 @@ export default function ProfilePage() {
                     Jami sarflangan:
                   </span>
                   <span className="text-lg sm:text-xl font-bold ml-2">
-                    120,000 so'm
+                    120,000 so&apos;m
                   </span>
                 </div>
               </div>
@@ -320,7 +320,7 @@ export default function ProfilePage() {
                       </span>
                       <span>
                         <i className="fas fa-money-bill mr-1 text-blue-600"></i>
-                        45,000 so'm
+                        45,000 so&apos;m
                       </span>
                       <button className="text-blue-600 hover:text-black font-semibold transition-colors">
                         <i className="fas fa-eye mr-1"></i>Batafsil
@@ -345,7 +345,7 @@ export default function ProfilePage() {
                         <p className="text-sm text-gray-600">Daniel Kahneman</p>
                       </div>
                       <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-semibold w-fit">
-                        Yo'lda
+                        Yo&apos;lda
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs sm:text-sm text-gray-600">
@@ -355,7 +355,7 @@ export default function ProfilePage() {
                       </span>
                       <span>
                         <i className="fas fa-money-bill mr-1 text-blue-600"></i>
-                        55,000 so'm
+                        55,000 so&apos;m
                       </span>
                       <button className="text-blue-600 hover:text-black font-semibold transition-colors">
                         <i className="fas fa-eye mr-1"></i>Batafsil
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                       </span>
                       <span>
                         <i className="fas fa-money-bill mr-1 text-blue-600"></i>
-                        65,000 so'm
+                        65,000 so&apos;m
                       </span>
                       <button className="text-blue-600 hover:text-black font-semibold transition-colors">
                         <i className="fas fa-eye mr-1"></i>Batafsil
@@ -418,7 +418,7 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-xs font-semibold whitespace-nowrap">
-                    Yo'lda
+                    Yo&apos;lda
                   </span>
                 </div>
 
@@ -472,10 +472,10 @@ export default function ProfilePage() {
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-black text-white rounded-xl font-semibold hover:shadow-blue transition-all text-sm">
-                    <FaPhone className="mr-2 inline" /> Kuryer bilan bog'lanish
+                    <FaPhone className="mr-2 inline" /> Kuryer bilan bog&apos;lanish
                   </button>
                   <button className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all text-sm">
-                    <FaMap className="mr-2 inline" /> Xaritada ko'rish
+                    <FaMap className="mr-2 inline" /> Xaritada ko&apos;rish
                   </button>
                 </div>
               </div>
@@ -567,7 +567,7 @@ export default function ProfilePage() {
                   onClick={markAllRead}
                   className="px-4 py-2 text-blue-600 hover:text-black font-semibold transition-colors text-sm flex items-center gap-2"
                 >
-                  <FaCheckDouble /> Hammasini o'qilgan deb belgilash
+                  <FaCheckDouble /> Hammasini o&apos;qilgan deb belgilash
                 </button>
               </div>
 
@@ -605,6 +605,7 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+
         </div>
       </div>
     </div>
@@ -653,7 +654,7 @@ function RentalCard({ rental }) {
           </div>
           <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Kunlik to'lov:</span>
+              <span className="text-gray-600">Kunlik to&apos;lov:</span>
               <span className="font-semibold text-gray-900">
                 {rental.dailyPayment}
               </span>

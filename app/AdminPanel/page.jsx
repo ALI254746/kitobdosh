@@ -1,6 +1,7 @@
 "use client";
 
 import { FaBook, FaUsers, FaHandshake, FaDollarSign } from "react-icons/fa";
+import Image from "next/image";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -51,11 +52,14 @@ function ActiveUser({ img, name, desc, rating }) {
   return (
     <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100  rounded-lg shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5">
       <div className="flex items-center space-x-3">
-        <img
-          src={img}
-          alt={name}
-          className="w-12 h-12 rounded-full shadow-md"
-        />
+        <div className="relative w-12 h-12">
+          <Image
+            src={img}
+            alt={name}
+            fill
+            className="rounded-full shadow-md object-cover"
+          />
+        </div>
         <div>
           <p className="font-semibold text-gray-900 dark:text-white">{name}</p>
           <p className="text-sm text-gray-600 dark:text-gray-400">{desc}</p>

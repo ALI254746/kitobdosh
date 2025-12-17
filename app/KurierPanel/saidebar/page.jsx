@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   FaBox,
   FaClock,
@@ -42,11 +43,14 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
 
           {/* Profile */}
           <div className="flex items-center gap-3 mt-4">
-            <img
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
-              alt="Profil"
-              className="w-12 h-12 rounded-full object-cover"
-            />
+            <div className="relative w-12 h-12">
+              <Image
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
+                alt="Profil"
+                fill
+                className="rounded-full object-cover"
+              />
+            </div>
 
             <div>
               <p className="font-semibold text-gray-800">Aziz Rahimov</p>
@@ -95,11 +99,14 @@ export default function Sidebar({ mobileMenuOpen, setMobileMenuOpen }) {
 
           {/* Profile */}
           <div className="flex items-center gap-3 mt-4">
-            <img
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
-              alt="Profil"
-              className="w-12 h-12 rounded-full object-cover"
-            />
+            <div className="relative w-12 h-12">
+              <Image
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop"
+                alt="Profil"
+                fill
+                className="rounded-full object-cover"
+              />
+            </div>
 
             <div>
               <p className="font-semibold text-gray-800">Aziz Rahimov</p>

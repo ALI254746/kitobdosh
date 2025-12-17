@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 export default function PickupTab({ books }) {
   const [activeTab, setActiveTab] = useState("pickup");
@@ -119,12 +120,15 @@ export default function PickupTab({ books }) {
                 className="hover:bg-gray-50 hover:shadow-md hover:-translate-y-1 transition-all duration-200 cursor-pointer"
               >
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <img
-                    src={book.image}
-                    alt={book.name}
-                    className="w-16 h-24 object-cover rounded shadow-sm"
-                    onClick={() => setSelectedBook(book)}
-                  />
+                  <div className="relative w-16 h-24">
+                    <Image
+                      src={book.image}
+                      alt={book.name}
+                      fill
+                      className="rounded shadow-sm cursor-pointer object-cover"
+                      onClick={() => setSelectedBook(book)}
+                    />
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <p className="text-sm font-medium text-gray-900">

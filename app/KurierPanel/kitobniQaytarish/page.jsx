@@ -8,6 +8,7 @@ import {
   FaMoneyBillWave,
 } from "react-icons/fa";
 import { FaCheck, FaCar, FaBook, FaCheckCircle, FaTruck } from "react-icons/fa";
+import Image from "next/image";
 export default function BookReturn() {
   const [currentStep, setCurrentStep] = useState(0);
   const [bookCondition, setBookCondition] = useState("");
@@ -71,11 +72,14 @@ export default function BookReturn() {
             />
             {bookData.title}
           </h2>
-          <img
-            src={bookData.image}
-            alt={bookData.title}
-            className="w-80 h-44 object-cover rounded-lg shadow-md"
-          />
+          <div className="relative w-80 h-44">
+            <Image
+              src={bookData.image}
+              alt={bookData.title}
+              fill
+              className="object-cover rounded-lg shadow-md"
+            />
+          </div>
 
           {/* Kitob ma'lumotlari */}
           <div className="flex-1 space-y-4">
@@ -170,11 +174,11 @@ export default function BookReturn() {
         {currentStep === 0 && (
           <div>
             <h3 className="text-xl font-bold text-gray-800 mb-4">
-              So'rovni qabul qilish
+              So&apos;rovni qabul qilish
             </h3>
             <div className="bg-blue-50 rounded-lg p-4 mb-6">
               <p className="text-gray-700">
-                Kitobni qaytarib olish so'rovi keldi. Davom etish uchun qabul
+                Kitobni qaytarib olish so&apos;rovi keldi. Davom etish uchun qabul
                 qiling.
               </p>
             </div>
@@ -192,7 +196,7 @@ export default function BookReturn() {
             onClick={() => setCurrentStep(2)}
             className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all hover:shadow-md mb-4"
           >
-            <i className="fas fa-car mr-2"></i>Yo'ldaman
+            <i className="fas fa-car mr-2"></i>Yo&apos;ldaman
           </button>
         )}
 
@@ -211,7 +215,7 @@ export default function BookReturn() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Holatni tanlang</option>
-                <option value="perfect">To'liq yaxshi</option>
+                <option value="perfect">To&apos;liq yaxshi</option>
                 <option value="10">10% zarar</option>
                 <option value="30">30% zarar</option>
                 <option value="60">60% zarar</option>

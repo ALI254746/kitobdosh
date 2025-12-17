@@ -124,7 +124,7 @@ export default function Page() {
                 : "bg-gray-300 cursor-not-allowed"
             }`}
           >
-            <FaCar className="text-lg" /> Yo'ldaman
+            <FaCar className="text-lg" /> Yo&apos;ldaman
           </button>
 
           <button

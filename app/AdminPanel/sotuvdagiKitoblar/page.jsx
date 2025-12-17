@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { FaBook, FaPlus } from "react-icons/fa";
 import { FaShoppingCart, FaStore, FaChartLine } from "react-icons/fa";
 import { FaEdit, FaTrash } from "react-icons/fa";
@@ -85,7 +86,7 @@ export default function SotuvdagiKitoblarHeader() {
           className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center"
         >
           <FaPlus className="mr-2" />
-          Yangi kitob qo'shish
+          Yangi kitob qo&apos;shish
         </button>
 
         {/* Modal (yangi kitob qo'shish oynasi) */}
@@ -296,11 +297,14 @@ export default function SotuvdagiKitoblarHeader() {
                   className="hover:bg-gray-50 dark:hover:bg-gray-200 transition-all duration-200 hover:shadow-md"
                 >
                   <td className="px-6 py-4">
-                    <img
-                      src={book.image}
-                      alt={book.name}
-                      className="w-12 h-16 object-cover rounded-lg shadow-sm"
-                    />
+                    <div className="relative w-12 h-16">
+                      <Image
+                        src={book.image}
+                        alt={book.name}
+                        fill
+                        className="object-cover rounded-lg shadow-sm"
+                      />
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-semibold text-gray-800 ">
@@ -314,7 +318,7 @@ export default function SotuvdagiKitoblarHeader() {
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-semibold text-gray-800">
-                      {book.price.toLocaleString()} so'm
+                      {book.price.toLocaleString()} so&apos;m
                     </p>
                   </td>
                   <td className="px-6 py-4">

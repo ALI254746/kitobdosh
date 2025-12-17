@@ -8,6 +8,7 @@ import {
   FaStar,
   FaClock,
 } from "react-icons/fa";
+import Image from "next/image";
 
 export default function Dashboard() {
   return (
@@ -15,11 +16,14 @@ export default function Dashboard() {
       {/* Profil kartasi */}
       <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
         <div className="flex flex-col sm:flex-row items-center gap-6">
-          <img
-            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop"
-            alt="Profil"
-            className="w-24 h-24 rounded-full object-cover"
-          />
+          <div className="relative w-24 h-24">
+            <Image
+              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop"
+              alt="Profil"
+              fill
+              className="rounded-full object-cover"
+            />
+          </div>
           <div className="text-center sm:text-left">
             <h3 className="text-2xl font-bold text-gray-800">Aziz Rahimov</h3>
             <p className="text-gray-600 mt-1 flex items-center justify-center sm:justify-start gap-2">
@@ -65,12 +69,12 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4">
-          <div className="bg-purple-100 rounded-full p-3">
-            <FaClock className="text-purple-600 text-xl" />
-          </div>
-          <div>
-            <p className="text-gray-600 text-sm">O'z vaqtida</p>
-            <p className="text-2xl font-bold text-gray-800">95%</p>
+          <div className="bg-white p-4 rounded-xl shadow-md flex items-center gap-4">
+            <FaClock className="text-blue-500 text-3xl" />
+            <div>
+              <p className="text-gray-600 text-sm">O&apos;z vaqtida</p>
+              <h3 className="text-xl font-bold text-gray-800">95%</h3>
+            </div>
           </div>
         </div>
       </div>
@@ -78,19 +82,20 @@ export default function Dashboard() {
       {/* Progress statistikasi */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h3 className="text-xl font-bold text-gray-800 mb-4">Statistika</h3>
+        {/* Statistika ro'yxati */}
         <div className="space-y-4">
-          {/* Progress 1 */}
-          <div>
-            <div className="flex justify-between mb-2">
-              <span className="text-gray-600">O'z vaqtida yetkazilgan</span>
-              <span className="font-semibold text-gray-800">95%</span>
+          <div className="bg-white p-4 rounded-xl shadow-md flex justify-between items-center hover:bg-gray-50 transition">
+            <div className="flex items-center gap-3">
+              <FaCheckCircle className="text-green-500 text-xl" />
+              <span className="text-gray-600">O&apos;z vaqtida yetkazilgan</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full"
-                style={{ width: "95%" }}
-              ></div>
-            </div>
+            <span className="font-bold text-gray-800">120</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full"
+              style={{ width: "95%" }}
+            ></div>
           </div>
 
           {/* Progress 2 */}

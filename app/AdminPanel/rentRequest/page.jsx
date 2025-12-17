@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 export default function RentRequests() {
   const rentData = [
     {
@@ -60,7 +62,7 @@ export default function RentRequests() {
       <div className="bg-neutral-50  rounded-xl p-6 shadow-2xl mb-8 transition-colors duration-300">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 space-y-4 sm:space-y-0">
-          <h3 className="text-lg font-bold text-gray-900 ">Ijara So'rovlari</h3>
+          <h3 className="text-lg font-bold text-gray-900 ">Ijara So&apos;rovlari</h3>
           <div className="flex flex-wrap gap-2">
             <button className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:shadow-lg hover:bg-blue-700 transition-all duration-200 transform hover:-translate-y-0.5">
               <i className="fas fa-filter mr-2"></i>Filtrlash
@@ -108,11 +110,14 @@ export default function RentRequests() {
                   {/* User */}
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-3">
-                      <img
-                        src={item.user.avatar}
-                        alt="User"
-                        className="w-10 h-10 rounded-full shadow-md"
-                      />
+                      <div className="relative w-10 h-10">
+                        <Image
+                          src={item.user.avatar}
+                          alt="User"
+                          fill
+                          className="rounded-full shadow-md object-cover"
+                        />
+                      </div>
                       <div>
                         <p className="font-semibold text-black">
                           {item.user.name}
@@ -125,11 +130,14 @@ export default function RentRequests() {
                   {/* Book */}
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-3">
-                      <img
-                        src={item.book.cover}
-                        alt="Book"
-                        className="w-12 h-16 rounded shadow-md object-cover"
-                      />
+                      <div className="relative w-12 h-16">
+                        <Image
+                          src={item.book.cover}
+                          alt="Book"
+                          fill
+                          className="rounded shadow-md object-cover"
+                        />
+                      </div>
                       <div>
                         <p className="font-semibold text-gray-900 ">
                           {item.book.title}

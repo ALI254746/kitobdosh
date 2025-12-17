@@ -37,9 +37,10 @@ function Page() {
       { threshold: 0.3 }
     );
 
-    if (sectionRef.current) observer.observe(sectionRef.current);
+    const section = sectionRef.current;
+    if (section) observer.observe(section);
     return () => {
-      if (sectionRef.current) observer.unobserve(sectionRef.current);
+      if (section) observer.unobserve(section);
     };
   }, []);
 
@@ -379,7 +380,7 @@ function Page() {
 
             {/* Quote */}
             <p className="text-xl italic text-gray-600 mb-8 border-l-4 border-blue-600 pl-6">
-              "Texnologiya – bu taraqqiyotning tili."
+              &quot;Texnologiya – bu taraqqiyotning tili.&quot;
             </p>
 
             {/* About text */}
