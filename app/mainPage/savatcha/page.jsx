@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa6";
 import { FaPlus, FaMinus, FaTrash } from "react-icons/fa";
 import { FaInfoCircle } from "react-icons/fa";
+import Image from "next/image";
 
 export default function CartHeader() {
   const [isVisible, setIsVisible] = useState(false);
@@ -75,10 +76,13 @@ export default function CartHeader() {
           <div className="bg-white rounded-xl shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
             <div className="flex gap-6">
               <div className="flex-shrink-0">
-                <img
+                <Image
                   className="w-24 h-32 rounded-lg object-cover"
                   src="https://storage.googleapis.com/uxpilot-auth.appspot.com/adb4f7409e-76c10fce523b814d55d0.png"
                   alt="matematika darsligi"
+                  width={96}
+                  height={128}
+                  unoptimized
                 />
               </div>
               <div className="flex-grow">
@@ -158,10 +162,13 @@ export default function CartHeader() {
             className="bg-white rounded-2xl p-6 mb-4 border border-gray-100 hover:shadow-md transition-transform hover:-translate-y-1"
           >
             <div className="flex items-center space-x-4">
-              <img
+              <Image
                 className="w-20 h-28 rounded-lg object-cover"
                 src="https://storage.googleapis.com/uxpilot-auth.appspot.com/0a3c673cab-677aa09155081621fd6a.png"
                 alt="zamonaviy kitob muqovasi"
+                width={80}
+                height={112}
+                unoptimized
               />
 
               <div className="flex-1">
@@ -234,10 +241,13 @@ export default function CartHeader() {
                   key={i}
                   className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
                 >
-                  <img
+                  <Image
                     className="w-full h-32 rounded-lg object-cover mb-3"
                     src={item.img}
                     alt={item.title}
+                    width={200}
+                    height={128}
+                    unoptimized
                   />
                   <h4 className="font-medium text-gray-800 mb-1">
                     {item.title}

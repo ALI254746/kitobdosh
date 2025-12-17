@@ -1,6 +1,7 @@
 import React from "react";
 import { FaStar, FaRegStar } from "react-icons/fa";
 import { FaShoppingCart } from "react-icons/fa";
+import Image from "next/image";
 function Page() {
   return (
     <div>
@@ -84,10 +85,13 @@ function Page() {
           >
             <div class="book-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
               <div class="relative">
-                <img
+                <Image
                   class="w-full h-64 object-cover"
                   src="https://storage.googleapis.com/uxpilot-auth.appspot.com/25745aa5fc-be88d0bb286347101d2b.png"
                   alt="modern biology textbook cover with colorful illustrations"
+                  width={300}
+                  height={256}
+                  unoptimized
                 />
                 <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                   yangi
@@ -164,10 +168,13 @@ function Page() {
 
             <div class="book-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
               <div class="relative">
-                <img
+                <Image
                   class="w-full h-64 object-cover"
                   src="https://storage.googleapis.com/uxpilot-auth.appspot.com/9b4b0d5ffc-14429b36cbaf686cd17a.png"
                   alt="chemistry textbook with molecular structures and periodic table"
+                  width={300}
+                  height={256}
+                  unoptimized
                 />
                 <div class="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                   New
@@ -244,10 +251,13 @@ function Page() {
             </div>
 
             <div class="book-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <img
+              <Image
                 class="w-full h-64 object-cover"
                 src="https://storage.googleapis.com/uxpilot-auth.appspot.com/607c096b87-40f40db40b3aaeb4c00c.png"
                 alt="classic literature book with elegant typography design"
+                width={300}
+                height={256}
+                unoptimized
               />
               <div class="p-4">
                 <div class="flex items-center justify-between mb-2">
@@ -320,10 +330,13 @@ function Page() {
             </div>
 
             <div class="book-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <img
+              <Image
                 class="w-full h-64 object-cover"
                 src="https://storage.googleapis.com/uxpilot-auth.appspot.com/2d20d5d4c4-fdf914593cc48643a79c.png"
                 alt="mathematics textbook with geometric patterns and formulas"
+                width={300}
+                height={256}
+                unoptimized
               />
               <div class="p-4">
                 <div class="flex items-center justify-between mb-2">

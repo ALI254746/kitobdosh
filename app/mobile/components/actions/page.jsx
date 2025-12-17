@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Truck, Package, CheckCircle2, Clock, MapPin, MessageSquare, Info, ShieldCheck, User } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // --- Constants & Types ---
 const ORDER_STATUS = {
@@ -89,7 +90,7 @@ export default function OrderTrackingPage() {
            className="bg-white p-4 rounded-3xl shadow-soft border border-gray-100 flex gap-4 items-center"
         >
            <div className="w-16 h-24 rounded-xl overflow-hidden shadow-sm bg-gray-200 flex-shrink-0">
-              <img src={order.book.cover} alt="Cover" className="w-full h-full object-cover" />
+              <Image src={order.book.cover} alt="Cover" className="w-full h-full object-cover" width={64} height={96} unoptimized />
            </div>
            <div>
               <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full mb-1 inline-block ${order.book.type === 'rent' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>

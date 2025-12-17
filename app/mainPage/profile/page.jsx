@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import {
   FaBook,
   FaShoppingBag,
@@ -296,10 +297,12 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 {/* Purchase Item 1 */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border-2 border-gray-100 rounded-2xl hover:border-blue-200 hover:shadow-blue transition-all">
-                  <img
+                  <Image
                     src="https://images.unsplash.com/photo-1589998059171-988d887df646?w=200&h=280&fit=crop"
                     alt="Kitob"
                     className="w-full sm:w-20 h-32 sm:h-28 object-cover rounded-xl"
+                    width={80}
+                    height={112}
                   />
                   <div className="flex-1 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
@@ -331,10 +334,12 @@ export default function ProfilePage() {
 
                 {/* Purchase Item 2 */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border-2 border-gray-100 rounded-2xl hover:border-blue-200 hover:shadow-blue transition-all">
-                  <img
+                  <Image
                     src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=200&h=280&fit=crop"
                     alt="Kitob"
                     className="w-full sm:w-20 h-32 sm:h-28 object-cover rounded-xl"
+                    width={80}
+                    height={112}
                   />
                   <div className="flex-1 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
@@ -366,10 +371,12 @@ export default function ProfilePage() {
 
                 {/* Purchase Item 3 */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 border-2 border-gray-100 rounded-2xl hover:border-blue-200 hover:shadow-blue transition-all">
-                  <img
+                  <Image
                     src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=200&h=280&fit=crop"
                     alt="Kitob"
                     className="w-full sm:w-20 h-32 sm:h-28 object-cover rounded-xl"
+                    width={80}
+                    height={112}
                   />
                   <div className="flex-1 w-full">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
@@ -629,10 +636,13 @@ function RentalCard({ rental }) {
   return (
     <div className="bg-white rounded-2xl shadow-blue overflow-hidden hover:shadow-black transition-all">
       <div className="flex flex-col sm:flex-row">
-        <img
+        <Image
           src={rental.img}
           alt={rental.title}
           className="w-full sm:w-32 h-48 sm:h-auto object-cover"
+          width={128}
+          height={192}
+          unoptimized
         />
         <div className="p-4 sm:p-5 flex-1">
           <div className="flex items-start justify-between mb-3">

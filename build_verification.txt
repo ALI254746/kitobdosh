@@ -1,0 +1,20 @@
+
+> my-app@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./app/mainPage/profile/page.jsx
+299:20  Error: 'Image' is not defined.  react/jsx-no-undef
+336:20  Error: 'Image' is not defined.  react/jsx-no-undef
+373:20  Error: 'Image' is not defined.  react/jsx-no-undef
+638:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules

@@ -2,6 +2,7 @@
 import React from "react";
 import { FaStar, FaHeart, FaCommentAlt, FaShoppingCart } from "react-icons/fa";
 import { useState } from "react";
+import Image from "next/image";
 const books = [
   {
     id: 1,
@@ -118,10 +119,12 @@ export default function IjaraBookPage() {
                 <FaHeart />
               </div>
 
-              <img
+              <Image
                 src={book.img}
                 alt={book.title}
                 className="w-full h-56 object-cover rounded-xl mb-4"
+                width={300}
+                height={224}
               />
 
               <h3 className="text-lg font-semibold text-blue-900">

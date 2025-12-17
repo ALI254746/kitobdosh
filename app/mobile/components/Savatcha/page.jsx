@@ -230,10 +230,13 @@ export default function SavatchaPage() {
               <div className="flex gap-4">
                 {/* Book Cover */}
                 <div className="w-[80px] h-[110px] relative rounded-lg overflow-hidden flex-shrink-0 shadow-inner bg-gray-100 dark:bg-slate-700">
-                    <img
+                    <Image
                         src={item.cover}
                         alt={item.title}
                         className="w-full h-full object-cover"
+                        width={80}
+                        height={110}
+                        unoptimized
                     />
                 </div>
 

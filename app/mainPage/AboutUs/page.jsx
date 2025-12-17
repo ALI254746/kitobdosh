@@ -12,6 +12,7 @@ import {
   FaHtml5,
   FaCss3Alt,
 } from "react-icons/fa";
+import Image from "next/image";
 import {
   FaGraduationCap,
   FaUserGraduate,
@@ -105,10 +106,11 @@ function Page() {
       { threshold: 0.5 } // sectionning yarmi ko‘ringanida ishga tushadi
     );
 
-    if (typingRef.current) observer.observe(typingRef.current);
+    const currentTypingRef = typingRef.current;
+    if (currentTypingRef) observer.observe(currentTypingRef);
 
     return () => {
-      if (typingRef.current) observer.unobserve(typingRef.current);
+      if (currentTypingRef) observer.unobserve(currentTypingRef);
     };
   }, []);
   useEffect(() => {
@@ -141,12 +143,13 @@ function Page() {
       { threshold: 0.3 } // ekranga 30% kirganda ishlaydi
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
     }
 
     return () => {
-      if (ref.current) observer.unobserve(ref.current);
+      if (currentRef) observer.unobserve(currentRef);
     };
   }, []);
   const [isVisible1, setIsVisible1] = useState(false);
@@ -162,9 +165,10 @@ function Page() {
       { threshold: 0.3 } // 30% qismi ko‘ringanda animatsiya boshlanadi
     );
 
-    if (ref.current) observer.observe(ref.current);
+    const currentRef = ref.current;
+    if (currentRef) observer.observe(currentRef);
     return () => {
-      if (ref.current) observer.unobserve(ref.current);
+      if (currentRef) observer.unobserve(currentRef);
     };
   }, []);
   return (
@@ -230,10 +234,13 @@ function Page() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <img
+          <Image
             className="w-full h-[500px] rounded-3xl shadow-2xl object-cover fade-in"
             src="https://storage.googleapis.com/uxpilot-auth.appspot.com/88316ff290-aaea57af544ba8742ef3.png"
             alt="Feruza"
+            width={600}
+            height={500}
+            unoptimized
           />
 
           <div className="fade-in" style={{ animationDelay: "0.6s" }}>
@@ -357,10 +364,13 @@ function Page() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <img
+          <Image
             className="w-full h-[500px] rounded-3xl shadow-2xl object-cover fade-in lg:order-2"
             src="https://storage.googleapis.com/uxpilot-auth.appspot.com/de146046ef-b51f77662f9a361f95f7.png"
             alt="Hojiakbar"
+            width={600}
+            height={500}
+            unoptimized
           />
           <div
             className="fade-in lg:order-1"

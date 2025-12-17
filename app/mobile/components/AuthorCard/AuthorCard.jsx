@@ -1,10 +1,15 @@
+
+import Image from "next/image";
+
 export default function AuthorCard({ author }) {
   return (
     <div className="min-w-44 bg-white rounded-2xl p-4 shadow-sm text-center flex-shrink-0 hover:shadow-md transition">
-      <img
+      <Image
         src={author.image}
         alt={author.name}
         className="w-20 h-20 rounded-full mx-auto mb-3 object-cover border-4 border-blue-100"
+        width={80}
+        height={80}
       />
 
       <h3 className="font-bold text-gray-800 text-sm mb-1">{author.name}</h3>
