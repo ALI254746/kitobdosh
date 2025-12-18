@@ -1,22 +1,59 @@
 "use client";
-import { useState } from "react";
-import {
-  FaEnvelope,
-  FaLock,
-  FaBookOpen,
-  FaGraduationCap,
-  FaLightbulb,
-  FaPenFancy,
-  FaBookmark,
-} from "react-icons/fa";
-import Image from "next/image";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { 
+  motion, 
+  AnimatePresence, 
+  useAnimation, 
+  useMotionValue, 
+  useTransform 
+} from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 import { signIn } from "next-auth/react";
+import Image from "next/image";
+
+// Icons
+import { 
+  FaEnvelope, 
+  FaLock, 
+  FaBookOpen, 
+  FaGraduationCap, 
+  FaArrowRight,
+  FaGoogle,
+  FaLightbulb,
+  FaShapes,
+  FaGlobeAmericas
+} from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+
+// --- ANIMATION VARIANTS ---
+const pageTransition = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+};
+
+const formVariants = {
+  hidden: { x: 50, opacity: 0 },
+  visible: { 
+    x: 0, 
+    opacity: 1,
+    transition: { type: "spring", stiffness: 100, damping: 20, staggerChildren: 0.1 } 
+  },
+  exit: { x: -50, opacity: 0 }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1 }
+};
+
+const floatAnimation = {
+  y: [10, -10, 10],
+  rotate: [0, 5, -5, 0],
+  transition: { duration: 6, repeat: Infinity, ease: "easeInOut" }
+};
 
 export default function AuthPage() {
   const [isRegister, setIsRegister] = useState(false);
@@ -25,13 +62,31 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // LOGIN
-  const handleLogin = async (e) => {
+  // Mouse move effect for background (Parallax)
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotateX = useTransform(y, [0, 1], [5, -5]);
+  const rotateY = useTransform(x, [0, 1], [-5, 5]);
+
+  function handleMouseMove(event) {
+    const { clientX, clientY } = event;
+    const { innerWidth, innerHeight } = window;
+    x.set(clientX / innerWidth);
+    y.set(clientY / innerHeight);
+  }
+
+  // --- HANDLERS ---
+  const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Simulate API delay for smoothness
+    await new Promise(r => setTimeout(r, 1000));
 
+    const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
+    
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -40,239 +95,269 @@ export default function AuthPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.message || "Login xatosi!");
+        toast.error(data.message || "Xatolik yuz berdi!", { icon: "⚠️" });
         return;
       }
 
-      toast.success("🎉 Login muvaffaqiyatli!");
+      toast.success(isRegister ? "Muvaffaqiyatli ro'yxatdan o'tdingiz!" : "Xush kelibsiz!", { icon: "🎉" });
 
-      // 📱💻 DEVICE AUTO REDIRECT
       if (typeof window !== "undefined") {
         const isMobile = window.innerWidth < 728;
-        
-        console.log("Login response data:", data); // Debugging uchun
         const role = data.role ? data.role.toLowerCase().trim() : "";
 
-        if (role === "admin") {
-          router.push("/AdminPanel");
-        } else if (role === "kurier") {
-          router.push("/KurierPanel");
-        } else if (role === "user") {
-          // User uchun mobil yoki desktopga yo‘naltirish
-          if (isMobile) router.push("/mobile");
-          else router.push("/mainPage"); // desktop
+        if (role === "admin") router.push("/AdminPanel");
+        else if (role === "kurier") router.push("/KurierPanel");
+        else if (role === "user") {
+          router.push(isMobile ? "/mobile" : "/mainPage");
         }
       }
     } catch (err) {
-      toast.error("Server yoki internetda xato!");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🔹 REGISTER
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        toast.success("✅ Ro‘yxatdan o‘tish muvaffaqiyatli!");
-        setIsRegister(false);
-      } else {
-        toast.error(data.message || "Ro‘yxatdan o‘tishda xatolik!");
-      }
-    } catch {
-      toast.error("Tarmoqda xatolik yuz berdi!");
+      toast.error("Tarmoq xatosi!");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans relative overflow-hidden">
-      {/* Background Blobs for specific premium feel */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-cyan-400/20 rounded-full blur-[120px] pointer-events-none"></div>
+    <motion.div 
+      variants={pageTransition}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      onMouseMove={handleMouseMove}
+      className="min-h-screen flex bg-white font-sans overflow-hidden"
+    >
+      <Toaster position="top-center" toastOptions={{
+        style: {
+          background: '#1F2937',
+          color: '#fff',
+          borderRadius: '16px',
+          fontWeight: 'bold',
+        }
+      }} />
 
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: "#1e293b",
-            color: "#fff",
-            borderRadius: "16px",
-            padding: "16px 24px",
-            fontSize: "14px",
-          },
-        }}
-      />
-
-      {/* Main Card */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="bg-white/80 backdrop-blur-xl w-full max-w-[420px] rounded-[32px] shadow-2xl p-6 md:p-10 border border-white/50 relative z-10"
-      >
-        {/* Header Logo Area */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-tr from-[#52C6DA] to-blue-500 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-cyan-200 mb-6 transform rotate-3 hover:rotate-6 transition-all duration-300">
-            <FaBookOpen className="text-white text-3xl" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">
-            Kitobdosh
-          </h1>
-          <p className="text-slate-500 font-medium">
-            Bilimlar olamiga xush kelibsiz
-          </p>
+      {/* --- LEFT SIDE: ARTWORK & SHOWCASE (Desktop) --- */}
+      <div className="hidden lg:flex w-1/2 relative bg-[#1F2937] items-center justify-center p-12 overflow-hidden">
+        {/* Dynamic Background Elements */}
+        <div className="absolute inset-0 z-0">
+             <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#96C7B9] opacity-10 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2 animate-pulse" />
+             <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[#D1F0E0] opacity-5 rounded-full blur-[100px] -translate-x-1/2 translate-y-1/3" />
         </div>
 
-        {/* Toggle Switch */}
-        <div className="bg-slate-100 p-1.5 rounded-2xl flex mb-8 relative">
-          <motion.div
-            className="absolute top-1.5 bottom-1.5 bg-white rounded-xl shadow-sm z-0"
-            initial={false}
-            animate={{
-              left: isRegister ? "50%" : "4px",
-              right: isRegister ? "4px" : "50%",
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          />
-          <button
-            onClick={() => setIsRegister(false)}
-            className={`flex-1 py-3 text-sm font-bold relative z-10 transition-colors ${
-              !isRegister ? "text-slate-800" : "text-slate-500"
-            }`}
-          >
-            Kirish
-          </button>
-          <button
-            onClick={() => setIsRegister(true)}
-            className={`flex-1 py-3 text-sm font-bold relative z-10 transition-colors ${
-              isRegister ? "text-slate-800" : "text-slate-500"
-            }`}
-          >
-            Ro‘yxatdan o‘tish
-          </button>
-        </div>
-
-        {/* Form */}
-        <form
-          onSubmit={isRegister ? handleRegister : handleLogin}
-          className="space-y-5"
+        <motion.div 
+            style={{ rotateX, rotateY, perspective: 1000 }}
+            className="relative z-10 w-full max-w-2xl"
         >
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-500 uppercase ml-1">
-              Elektron pochta
-            </label>
-            <div className="relative group">
-              <div className="absolute top-1/2 -translate-y-1/2 left-4 text-slate-400 group-focus-within:text-[#52C6DA] transition-colors">
-                <FaEnvelope />
-              </div>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@mail.com"
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-slate-800 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#52C6DA] focus:bg-white transition-all duration-300"
-              />
+            {/* 3D Floating Elements Container */}
+            <div className="relative h-[600px] w-full flex items-center justify-center">
+                
+                {/* Central Circle */}
+                <motion.div 
+                   animate={{ scale: [1, 1.05, 1], borderColor: ["rgba(150,199,185,0.2)", "rgba(150,199,185,0.4)", "rgba(150,199,185,0.2)"] }}
+                   transition={{ duration: 4, repeat: Infinity }}
+                   className="absolute w-96 h-96 rounded-full border-2 border-[#96C7B9]/20 flex items-center justify-center"
+                >
+                    <div className="w-64 h-64 rounded-full bg-gradient-to-br from-[#96C7B9]/20 to-transparent backdrop-blur-3xl" />
+                </motion.div>
+
+                {/* Floating Icons */}
+                <motion.div animate={floatAnimation} className="absolute top-20 left-10 p-6 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-xl">
+                    <FaBookOpen className="text-4xl text-[#96C7B9]" />
+                </motion.div>
+
+                <motion.div animate={{ ...floatAnimation, transition: { duration: 7, repeat: Infinity, delay: 1 } }} className="absolute bottom-32 right-10 p-5 bg-white/10 backdrop-blur-md rounded-3xl border border-white/10 shadow-xl">
+                    <FaGraduationCap className="text-4xl text-[#D1F0E0]" />
+                </motion.div>
+
+                <motion.div animate={{ ...floatAnimation, transition: { duration: 5, repeat: Infinity, delay: 0.5 } }} className="absolute top-40 right-20 p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
+                    <FaLightbulb className="text-3xl text-yellow-200/80" />
+                </motion.div>
+                
+                <motion.div animate={{ ...floatAnimation, transition: { duration: 8, repeat: Infinity, delay: 2 } }} className="absolute bottom-20 left-20 p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
+                    <FaGlobeAmericas className="text-3xl text-blue-300/80" />
+                </motion.div>
+
+                {/* Hero Text */}
+                <div className="text-center relative z-20 space-y-6">
+                    <motion.h1 
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="text-6xl font-black text-white tracking-tight leading-tight"
+                    >
+                        Bilim — bu <br/> <span className="text-[#96C7B9]">super kuch.</span>
+                    </motion.h1>
+                    <motion.p 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="text-lg text-gray-400 max-w-md mx-auto leading-relaxed"
+                    >
+                        Kitobdosh platformasi orqali minglab kitoblarga ega bo&apos;ling. 
+                        O&apos;qing, o&apos;rganing va ulashing.
+                    </motion.p>
+                </div>
             </div>
-          </div>
+        </motion.div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-500 uppercase ml-1">
-              Parol
-            </label>
-            <div className="relative group">
-              <div className="absolute top-1/2 -translate-y-1/2 left-4 text-slate-400 group-focus-within:text-[#52C6DA] transition-colors">
-                <FaLock />
-              </div>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-slate-800 font-medium placeholder:text-slate-400 focus:outline-none focus:border-[#52C6DA] focus:bg-white transition-all duration-300"
-              />
+        {/* Bottom Stats */}
+        <div className="absolute bottom-10 left-10 flex gap-8 z-10">
+            <div>
+                <p className="text-2xl font-black text-white">5K+</p>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Foydalanuvchilar</p>
             </div>
-          </div>
-
-          {!isRegister && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                className="text-xs font-bold text-[#52C6DA] hover:text-[#3aa8bc] transition-colors"
-                onClick={() => toast("Hozircha faol emas", { icon: "🔧" })}
-              >
-                Parolni unutdingizmi?
-              </button>
+            <div>
+                <p className="text-2xl font-black text-white">10K+</p>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Kitoblar</p>
             </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-4 rounded-2xl font-bold text-white shadow-lg shadow-cyan-200/50 hover:shadow-cyan-300/60 active:scale-[0.98] transition-all bg-gradient-to-r from-[#52C6DA] to-blue-500 flex items-center justify-center gap-2 ${
-              loading ? "opacity-70 cursor-not-allowed" : ""
-            }`}
-          >
-            {loading ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-              />
-            ) : isRegister ? (
-              <>
-                <span>Ro‘yxatdan o‘tish</span>
-                <FaPenFancy size={14} />
-              </>
-            ) : (
-              <>
-                <span>Kirish</span>
-                <FaGraduationCap size={16} />
-              </>
-            )}
-          </button>
-        </form>
-
-        <div className="mt-8 relative flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-100"></div>
-          </div>
-          <span className="relative bg-white/80 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider backdrop-blur-xl">
-            Yoki
-          </span>
         </div>
-
-        <div className="mt-6">
-          <button
-            onClick={() => signIn("google")}
-            className="w-full py-3.5 bg-white border-2 border-slate-100 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-[0.98]"
-          >
-            <FcGoogle size={22} />
-            <span className="text-sm font-bold text-slate-600">
-              Google orqali davom etish
-            </span>
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Footer Text */}
-      <div className="absolute bottom-6 text-center w-full">
-        <p className="text-xs text-slate-400 font-medium">
-          &copy; 2025 Kitobdosh. Barcha huquqlar himoyalangan.
-        </p>
       </div>
-    </div>
+
+      {/* --- RIGHT SIDE: FORM (Desktop & Mobile) --- */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-12 relative">
+        <div className="absolute top-0 right-0 p-6 hidden lg:block">
+            <span className="text-sm font-bold text-gray-400 mr-2">
+                {isRegister ? "Allaqachon hisobingiz bormi?" : "Hali hisobingiz yo'qmi?"}
+            </span>
+            <button 
+                onClick={() => setIsRegister(!isRegister)}
+                className="text-[#1F2937] font-black hover:text-[#96C7B9] transition-colors underline decoration-2 underline-offset-4"
+            >
+                {isRegister ? "Kirish" : "Ro'yxatdan o'tish"}
+            </button>
+        </div>
+
+        <div className="w-full max-w-md space-y-8">
+            {/* Header */}
+            <div className="text-center lg:text-left space-y-2">
+                <div className="inline-flex items-center gap-3 mb-4 lg:mb-0">
+                    <div className="w-12 h-12 bg-[#1F2937] text-white rounded-xl flex items-center justify-center text-2xl shadow-lg shadow-[#1F2937]/20">
+                        <FaBookOpen />
+                    </div>
+                    <span className="text-2xl font-black text-[#1F2937] tracking-tight">Kitobdosh</span>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-black text-[#1F2937]">
+                    {isRegister ? "Xush kelibsiz!" : "Qaytganingizdan xursandmiz!"}
+                </h2>
+                <p className="text-gray-500 font-medium">
+                    {isRegister 
+                        ? "Boshlash uchun ma'lumotlaringizni kiriting" 
+                        : "Davom etish uchun hisobingizga kiring"
+                    }
+                </p>
+            </div>
+
+            {/* Auth Form */}
+            <AnimatePresence mode="wait">
+                <motion.form 
+                    key={isRegister ? "register" : "login"}
+                    variants={formVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    onSubmit={handleAuth}
+                    className="space-y-6"
+                >
+                    <motion.div variants={itemVariants} className="space-y-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider ml-1">Email manzilingiz</label>
+                        <div className="relative group">
+                            <FaEnvelope className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1F2937] transition-colors z-10" />
+                            <input 
+                                type="email" 
+                                required 
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="name@company.com"
+                                className="w-full h-14 pl-12 pr-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-[#96C7B9] focus:shadow-[0_0_0_4px_rgba(150,199,185,0.2)] transition-all font-bold text-[#1F2937] placeholder-gray-400"
+                            />
+                        </div>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants} className="space-y-2">
+                         <div className="flex justify-between items-center ml-1 pr-1">
+                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parol</label>
+                             {!isRegister && (
+                                <button type="button" className="text-xs font-bold text-[#96C7B9] hover:text-[#1F2937] transition-colors">
+                                    Parolni unutdingizmi?
+                                </button>
+                             )}
+                         </div>
+                        <div className="relative group">
+                            <FaLock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1F2937] transition-colors z-10" />
+                            <input 
+                                type="password" 
+                                required 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full h-14 pl-12 pr-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-[#96C7B9] focus:shadow-[0_0_0_4px_rgba(150,199,185,0.2)] transition-all font-bold text-[#1F2937] placeholder-gray-400"
+                            />
+                        </div>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants} className="pt-2">
+                        <button 
+                            type="submit"
+                            disabled={loading}
+                            className="w-full h-14 bg-[#1F2937] hover:bg-[#96C7B9] text-white rounded-2xl font-black text-lg shadow-xl shadow-[#1F2937]/20 hover:shadow-[#96C7B9]/40 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed group"
+                        >
+                            {loading ? (
+                                <motion.div 
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                    className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full"
+                                />
+                            ) : (
+                                <>
+                                    {isRegister ? "Hisob yaratish" : "Kirish"}
+                                    <FaArrowRight className="group-hover:translate-x-1 transition-transform" />
+                                </>
+                            )}
+                        </button>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants} className="relative py-2">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-100"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-white px-2 text-gray-400 font-bold tracking-wider">Yoki</span>
+                        </div>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants}>
+                        <button 
+                            type="button"
+                            onClick={() => signIn("google")}
+                            className="w-full h-14 bg-white border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 text-[#1F2937] rounded-2xl font-bold flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                        >
+                            <FcGoogle className="text-2xl" />
+                            <span>Google orqali davom etish</span>
+                        </button>
+                    </motion.div>
+                </motion.form>
+            </AnimatePresence>
+
+            {/* Mobile Switcher */}
+            <div className="lg:hidden text-center mt-8">
+                <p className="text-gray-500 font-medium text-sm">
+                    {isRegister ? "Allaqachon hisobingiz bormi?" : "Hali hisobingiz yo'qmi?"} <br/>
+                    <button 
+                        onClick={() => setIsRegister(!isRegister)}
+                        className="text-[#1F2937] font-black mt-2 hover:text-[#96C7B9] transition-colors underline decoration-2 underline-offset-4"
+                    >
+                        {isRegister ? "Kirish" : "Ro'yxatdan o'tish"}
+                    </button>
+                </p>
+            </div>
+            
+        </div>
+        
+        {/* Footer info */}
+        <div className="absolute bottom-6 w-full text-center lg:text-left lg:pl-12">
+             <p className="text-xs text-gray-300 font-bold">&copy; 2025 Kitobdosh Inc.</p>
+        </div>
+      </div>
+    </motion.div>
   );
 }
