@@ -1,430 +1,269 @@
-import React from "react";
-import { FaStar, FaRegStar } from "react-icons/fa";
-import { FaShoppingCart } from "react-icons/fa";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-function Page() {
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  FaStar, 
+  FaShoppingCart, 
+  FaSearch, 
+  FaFilter, 
+  FaHeart,
+  FaRegHeart,
+  FaBolt
+} from "react-icons/fa";
+
+// --- MOCK DATA ---
+const BOOKS = [
+  {
+    id: 1,
+    title: "Zamonaviy Biologiya",
+    author: "Dr. Sarah Johnson",
+    price: 45.99,
+    oldPrice: 55.99,
+    rating: 4.8,
+    reviews: 156,
+    image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/25745aa5fc-be88d0bb286347101d2b.png",
+    category: "Fan",
+    store: "BookCity",
+    tag: "Yangi"
+  },
+  {
+    id: 2,
+    title: "Organic Chemistry",
+    author: "Prof. Michael Chen",
+    price: 52.99,
+    oldPrice: null,
+    rating: 4.9,
+    reviews: 203,
+    image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/9b4b0d5ffc-14429b36cbaf686cd17a.png",
+    category: "Kimyo",
+    store: "Kitoblar.uz",
+    tag: "Top"
+  },
+  {
+    id: 3,
+    title: "Jahon Adabiyoti",
+    author: "Turli Mualliflar",
+    price: 38.99,
+    oldPrice: 42.00,
+    rating: 4.5,
+    reviews: 89,
+    image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/607c096b87-40f40db40b3aaeb4c00c.png",
+    category: "Adabiyot",
+    store: "BookStore",
+    tag: null
+  },
+  {
+    id: 4,
+    title: "Oliy Matematika",
+    author: "Dr. Emma Wilson",
+    price: 49.99,
+    oldPrice: 60.00,
+    rating: 4.7,
+    reviews: 124,
+    image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/2d20d5d4c4-fdf914593cc48643a79c.png",
+    category: "Matematika",
+    store: "BookCity",
+    tag: "Chegirma"
+  }
+];
+
+// --- COMPONENTS ---
+
+const SkeletonCard = () => (
+  <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm animate-pulse">
+    <div className="w-full h-64 bg-gray-200 rounded-2xl mb-4" />
+    <div className="flex justify-between items-center mb-3">
+      <div className="h-4 w-20 bg-gray-200 rounded" />
+      <div className="h-6 w-6 bg-gray-200 rounded-full" />
+    </div>
+    <div className="h-6 w-3/4 bg-gray-200 rounded mb-2" />
+    <div className="h-4 w-1/2 bg-gray-200 rounded mb-4" />
+    <div className="flex justify-between items-end mt-4">
+      <div className="h-8 w-24 bg-gray-200 rounded" />
+      <div className="h-10 w-28 bg-gray-200 rounded-xl" />
+    </div>
+  </div>
+);
+
+const BookCard = ({ book }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+
   return (
-    <div>
-      {/* HEADER */}
-      {/* SEARCH & FILTER SECTION */}
-      <section id="search-filter" className="bg-white ">
-        <div className="max-w-7xl mx-auto px-6 py-15">
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* SEARCH INPUT */}
-              <div className="flex-1">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search for books, authors, or bookstores..."
-                    className="w-full  text-black pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <i className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    <svg
-                      className="w-5 h-5"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="currentColor"
-                      viewBox="0 0 512 512"
-                    >
-                      <path
-                        d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 
-                      0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 
-                      40-122.7 40C93.1 416 0 322.9 0 208S93.1 
-                      0 208 0S416 93.1 416 208zM208 352a144 
-                      144 0 1 0 0-288 144 144 0 1 0 0 288z"
-                      />
-                    </svg>
-                  </i>
-                </div>
-              </div>
-
-              {/* FILTERS */}
-              <div className="flex flex-wrap gap-4">
-                <select className="px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option>Katigoriyalar</option>
-                  <option>ilmiy</option>
-                  <option>Badiy</option>
-                  <option>fantastik</option>
-                </select>
-
-                <select className="px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option>Do&apos;konlar</option>
-                  <option>BookCity</option>
-                  <option>Kitoblar.uz</option>
-                  <option>QamarBook</option>
-                </select>
-
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  className="w-32 accent-blue-500"
-                />
-
-                <select className="px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option>Saaralash</option>
-                  <option>Arzonroq</option>
-                  <option>o&apos;rtacha</option>
-                  <option>Yuqori</option>
-                </select>
-
-                <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                  Qidiruv
-                </button>
-              </div>
-            </div>
-          </div>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      whileHover={{ y: -8 }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-lg shadow-slate-100/50 hover:shadow-xl hover:shadow-[#D1F0E0]/40 hover:border-[#96C7B9] transition-all duration-300 relative group"
+    >
+      {/* Image Area */}
+      <div className="relative w-full h-72 rounded-3xl overflow-hidden mb-4 bg-gray-50">
+        <Image
+          src={book.image}
+          alt={book.title}
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        
+        {/* Badges */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
+           {book.tag && (
+             <span className="px-3 py-1 bg-white/90 backdrop-blur text-xs font-bold text-[#1F2937] rounded-lg shadow-sm">
+                🔥 {book.tag}
+             </span>
+           )}
+           <span className="px-3 py-1 bg-[#96C7B9]/80 backdrop-blur text-xs font-bold text-white rounded-lg shadow-sm">
+             {book.store}
+           </span>
         </div>
-      </section>
-      <main id="main-content" class=" bg-white pb-10">
-        <div class="max-w-7xl mx-auto px-6">
-          <div
-            id="book-grid"
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
-          >
-            <div class="book-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <div class="relative">
-                <Image
-                  class="w-full h-64 object-cover"
-                  src="https://storage.googleapis.com/uxpilot-auth.appspot.com/25745aa5fc-be88d0bb286347101d2b.png"
-                  alt="modern biology textbook cover with colorful illustrations"
-                  width={300}
-                  height={256}
-                  unoptimized
-                />
-                <div class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                  yangi
-                </div>
-              </div>
-              <div class="p-4">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="bg-primary text-white px-2 py-1 rounded text-xs">
-                    BookCity
-                  </span>
-                  <button class="text-gray-400 hover:text-red-500 transition-colors">
-                    <i data-fa-i2svg="">
-                      <svg
-                        class="svg-inline--fa fa-heart"
-                        aria-hidden="true"
-                        focusable="false"
-                        data-prefix="far"
-                        data-icon="heart"
-                        role="img"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 512 512"
-                        data-fa-i2svg=""
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M225.8 468.2l-2.5-2.3L48.1 303.2C17.4 274.7 0 234.7 0 192.8v-3.3c0-70.4 50-130.8 119.2-144C158.6 37.9 198.9 47 231 69.6c9 6.4 17.4 13.8 25 22.3c4.2-4.8 8.7-9.2 13.5-13.3c3.7-3.2 7.5-6.2 11.5-9c0 0 0 0 0 0C313.1 47 353.4 37.9 392.8 45.4C462 58.6 512 119.1 512 189.5v3.3c0 41.9-17.4 81.9-48.1 110.4L288.7 465.9l-2.5 2.3c-8.2 7.6-19 11.9-30.2 11.9s-22-4.2-30.2-11.9zM239.1 145c-.4-.3-.7-.7-1-1.1l-17.8-20c0 0-.1-.1-.1-.1c0 0 0 0 0 0c-23.1-25.9-58-37.7-92-31.2C81.6 101.5 48 142.1 48 189.5v3.3c0 28.5 11.9 55.8 32.8 75.2L256 430.7 431.2 268c20.9-19.4 32.8-46.7 32.8-75.2v-3.3c0-47.3-33.6-88-80.1-96.9c-34-6.5-69 5.4-92 31.2c0 0 0 0-.1 .1s0 0-.1 .1l-17.8 20c-.3 .4-.7 .7-1 1.1c-4.5 4.5-10.6 7-16.9 7s-12.4-2.5-16.9-7z"
-                        ></path>
-                      </svg>
-                    </i>
-                  </button>
-                </div>
-                <h3 class="font-semibold text-black text-lg mb-1">Zamonaviy</h3>
-                <p class="text-gray-600 text-sm mb-2">by Dr. Sarah Johnson</p>
-                <div class="flex items-center mb-3">
-                  <div className="flex text-yellow-400">
-                    <FaStar />
-                    <FaStar />
-                    <FaStar />
-                    <FaStar />
-                    <FaRegStar />
-                  </div>
-                  <span class="text-gray-600 text-sm ml-2">4.2 (156)</span>
-                </div>
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-2xl font-bold text-blue-500 ">$45.99</span>
-                  <span class="text-gray-500 line-through">$55.99</span>
-                </div>
-                <div class="flex gap-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 576 512"
-                    >
-                      <path d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z" />
-                    </svg>
-                    Savatchaga
-                  </button>
-                  <button className="flex-1 bg-yellow-400 text-black py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 hover:bg-yellow-500 active:scale-95">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 576 512"
-                    >
-                      <path d="M64 32C28.7 32 0 60.7 0 96v32H576V96c0-35.3-28.7-64-64-64H64zM576 224H0V416c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V224zM112 352h64c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm112 16c0-8.8 7.2-16 16-16H368c8.8 0 16 7.2 16 16s-7.2 16-16 16H240c-8.8 0-16-7.2-16-16z" />
-                    </svg>
-                    sotib ol
-                  </button>
-                </div>
-              </div>
-            </div>
 
-            <div class="book-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <div class="relative">
-                <Image
-                  class="w-full h-64 object-cover"
-                  src="https://storage.googleapis.com/uxpilot-auth.appspot.com/9b4b0d5ffc-14429b36cbaf686cd17a.png"
-                  alt="chemistry textbook with molecular structures and periodic table"
-                  width={300}
-                  height={256}
-                  unoptimized
-                />
-                <div class="absolute top-3 right-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                  New
-                </div>
-              </div>
-              <div class="p-4">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="bg-green-600 text-white px-2 py-1 rounded text-xs">
-                    Kitoblar.uz
-                  </span>
-                  <button class="text-gray-400 hover:text-red-500 transition-colors">
-                    <i data-fa-i2svg="">
-                      <svg
-                        class="svg-inline--fa fa-heart"
-                        aria-hidden="true"
-                        focusable="false"
-                        data-prefix="far"
-                        data-icon="heart"
-                        role="img"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 512 512"
-                        data-fa-i2svg=""
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M225.8 468.2l-2.5-2.3L48.1 303.2C17.4 274.7 0 234.7 0 192.8v-3.3c0-70.4 50-130.8 119.2-144C158.6 37.9 198.9 47 231 69.6c9 6.4 17.4 13.8 25 22.3c4.2-4.8 8.7-9.2 13.5-13.3c3.7-3.2 7.5-6.2 11.5-9c0 0 0 0 0 0C313.1 47 353.4 37.9 392.8 45.4C462 58.6 512 119.1 512 189.5v3.3c0 41.9-17.4 81.9-48.1 110.4L288.7 465.9l-2.5 2.3c-8.2 7.6-19 11.9-30.2 11.9s-22-4.2-30.2-11.9zM239.1 145c-.4-.3-.7-.7-1-1.1l-17.8-20c0 0-.1-.1-.1-.1c0 0 0 0 0 0c-23.1-25.9-58-37.7-92-31.2C81.6 101.5 48 142.1 48 189.5v3.3c0 28.5 11.9 55.8 32.8 75.2L256 430.7 431.2 268c20.9-19.4 32.8-46.7 32.8-75.2v-3.3c0-47.3-33.6-88-80.1-96.9c-34-6.5-69 5.4-92 31.2c0 0 0 0-.1 .1s0 0-.1 .1l-17.8 20c-.3 .4-.7 .7-1 1.1c-4.5 4.5-10.6 7-16.9 7s-12.4-2.5-16.9-7z"
-                        ></path>
-                      </svg>
-                    </i>
-                  </button>
-                </div>
-                <h3 class="font-semibold text-black text-lg mb-1">
-                  Advanced Chemistry
-                </h3>
-                <p class="text-gray-600 text-sm mb-2">by Prof. Michael Chen</p>
-                <div class="flex items-center mb-3">
-                  <div className="flex text-yellow-400">
-                    <FaStar />
-                    <FaStar />
-                    <FaStar />
-                    <FaStar />
-                    <FaRegStar />
-                  </div>
-                  <span class="text-gray-600 text-sm ml-2">4.8 (203)</span>
-                </div>
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-2xl font-bold text-blue-600">$52.99</span>
-                </div>
-                <div class="flex gap-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 576 512"
-                    >
-                      <path d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z" />
-                    </svg>
-                    Add to Cart
-                  </button>
-                  <button className="flex-1 bg-yellow-400 text-black py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 hover:bg-yellow-500 active:scale-95">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 576 512"
-                    >
-                      <path d="M64 32C28.7 32 0 60.7 0 96v32H576V96c0-35.3-28.7-64-64-64H64zM576 224H0V416c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V224zM112 352h64c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm112 16c0-8.8 7.2-16 16-16H368c8.8 0 16 7.2 16 16s-7.2 16-16 16H240c-8.8 0-16-7.2-16-16z" />
-                    </svg>
-                    Buy Now
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="book-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <Image
-                class="w-full h-64 object-cover"
-                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/607c096b87-40f40db40b3aaeb4c00c.png"
-                alt="classic literature book with elegant typography design"
-                width={300}
-                height={256}
-                unoptimized
-              />
-              <div class="p-4">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="bg-purple-600 text-white px-2 py-1 rounded text-xs">
-                    ReadMore
-                  </span>
-                  <button class="text-gray-400 hover:text-red-500 transition-colors">
-                    <i data-fa-i2svg="">
-                      <svg
-                        class="svg-inline--fa fa-heart"
-                        aria-hidden="true"
-                        focusable="false"
-                        data-prefix="far"
-                        data-icon="heart"
-                        role="img"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 512 512"
-                        data-fa-i2svg=""
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M225.8 468.2l-2.5-2.3L48.1 303.2C17.4 274.7 0 234.7 0 192.8v-3.3c0-70.4 50-130.8 119.2-144C158.6 37.9 198.9 47 231 69.6c9 6.4 17.4 13.8 25 22.3c4.2-4.8 8.7-9.2 13.5-13.3c3.7-3.2 7.5-6.2 11.5-9c0 0 0 0 0 0C313.1 47 353.4 37.9 392.8 45.4C462 58.6 512 119.1 512 189.5v3.3c0 41.9-17.4 81.9-48.1 110.4L288.7 465.9l-2.5 2.3c-8.2 7.6-19 11.9-30.2 11.9s-22-4.2-30.2-11.9zM239.1 145c-.4-.3-.7-.7-1-1.1l-17.8-20c0 0-.1-.1-.1-.1c0 0 0 0 0 0c-23.1-25.9-58-37.7-92-31.2C81.6 101.5 48 142.1 48 189.5v3.3c0 28.5 11.9 55.8 32.8 75.2L256 430.7 431.2 268c20.9-19.4 32.8-46.7 32.8-75.2v-3.3c0-47.3-33.6-88-80.1-96.9c-34-6.5-69 5.4-92 31.2c0 0 0 0-.1 .1s0 0-.1 .1l-17.8 20c-.3 .4-.7 .7-1 1.1c-4.5 4.5-10.6 7-16.9 7s-12.4-2.5-16.9-7z"
-                        ></path>
-                      </svg>
-                    </i>
-                  </button>
-                </div>
-                <h3 class="font-semibold text-black text-lg mb-1">
-                  World Literature
-                </h3>
-                <p class="text-gray-600 text-sm mb-2">by Various Authors</p>
-                <div class="flex items-center mb-3">
-                  <div className="flex text-yellow-400">
-                    <FaStar />
-                    <FaStar />
-                    <FaStar />
-                    <FaStar />
-                    <FaRegStar />
-                  </div>
-                  <span class="text-gray-600 text-sm ml-2">4.5 (89)</span>
-                </div>
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-2xl font-bold text-blue-600">$38.99</span>
-                </div>
-                <div class="flex gap-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 576 512"
-                    >
-                      <path d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z" />
-                    </svg>
-                    Add to Cart
-                  </button>
-                  <button className="flex-1 bg-yellow-400 text-black py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 hover:bg-yellow-500 active:scale-95">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 576 512"
-                    >
-                      <path d="M64 32C28.7 32 0 60.7 0 96v32H576V96c0-35.3-28.7-64-64-64H64zM576 224H0V416c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V224zM112 352h64c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm112 16c0-8.8 7.2-16 16-16H368c8.8 0 16 7.2 16 16s-7.2 16-16 16H240c-8.8 0-16-7.2-16-16z" />
-                    </svg>
-                    Buy Now
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="book-card bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-              <Image
-                class="w-full h-64 object-cover"
-                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/2d20d5d4c4-fdf914593cc48643a79c.png"
-                alt="mathematics textbook with geometric patterns and formulas"
-                width={300}
-                height={256}
-                unoptimized
-              />
-              <div class="p-4">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="bg-primary text-white px-2 py-1 rounded text-xs">
-                    BookCity
-                  </span>
-                  <button class="text-gray-400 hover:text-red-500 transition-colors">
-                    <i data-fa-i2svg="">
-                      <svg
-                        class="svg-inline--fa fa-heart"
-                        aria-hidden="true"
-                        focusable="false"
-                        data-prefix="far"
-                        data-icon="heart"
-                        role="img"
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 512 512"
-                        data-fa-i2svg=""
-                      >
-                        <path
-                          fill="currentColor"
-                          d="M225.8 468.2l-2.5-2.3L48.1 303.2C17.4 274.7 0 234.7 0 192.8v-3.3c0-70.4 50-130.8 119.2-144C158.6 37.9 198.9 47 231 69.6c9 6.4 17.4 13.8 25 22.3c4.2-4.8 8.7-9.2 13.5-13.3c3.7-3.2 7.5-6.2 11.5-9c0 0 0 0 0 0C313.1 47 353.4 37.9 392.8 45.4C462 58.6 512 119.1 512 189.5v3.3c0 41.9-17.4 81.9-48.1 110.4L288.7 465.9l-2.5 2.3c-8.2 7.6-19 11.9-30.2 11.9s-22-4.2-30.2-11.9zM239.1 145c-.4-.3-.7-.7-1-1.1l-17.8-20c0 0-.1-.1-.1-.1c0 0 0 0 0 0c-23.1-25.9-58-37.7-92-31.2C81.6 101.5 48 142.1 48 189.5v3.3c0 28.5 11.9 55.8 32.8 75.2L256 430.7 431.2 268c20.9-19.4 32.8-46.7 32.8-75.2v-3.3c0-47.3-33.6-88-80.1-96.9c-34-6.5-69 5.4-92 31.2c0 0 0 0-.1 .1s0 0-.1 .1l-17.8 20c-.3 .4-.7 .7-1 1.1c-4.5 4.5-10.6 7-16.9 7s-12.4-2.5-16.9-7z"
-                        ></path>
-                      </svg>
-                    </i>
-                  </button>
-                </div>
-                <h3 class="font-semibold text-black text-lg mb-1">
-                  Calculus &amp; Analysis
-                </h3>
-                <p class="text-gray-600 text-sm mb-2">by Dr. Emma Wilson</p>
-                <div class="flex items-center mb-3">
-                  <div className="flex text-yellow-400">
-                    <FaStar />
-                    <FaStar />
-                    <FaStar />
-                    <FaStar />
-                    <FaRegStar />
-                  </div>
-                  <span class="text-gray-600 text-sm ml-2">4.3 (124)</span>
-                </div>
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-2xl font-bold text-blue-600">$49.99</span>
-                </div>
-                <div class="flex gap-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 576 512"
-                    >
-                      <path d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z" />
-                    </svg>
-                    Add to Cart
-                  </button>
-                  <button className="flex-1 bg-yellow-400 text-black py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 hover:bg-yellow-500 active:scale-95">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
-                      fill="currentColor"
-                      viewBox="0 0 576 512"
-                    >
-                      <path d="M64 32C28.7 32 0 60.7 0 96v32H576V96c0-35.3-28.7-64-64-64H64zM576 224H0V416c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V224zM112 352h64c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm112 16c0-8.8 7.2-16 16-16H368c8.8 0 16 7.2 16 16s-7.2 16-16 16H240c-8.8 0-16-7.2-16-16z" />
-                    </svg>
-                    Buy Now
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Action Buttons Overlay */}
+        <div className={`absolute inset-x-0 bottom-4 px-4 flex gap-2 transition-all duration-300 transform ${isHovered ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}>
+             <button className="flex-1 bg-white/90 backdrop-blur text-[#1F2937] py-3 rounded-xl font-bold text-sm hover:bg-white shadow-lg flex items-center justify-center gap-2">
+                 <FaShoppingCart /> Savatcha
+             </button>
         </div>
+
+        {/* Favorite Button */}
+        <button 
+          onClick={() => setIsLiked(!isLiked)}
+          className="absolute top-4 right-4 w-10 h-10 bg-white/50 backdrop-blur rounded-full flex items-center justify-center text-[#1F2937] hover:bg-white hover:text-red-500 transition-all shadow-sm"
+        >
+          {isLiked ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="px-2 pb-2">
+        <div className="flex items-center gap-1 text-yellow-400 text-xs mb-2">
+            {[...Array(5)].map((_, i) => (
+                <FaStar key={i} className={i < Math.floor(book.rating) ? "" : "text-gray-300"} />
+            ))}
+            <span className="text-gray-400 ml-1 font-medium">({book.reviews})</span>
+        </div>
+        
+        <h3 className="text-xl font-bold text-[#1F2937] mb-1 line-clamp-1 group-hover:text-[#96C7B9] transition-colors">
+            {book.title}
+        </h3>
+        <p className="text-sm text-gray-400 mb-4">{book.author}</p>
+        
+        <div className="flex items-center justify-between">
+            <div>
+                <span className="text-2xl font-black text-[#96C7B9]">${book.price}</span>
+                {book.oldPrice && (
+                    <span className="text-sm text-gray-300 line-through ml-2">${book.oldPrice}</span>
+                )}
+            </div>
+            <button className="w-12 h-12 rounded-2xl bg-[#D1F0E0] text-[#1F2937] flex items-center justify-center hover:bg-[#96C7B9] hover:text-white transition-all shadow-md shadow-[#D1F0E0]/50">
+                <FaBolt />
+            </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- MAIN PAGE ---
+
+export default function MarketPage() {
+  const [loading, setLoading] = useState(true);
+  const [filterCategory, setFilterCategory] = useState("All");
+
+  useEffect(() => {
+    // Simulate API loading
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-white">
+      
+      {/* FILTER & SEARCH HEADER */}
+      <div className="sticky top-[80px] z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              
+              {/* Search */}
+              <div className="relative w-full md:w-96 group">
+                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#96C7B9] transition-colors" />
+                 <input 
+                   type="text" 
+                   placeholder="Kitob, muallif yoki janr..." 
+                   className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-[#D1F0E0] transition-all font-bold text-[#1F2937] placeholder-gray-400"
+                 />
+              </div>
+
+              {/* Filters */}
+              <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+                 {["Barchasi", "Ilmiy", "Badiiy", "Darsliklar", "Biznes"].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setFilterCategory(cat)}
+                      className={`px-6 py-3 rounded-xl font-bold text-sm whitespace-nowrap transition-all
+                        ${filterCategory === cat 
+                            ? "bg-[#1F2937] text-white shadow-lg" 
+                            : "bg-gray-50 text-gray-500 hover:bg-[#D1F0E0] hover:text-[#1F2937]"
+                        }
+                      `}
+                    >
+                        {cat}
+                    </button>
+                 ))}
+                 <button className="px-4 py-3 bg-gray-50 rounded-xl text-gray-500 hover:bg-[#D1F0E0] hover:text-[#1F2937] transition-all">
+                     <FaFilter />
+                 </button>
+              </div>
+
+           </div>
+        </div>
+      </div>
+
+      {/* CONTENT GRID */}
+      <main className="max-w-7xl mx-auto px-6 py-10">
+        <AnimatePresence mode="wait">
+             {loading ? (
+                 <motion.div 
+                   key="skeleton"
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
+                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+                 >
+                     {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
+                 </motion.div>
+             ) : (
+                 <motion.div 
+                    key="content"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+                 >
+                    {BOOKS.map((book) => (
+                        <BookCard key={book.id} book={book} />
+                    ))}
+                 </motion.div>
+             )}
+        </AnimatePresence>
       </main>
-      <button
-        className="
-        fixed bottom-6 right-6 
-        bg-yellow-400 text-black 
-        w-14 h-14 rounded-full 
-        shadow-lg hover:shadow-xl 
-        transition-all hover:scale-110 
-        flex items-center justify-center
-        z-50
-      "
+
+      {/* FLOATING CART BUTTON */}
+      <motion.button
+         whileHover={{ scale: 1.1 }}
+         whileTap={{ scale: 0.9 }}
+         className="fixed bottom-8 right-8 w-16 h-16 bg-[#1F2937] text-white rounded-full shadow-2xl flex items-center justify-center z-50 group hover:shadow-[#96C7B9]/50"
       >
-        <FaShoppingCart className="text-2xl" />
-      </button>{" "}
+          <div className="relative">
+             <FaShoppingCart className="text-2xl group-hover:text-[#96C7B9] transition-colors" />
+             <span className="absolute -top-3 -right-3 w-6 h-6 bg-[#96C7B9] text-[#1F2937] text-xs font-bold rounded-full flex items-center justify-center border-2 border-[#1F2937]">
+                3
+             </span>
+          </div>
+      </motion.button>
+
     </div>
   );
 }
-
-export default Page;

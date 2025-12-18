@@ -1,93 +1,153 @@
+"use client";
+
 import React from "react";
-import { FaFacebookF, FaInstagram, FaTelegram } from "react-icons/fa";
-function Footer() {
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  FaTelegramPlane,
+  FaInstagram,
+  FaFacebookF,
+  FaYoutube,
+  FaMapMarkerAlt,
+  FaEnvelope,
+  FaPhoneAlt,
+  FaArrowRight
+} from "react-icons/fa";
+
+export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="bg-gradient-to-r from-blue-800 to-cyan-700 text-white py-16 px-6">
-      <div className="container mx-auto max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-          {/* Logo va mission */}
-          <div>
-            <div className="flex items-center space-x-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 448 512"
-                className="w-6 h-6 text-white"
-                fill="currentColor"
-              >
-                <path d="M96 0C43 0 0 43 0 96V416c0 53 43 96 96 96H384h32c17.7 0 32-14.3 32-32s-14.3-32-32-32V384c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H384 96zm0 384H352v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32zm32-240c0-8.8 7.2-16 16-16H336c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16zm16 48H336c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16z" />
-              </svg>
-              <span>Feruza Book</span>
-            </div>
-            <p className="text-blue-100">
-              Bilimni har kim uchun qulay va arzon qilish
-            </p>
+    <footer className="relative bg-[#1F2937] text-white pt-24 pb-10 overflow-hidden font-sans rounded-t-[3rem]">
+      
+      {/* Decorative Blob */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#96C7B9] opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#D1F0E0] opacity-5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          
+          {/* Brand Column */}
+          <div className="space-y-6">
+             <Link href="/mainPage" className="inline-block">
+                <span className="text-3xl font-black tracking-tight text-white">
+                  Kitob<span className="text-[#96C7B9]">dosh</span>
+                </span>
+             </Link>
+             <p className="text-gray-400 leading-relaxed text-sm">
+               Talabalar va kitobxonlar uchun eng zamonaviy ijara va savdo platformasi. Bilim olishni oson va qulay qilamiz.
+             </p>
+             <div className="flex gap-4">
+                {[FaTelegramPlane, FaInstagram, FaFacebookF, FaYoutube].map((Icon, i) => (
+                   <a 
+                     key={i} 
+                     href="#" 
+                     className="w-10 h-10 rounded-full bg-white/5 hover:bg-[#96C7B9] hover:text-[#1F2937] flex items-center justify-center transition-all duration-300"
+                   >
+                     <Icon />
+                   </a>
+                ))}
+             </div>
           </div>
 
-          {/* Sahifalar */}
+          {/* Quick Links */}
           <div>
-            <h4 className="font-semibold mb-4">Sahifalar</h4>
-            <ul className="space-y-2 text-blue-100">
-              {["Bosh sahifa", "Ijara", "Sotib olish", "Biz haqimizda"].map(
-                (item, i) => (
-                  <li key={i}>
-                    <a href="#" className="hover:text-white transition-colors">
-                      {item}
-                    </a>
-                  </li>
-                )
-              )}
+            <h3 className="text-lg font-bold text-white mb-6">Sahifalar</h3>
+            <ul className="space-y-4">
+               {[
+                 { label: "Bosh Sahifa", href: "/mainPage" },
+                 { label: "Sotib Olish", href: "/mainPage/sotibolish" },
+                 { label: "Ijara", href: "/mainPage/ijarabook" },
+                 { label: "Biz Haqimizda", href: "/mainPage/AboutUs" },
+                 { label: "Aloqa", href: "/mainPage/contactUs" }
+               ].map((link, i) => (
+                 <li key={i}>
+                    <Link href={link.href} className="text-gray-400 hover:text-[#96C7B9] transition-colors inline-flex items-center gap-2 group text-sm">
+                       <span className="w-1.5 h-1.5 rounded-full bg-[#96C7B9] opacity-0 group-hover:opacity-100 transition-opacity" />
+                       {link.label}
+                    </Link>
+                 </li>
+               ))}
             </ul>
           </div>
 
-          {/* Yordam */}
+          {/* Categories */}
           <div>
-            <h4 className="font-semibold mb-4">Yordam</h4>
-            <ul className="space-y-2 text-blue-100">
-              {["Bog'lanish", "Savol-javob", "Yetkazish", "Qaytarish"].map(
-                (item, i) => (
-                  <li key={i}>
-                    <a href="#" className="hover:text-white transition-colors">
-                      {item}
+            <h3 className="text-lg font-bold text-white mb-6">Kategoriyalar</h3>
+            <ul className="space-y-4">
+               {[
+                 "Badiiy Adabiyotlar",
+                 "Darsliklar va Qo'llanmalar",
+                 "Bolalar Adabiyoti",
+                 "Psixologiya va Biznes",
+                 "Ilmiy Kitoblar"
+               ].map((cat, i) => (
+                 <li key={i}>
+                    <a href="#" className="text-gray-400 hover:text-[#96C7B9] transition-colors text-sm">
+                       {cat}
                     </a>
-                  </li>
-                )
-              )}
+                 </li>
+               ))}
             </ul>
           </div>
 
-          {/* Ijtimoiy tarmoqlar */}
-          <div className="container mx-auto max-w-6xl">
-            <h4 className="font-semibold mb-4">Ijtimoiy tarmoqlar</h4>
-            <div className="flex space-x-4">
-              <a
-                href="#"
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-              >
-                <FaFacebookF className="text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-              >
-                <FaInstagram className="text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-              >
-                <FaTelegram className="text-white" />
-              </a>
+          {/* Contact Info */}
+          <div>
+            <h3 className="text-lg font-bold text-white mb-6">Bog&apos;lanish</h3>
+            <ul className="space-y-4">
+               <li className="flex items-start gap-4">
+                  <div className="mt-1 min-w-[20px] text-[#96C7B9]">
+                     <FaMapMarkerAlt />
+                  </div>
+                  <span className="text-gray-400 text-sm">
+                    Termiz shahri, Islom Karimov ko&apos;chasi, 54-uy
+                  </span>
+               </li>
+               <li className="flex items-center gap-4">
+                  <div className="text-[#96C7B9]">
+                     <FaPhoneAlt />
+                  </div>
+                  <span className="text-gray-400 text-sm">
+                    +998 90 123 45 67
+                  </span>
+               </li>
+               <li className="flex items-center gap-4">
+                  <div className="text-[#96C7B9]">
+                     <FaEnvelope />
+                  </div>
+                  <span className="text-gray-400 text-sm">
+                    info@kitobdosh.uz
+                  </span>
+               </li>
+            </ul>
+
+            {/* Newsletter */}
+            <div className="mt-8 bg-white/5 rounded-xl p-1 flex items-center border border-white/10 focus-within:border-[#96C7B9] transition-colors">
+               <input 
+                 type="email" 
+                 placeholder="Email manzilingiz"
+                 className="bg-transparent border-none outline-none text-white px-4 py-2 w-full text-sm placeholder-gray-500"
+               />
+               <button className="w-10 h-10 bg-[#96C7B9] hover:bg-white text-[#1F2937] rounded-lg flex items-center justify-center transition-colors">
+                  <FaArrowRight />
+               </button>
             </div>
           </div>
+
         </div>
 
-        {/* Copyright */}
-        <div className="border-t border-white/20 pt-8 text-center text-blue-100">
-          <p>© 2025 Feruza Book. Barcha huquqlar himoyalangan.</p>
+        {/* Bottom Bar */}
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+           <p className="text-gray-500 text-xs">
+             &copy; {currentYear} Kitobdosh. Barcha huquqlar himoyalangan.
+           </p>
+           <div className="flex gap-6">
+              <a href="#" className="text-gray-500 hover:text-white text-xs transition-colors">Maxfiylik siyosati</a>
+              <a href="#" className="text-gray-500 hover:text-white text-xs transition-colors">Foydalanish shartlari</a>
+           </div>
         </div>
+
       </div>
     </footer>
   );
 }
-
-export default Footer;

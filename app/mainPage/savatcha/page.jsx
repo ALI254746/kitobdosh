@@ -1,376 +1,334 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-// react-icons dan
-import { motion } from "framer-motion";
-import {
-  FaBagShopping,
-  FaLocationDot,
-  FaTruck,
-  FaBolt,
-  FaShieldHalved,
-} from "react-icons/fa6";
-import { FaPlus, FaMinus, FaTrash } from "react-icons/fa";
-import { FaInfoCircle } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
+import {
+  FaTrashAlt,
+  FaMinus,
+  FaPlus,
+  FaArrowLeft,
+  FaShieldAlt,
+  FaCreditCard,
+  FaMoneyBillWave,
+  FaTruck,
+  FaBoxOpen,
+} from "react-icons/fa";
+import { FaLocationDot, FaClock } from "react-icons/fa6"; // Corrected import for FaClock
 
-export default function CartHeader() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+// --- MOCK DATA ---
+const INITIAL_CART_ITEMS = [
+  {
+    id: 1,
+    title: "Yuqori darajadagi matematika",
+    author: "Dr. Sarah Wilson",
+    price: 45000,
+    quantity: 1,
+    image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/adb4f7409e-76c10fce523b814d55d0.png",
+    type: "ijara", // or 'sotib-olish'
+    rentalDays: 10,
+    rentalPricePerDay: 3000,
+  },
+  {
+    id: 2,
+    title: "Zamonaviy Fizika",
+    author: "Prof. Einstein",
+    price: 120000,
+    quantity: 1,
+    image: "https://storage.googleapis.com/uxpilot-auth.appspot.com/0a3c673cab-677aa09155081621fd6a.png",
+    type: "sotib-olish",
+  },
+];
 
-  const handleIncrease = () => setQuantity((q) => q + 1);
-  const handleDecrease = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
+// --- COMPONENTS ---
 
-  const price = 45.0;
-  const total = (price * quantity).toFixed(2);
+const SkeletonCartItem = () => (
+  <div className="flex gap-4 p-4 rounded-3xl bg-white border border-gray-100 animate-pulse">
+    <div className="w-24 h-32 bg-gray-200 rounded-2xl" />
+    <div className="flex-1 space-y-3 py-2">
+      <div className="h-6 w-3/4 bg-gray-200 rounded-lg" />
+      <div className="h-4 w-1/2 bg-gray-200 rounded-lg" />
+      <div className="flex justify-between items-end mt-4">
+         <div className="h-8 w-24 bg-gray-200 rounded-xl" />
+         <div className="h-10 w-32 bg-gray-200 rounded-xl" />
+      </div>
+    </div>
+  </div>
+);
+
+const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+      className="group relative bg-white rounded-3xl p-5 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-[#D1F0E0]/30 hover:border-[#96C7B9] transition-all duration-300"
+    >
+      <div className="flex gap-5">
+        {/* Image */}
+        <div className="relative w-24 h-32 md:w-32 md:h-40 rounded-2xl overflow-hidden shadow-inner bg-gray-50 flex-shrink-0">
+          <Image
+            src={item.image}
+            alt={item.title}
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-500"
+          />
+          {item.type === "ijara" && (
+            <span className="absolute top-2 left-2 bg-[#D1F0E0] text-[#1F2937] text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm">
+              IJARA
+            </span>
+          )}
+        </div>
+
+        {/* Details */}
+        <div className="flex-1 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-start">
+              <h3 className="text-lg md:text-xl font-bold text-[#1F2937] line-clamp-2 leading-tight mb-1">
+                {item.title}
+              </h3>
+              <button 
+                onClick={() => onRemove(item.id)}
+                className="text-gray-300 hover:text-red-500 transition-colors p-1"
+              >
+                <FaTrashAlt />
+              </button>
+            </div>
+            <p className="text-sm text-gray-400 font-medium mb-3">{item.author}</p>
+            
+            {item.type === "ijara" && (
+               <div className="inline-flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-100 mb-2">
+                  <FaClock className="text-[#96C7B9] text-xs" />
+                  <span className="text-xs font-bold text-gray-500">{item.rentalDays} kun</span>
+                  <span className="text-xs text-gray-300">|</span>
+                  <span className="text-xs font-bold text-[#1F2937]">{item.rentalPricePerDay.toLocaleString()} so&apos;m/kun</span>
+               </div>
+            )}
+          </div>
+
+          <div className="flex justify-between items-end">
+            {/* Quantity Controls */}
+            <div className="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-100">
+               <button 
+                 onClick={() => onUpdateQuantity(item.id, -1)}
+                 disabled={item.quantity <= 1}
+                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-500 hover:text-[#1F2937] hover:shadow-sm disabled:opacity-50 transition-all"
+               >
+                 <FaMinus className="text-xs" />
+               </button>
+               <span className="w-10 text-center font-bold text-[#1F2937]">{item.quantity}</span>
+               <button 
+                 onClick={() => onUpdateQuantity(item.id, 1)}
+                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-white text-gray-500 hover:text-[#1F2937] hover:shadow-sm transition-all"
+               >
+                 <FaPlus className="text-xs" />
+               </button>
+            </div>
+
+            {/* Price */}
+            <div className="text-right">
+              {item.type === "ijara" ? (
+                 <>
+                   <p className="text-xs text-gray-400">Jami ijara narxi</p>
+                   <p className="text-xl font-black text-[#96C7B9]">
+                     {(item.rentalPricePerDay * item.rentalDays * item.quantity).toLocaleString()} <span className="text-xs text-[#1F2937]">so&apos;m</span>
+                   </p>
+                 </>
+              ) : (
+                 <p className="text-xl font-black text-[#96C7B9]">
+                   {(item.price * item.quantity).toLocaleString()} <span className="text-xs text-[#1F2937]">so&apos;m</span>
+                 </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- MAIN PAGE ---
+
+export default function CartPage() {
+  const [loading, setLoading] = useState(true);
+  const [cartItems, setCartItems] = useState([]);
+  const [deliveryMethod, setDeliveryMethod] = useState("pickup"); // 'pickup', 'standard', 'express'
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
+    // Simulate API Fetch
+    setTimeout(() => {
+        setCartItems(INITIAL_CART_ITEMS);
+        setLoading(false);
+    }, 1500);
   }, []);
 
+  const updateQuantity = (id, change) => {
+    setCartItems(items => items.map(item => 
+        item.id === id ? { ...item, quantity: Math.max(1, item.quantity + change) } : item
+    ));
+  };
+
+  const removeItem = (id) => {
+    setCartItems(items => items.filter(item => item.id !== id));
+  };
+
+  // Calculations
+  const subtotal = cartItems.reduce((acc, item) => {
+      if (item.type === "ijara") {
+          return acc + (item.rentalPricePerDay * item.rentalDays * item.quantity);
+      }
+      return acc + (item.price * item.quantity);
+  }, 0);
+
+  const deliveryPrice = deliveryMethod === 'standard' ? 20000 : (deliveryMethod === 'express' ? 50000 : 0);
+  const total = subtotal + deliveryPrice;
+
   return (
-    <div className="bg-white">
-      <div className="max-w-7xl mx-auto px-6 text-center py-25">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={isVisible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="flex items-center justify-center mb-4"
-        >
-          <FaBagShopping className="text-5xl text-blue-600 drop-shadow-[0_0_10px_rgba(37,99,235,0.6)] mr-3" />
-          <h1 className="text-4xl font-bold text-gray-900 drop-shadow-[0_2px_5px_rgba(37,99,235,0.5)]">
-            Sizning savatingiz
-          </h1>
-        </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={isVisible ? { opacity: 1 } : {}}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          className="text-lg text-gray-700 max-w-2xl mx-auto"
-        >
-          Buyurtma berishdan oldin tanlagan kitoblaringizni ko‘rib chiqing.
-        </motion.p>
+    <div className="min-h-screen bg-[#F0FDF8] font-sans pb-20">
+      
+      {/* Header */}
+      <div className="bg-white border-b border-[#D1F0E0]/50 sticky top-0 z-40 backdrop-blur-md bg-white/80">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+           <Link href="/mainPage/sotibolish" className="flex items-center gap-2 text-gray-400 hover:text-[#1F2937] transition-colors font-bold text-sm">
+              <FaArrowLeft /> Ortga qaytish
+           </Link>
+           <h1 className="text-xl md:text-2xl font-black text-[#1F2937]">
+              Savat <span className="text-[#96C7B9]">({cartItems.length})</span>
+           </h1>
+           <div className="w-24" /> {/* Spacer for centering */}
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto px-6">
-        {/* CHAP USTUN - SAVATDAGI MAHSULOTLAR */}
-        <div id="cart-items" className="lg:col-span-2">
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-              Ijaraga olingan mahsulotlar
-            </h2>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <FaInfoCircle className="text-blue-500 mr-3" />
-                <p className="text-blue-700 text-sm">
-                  Eslatma: Sotib olingan mahsulotlar savatda saqlanmaydi —
-                  darhol xaridni yakunlash uchun “Hozir sotib olish” tugmasini
-                  bosing.
-                </p>
-              </div>
+      <main className="max-w-7xl mx-auto px-6 py-10">
+        <div className="flex flex-col lg:flex-row gap-8">
+            
+            {/* LEFT COLUMN: Cart Items */}
+            <div className="flex-1 space-y-6">
+                <AnimatePresence mode="popLayout">
+                    {loading ? (
+                        <>
+                           <SkeletonCartItem />
+                           <SkeletonCartItem />
+                        </>
+                    ) : cartItems.length > 0 ? (
+                        cartItems.map(item => (
+                            <CartItem 
+                                key={item.id} 
+                                item={item} 
+                                onUpdateQuantity={updateQuantity}
+                                onRemove={removeItem}
+                            />
+                        ))
+                    ) : (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="bg-white rounded-[2.5rem] p-12 text-center border border-dashed border-gray-200"
+                        >
+                           <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl text-gray-300">
+                               <FaBoxOpen />
+                           </div>
+                           <h3 className="text-xl font-bold text-[#1F2937] mb-2">Savatingiz bo&apos;sh</h3>
+                           <p className="text-gray-400 mb-8">Hozircha hech narsa tanlamadingiz.</p>
+                           <Link href="/mainPage/sotibolish" className="inline-block bg-[#1F2937] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#96C7B9] hover:shadow-lg transition-all">
+                               Xaridni boshlash
+                           </Link>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
-          </div>
 
-          {/* IJARA KARTASI */}
-          <div className="bg-white rounded-xl shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
-            <div className="flex gap-6">
-              <div className="flex-shrink-0">
-                <Image
-                  className="w-24 h-32 rounded-lg object-cover"
-                  src="https://storage.googleapis.com/uxpilot-auth.appspot.com/adb4f7409e-76c10fce523b814d55d0.png"
-                  alt="matematika darsligi"
-                  width={96}
-                  height={128}
-                  unoptimized
-                />
-              </div>
-              <div className="flex-grow">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                      Yuqori darajadagi matematika
+            {/* RIGHT COLUMN: Summary */}
+            <div className="lg:w-[400px]">
+                <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-xl shadow-slate-100/50 sticky top-28">
+                    <h3 className="text-lg font-black text-[#1F2937] mb-6 flex items-center gap-2">
+                        Buyurtma Ma&apos;lumotlari
                     </h3>
-                    <p className="text-gray-600 text-sm mb-2">
-                      Muallif: Dr. Sarah Wilson
+
+                    {/* Delivery Options */}
+                    <div className="space-y-3 mb-8">
+                        <label className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all
+                            ${deliveryMethod === 'pickup' ? 'border-[#96C7B9] bg-[#F0FDF8]' : 'border-gray-100 hover:border-gray-200'}
+                        `}>
+                            <input 
+                              type="radio" 
+                              name="delivery" 
+                              checked={deliveryMethod === 'pickup'} 
+                              onChange={() => setDeliveryMethod('pickup')}
+                              className="hidden"
+                            />
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+                                ${deliveryMethod === 'pickup' ? 'border-[#96C7B9]' : 'border-gray-300'}
+                            `}>
+                                {deliveryMethod === 'pickup' && <div className="w-2.5 h-2.5 rounded-full bg-[#96C7B9]" />}
+                            </div>
+                            <div className="flex-1">
+                                <span className="block font-bold text-[#1F2937] text-sm">Olib ketish</span>
+                                <span className="text-xs text-gray-400">Kitob do&apos;konidan</span>
+                            </div>
+                            <span className="font-bold text-[#96C7B9] text-sm">0 so&apos;m</span>
+                        </label>
+
+                        <label className={`flex items-center gap-3 p-4 rounded-2xl border-2 cursor-pointer transition-all
+                            ${deliveryMethod === 'standard' ? 'border-[#96C7B9] bg-[#F0FDF8]' : 'border-gray-100 hover:border-gray-200'}
+                        `}>
+                            <input 
+                              type="radio" 
+                              name="delivery" 
+                              checked={deliveryMethod === 'standard'} 
+                              onChange={() => setDeliveryMethod('standard')}
+                              className="hidden"
+                            />
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
+                                ${deliveryMethod === 'standard' ? 'border-[#96C7B9]' : 'border-gray-300'}
+                            `}>
+                                {deliveryMethod === 'standard' && <div className="w-2.5 h-2.5 rounded-full bg-[#96C7B9]" />}
+                            </div>
+                            <div className="flex-1">
+                                <span className="block font-bold text-[#1F2937] text-sm">Yetkazib berish</span>
+                                <span className="text-xs text-gray-400">Shahar ichida (1-3 kun)</span>
+                            </div>
+                            <span className="font-bold text-[#1F2937] text-sm">20,000</span>
+                        </label>
+                    </div>
+
+                    {/* Summary Lines */}
+                    <div className="space-y-3 py-6 border-t border-dashed border-gray-200 text-sm">
+                        <div className="flex justify-between text-gray-500">
+                            <span>Mahsulotlar ({cartItems.length})</span>
+                            <span className="font-medium">{subtotal.toLocaleString()} so&apos;m</span>
+                        </div>
+                        <div className="flex justify-between text-gray-500">
+                            <span>Yetkazib berish</span>
+                            <span className="font-medium">{deliveryPrice.toLocaleString()} so&apos;m</span>
+                        </div>
+                        <div className="flex justify-between text-[#96C7B9] font-bold">
+                            <span>Chegirma</span>
+                            <span>0 so&apos;m</span>
+                        </div>
+                    </div>
+
+                    {/* Total */}
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100 mb-6">
+                        <span className="font-bold text-[#1F2937]">Jami to&apos;lov</span>
+                        <span className="text-2xl font-black text-[#1F2937]">
+                            {total.toLocaleString()} <span className="text-sm font-medium text-gray-400">so&apos;m</span>
+                        </span>
+                    </div>
+
+                    <button className="w-full py-4 bg-[#1F2937] text-white rounded-2xl font-bold shadow-xl shadow-gray-200 hover:bg-[#96C7B9] hover:shadow-[#96C7B9]/40 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                        <FaCreditCard /> To&apos;lovga o&apos;tish
+                    </button>
+                    
+                    <p className="mt-4 text-xs text-center text-gray-400 flex items-center justify-center gap-1.5 opacity-80">
+                        <FaShieldAlt /> Barcha to&apos;lovlar himoyalangan
                     </p>
-                    <div className="flex items-center text-sm text-gray-500 mb-2">
-                      <span className="bg-gray-100 px-2 py-1 rounded text-xs">
-                        Akademik kitob do‘koni
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <button className="text-blue-500 hover:text-cyan-400 transition-colors">
-                      <FaLocationDot className="text-lg" />
-                    </button>
-                    <button className="text-gray-400 hover:text-red-500 transition-colors">
-                      <FaTrash className="text-lg" />
-                    </button>
-                  </div>
                 </div>
-
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Boshlanish sanasi
-                    </label>
-                    <input
-                      type="date"
-                      defaultValue="2024-01-15"
-                      className="w-full px-3 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tugash sanasi
-                    </label>
-                    <input
-                      type="date"
-                      defaultValue="2024-01-25"
-                      className="w-full text-black px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-cyan-500 font-semibold">
-                      ₸ 3,000 / kun
-                    </span>
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                      Mavjud
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-600">10 kun</p>
-                    <p className="text-lg font-bold text-gray-800">₸ 30,000</p>
-                  </div>
-                </div>
-
-                <p className="text-xs text-gray-500 mt-2">
-                  Ijara to‘lovi har kuni hisoblanadi. Qaytarish sanasi:
-                  25/01/2024
-                </p>
-              </div>
             </div>
-          </div>
-
-          {/* YANA SHU MAHSULOT */}
-          <div
-            id="cart-item-1"
-            className="bg-white rounded-2xl p-6 mb-4 border border-gray-100 hover:shadow-md transition-transform hover:-translate-y-1"
-          >
-            <div className="flex items-center space-x-4">
-              <Image
-                className="w-20 h-28 rounded-lg object-cover"
-                src="https://storage.googleapis.com/uxpilot-auth.appspot.com/0a3c673cab-677aa09155081621fd6a.png"
-                alt="zamonaviy kitob muqovasi"
-                width={80}
-                height={112}
-                unoptimized
-              />
-
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-800 text-lg">
-                  Yuqori darajadagi matematika
-                </h3>
-                <p className="text-gray-600 mb-2">Muallif: Dr. Sarah Johnson</p>
-                <span className="inline-block bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">
-                  Akademik kitoblar do‘koni
-                </span>
-
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center space-x-3">
-                    <button
-                      onClick={handleDecrease}
-                      className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
-                    >
-                      <FaMinus className="text-sm" />
-                    </button>
-
-                    <span className="font-medium">{quantity}</span>
-
-                    <button
-                      onClick={handleIncrease}
-                      className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
-                    >
-                      <FaPlus className="text-sm" />
-                    </button>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">$45.00 dona</p>
-                    <p className="font-semibold text-lg text-gray-800">
-                      ${total}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <button className="text-red-500 hover:text-red-700 p-2">
-                <FaTrash />
-              </button>
-            </div>
-          </div>
-
-          {/* TAVSIYA QILINADI */}
-          <div className="mt-12">
-            <h3 className="text-xl font-semibold text-gray-800 mb-6">
-              Sizga yoqishi mumkin
-            </h3>
-            <div className="grid md:grid-cols-3 gap-6">
-              {[
-                {
-                  title: "Organik kimyo",
-                  price: "₸ 2,800 / kun",
-                  img: "https://storage.googleapis.com/uxpilot-auth.appspot.com/74f926aba4-73f686cbb57a263e0f29.png",
-                },
-                {
-                  title: "Hujayra biologiyasi",
-                  price: "₸ 3,200 / kun",
-                  img: "https://storage.googleapis.com/uxpilot-auth.appspot.com/a01b7cb7d3-7b904b2368a76341cdce.png",
-                },
-                {
-                  title: "Statistika",
-                  price: "₸ 2,600 / kun",
-                  img: "https://storage.googleapis.com/uxpilot-auth.appspot.com/40846ccb30-19066ac07af289eb02f0.png",
-                },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow"
-                >
-                  <Image
-                    className="w-full h-32 rounded-lg object-cover mb-3"
-                    src={item.img}
-                    alt={item.title}
-                    width={200}
-                    height={128}
-                    unoptimized
-                  />
-                  <h4 className="font-medium text-gray-800 mb-1">
-                    {item.title}
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-2">{item.price}</p>
-                  <button className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                    Ijaraga olish
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
-
-        {/* O‘NG USTUN - BUYURTMA XULOSASI */}
-        <div className="lg:col-span-1">
-          <div className="glassmorphism rounded-xl p-6 shadow-lg sticky top-32">
-            <h3 className="text-xl font-semibold text-gray-800 mb-6">
-              Buyurtma xulosasi
-            </h3>
-
-            {/* YETKAZIB BERISH VARIANTLARI */}
-            <div className="mb-6">
-              <h4 className="font-medium text-gray-700 mb-3">
-                Yetkazib berish usullari
-              </h4>
-              <div className="space-y-3">
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input type="radio" name="delivery" defaultChecked />
-                  <div className="flex items-center space-x-2">
-                    <FaLocationDot className="text-blue-700" />
-                    <div>
-                      <p className="text-sm text-black font-medium">
-                        Kitob do‘konidan olib ketish
-                      </p>
-                      <p className="text-xs text-gray-500">Bepul</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input type="radio" name="delivery" />
-                  <div className="flex items-center space-x-2">
-                    <FaTruck className="text-blue-700" />
-                    <div>
-                      <p className="text-sm text-black font-medium">
-                        Oddiy yetkazib berish (1–3 kun)
-                      </p>
-                      <p className="text-xs text-gray-500">₸ 2,000</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <input type="radio" name="delivery" />
-                  <div className="flex items-center space-x-2">
-                    <FaBolt className="text-yellow-500" />
-                    <div>
-                      <p className="text-sm text-black font-medium">
-                        Tezkor yetkazib berish (shu kunning o‘zida)
-                      </p>
-                      <p className="text-xs text-gray-500">₸ 5,000</p>
-                    </div>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* JAMI */}
-            <div className="border-t pt-4 space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Mahsulotlar jami</span>
-                <span className="font-medium text-black">₸ 70,000</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Kuryer to‘lovi</span>
-                <span className="font-medium text-black">₸ 0</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Chegirma</span>
-                <span className="font-medium text-green-600">-₸ 0</span>
-              </div>
-              <div className="border-t pt-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-800">
-                    Umumiy summa
-                  </span>
-                  <span className="text-xl font-bold text-blue-600">
-                    ₸ 70,000
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* KUPON */}
-            <div className="mt-6 flex space-x-2">
-              <input
-                type="text"
-                placeholder="Kupon kodini kiriting"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">
-                Qo‘llash
-              </button>
-            </div>
-
-            {/* HARAKATLAR */}
-            <div className="mt-8 space-y-3">
-              <button className="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors">
-                To‘lovga o‘tish
-              </button>
-              <button className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                Xaridni davom ettirish
-              </button>
-            </div>
-
-            <p className="text-xs text-gray-500 text-center mt-4 flex items-center justify-center gap-1">
-              <FaShieldHalved /> Xavfsiz to‘lovlar — karta, Payme, Click orqali
-              amalga oshiriladi
-            </p>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

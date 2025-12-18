@@ -1,280 +1,220 @@
 "use client";
-import React from "react";
-import { FaEnvelope } from "react-icons/fa";
-import { TypeAnimation } from "react-type-animation";
+
+import React, { useRef } from "react";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
-import { FaTelegram, FaLocationDot } from "react-icons/fa6";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { 
+  FaPaperPlane, 
+  FaMapMarkerAlt, 
+  FaPhoneAlt, 
+  FaEnvelopeOpenText,
+  FaTelegramPlane,
+  FaInstagram,
+  FaLinkedinIn,
+  FaClock
+} from "react-icons/fa";
 
-// Material Icons dan email
-function Page() {
-  const sectionRef = useRef(null);
+export default function ContactUsPage() {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: containerRef });
+  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("fade-in-visible");
-          }
-        });
-      },
-      { threshold: 0.2 }
-    );
+  // Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15, delayChildren: 0.2 }
+    }
+  };
 
-    const elements = sectionRef.current.querySelectorAll(".fade-in");
-    elements.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, []);
+  const itemVariants = {
+    hidden: { y: 40, opacity: 0, scale: 0.95 },
+    visible: { 
+      y: 0, 
+      opacity: 1, 
+      scale: 1,
+      transition: { type: "spring", stiffness: 60, damping: 15 } 
+    }
+  };
 
   return (
-    <div>
-      <div className="bg-white h-[400] flex items-center justify-center">
-        <div className="max-w-3xl text-center px-6 py-12">
-          {/* Typing Animation Title */}
-          <h1 className="text-5xl font-bold text-gray-800 mb-6">
-            <TypeAnimation
-              sequence={[
-                "Aloqada bo'lamiz...", // yoziladigan matn
-                1500, // kutish (ms)
-              ]}
-              wrapper="span"
-              speed={20}
-              repeat={false}
-              style={{ display: "inline-block" }}
+    <div ref={containerRef} className="min-h-screen bg-white font-sans overflow-hidden">
+      
+      {/* --- HERO SECTION --- */}
+      <section className="relative pt-32 pb-20 px-6 text-center overflow-hidden">
+         {/* Parallax Background Elements */}
+         <motion.div style={{ y }} className="absolute top-0 left-0 w-full h-full -z-10 bg-white">
+            <motion.div 
+               animate={{ scale: [1, 1.2, 1], rotate: [0, 10, 0] }}
+               transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+               className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-gradient-to-br from-[#D1F0E0]/20 to-transparent rounded-full blur-3xl opacity-60"
             />
-          </h1>
+            <motion.div 
+               animate={{ scale: [1, 1.1, 1], x: [0, -30, 0] }}
+               transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+               className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-gradient-to-tr from-[#96C7B9]/20 to-transparent rounded-full blur-3xl opacity-50"
+            />
+         </motion.div>
 
-          {/* Subtext */}
-          <p className="text-xl text-gray-600 mb-8 fade-in">
-            Feruza Book haqida savolingiz bormi? Sizdan eshitishni juda
-            xohlaymiz.
-          </p>
-
-          {/* Icon with animation */}
-          <div className="flex justify-center">
-            <FaEnvelope className="text-5xl text-blue-600 animate-bounce" />
-          </div>
-        </div>
-      </div>
-      <section
-        id="contact-form-section"
-        className="py-2 bg-white overflow-hidden"
-      >
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Chap taraf (rasm + matn) */}
-            <div id="contact-image" className="space-y-6 fade-in">
-              <div className="h-160 overflow-hidden rounded-2xl">
-                <Image
-                  src="https://storage.googleapis.com/uxpilot-auth.appspot.com/c52f5e0a2c-7cfec64aa824ee1b542b.png"
-                  alt="Talaba laptopda yozayotgan holatda, zamonaviy kutubxona"
-                  width={800}
-                  height={900}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-lg text-gray-600 font-medium">
-                  Sizning savollaringiz biz uchun muhim
-                </p>
-              </div>
-            </div>
-
-            {/* O‘ng taraf (forma) */}
-            <div
-              id="contact-form-card"
-              className="glassmorphic rounded-2xl p-8 shadow-xl fade-in"
-              style={{ animationDelay: "0.3s" }}
+         <div className="max-w-5xl mx-auto relative z-10">
+            <motion.div
+               initial={{ scale: 0, rotate: -45 }}
+               animate={{ scale: 1, rotate: 0 }}
+               transition={{ type: "spring", stiffness: 200, damping: 20 }}
+               className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-[#D1F0E0] to-white rounded-[2rem] mb-8 shadow-2xl shadow-[#D1F0E0]/50 border border-white"
             >
-              <h2 className="text-3xl font-bold text-gray-800 mb-8">
-                Bizga xabar yuboring
-              </h2>
-              <form id="contact-form" className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    To‘liq ism
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                  />
-                </div>
+               <FaPaperPlane className="text-4xl text-[#1F2937]" />
+            </motion.div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email manzil
-                  </label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mavzu
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Xabar
-                  </label>
-                  <textarea
-                    rows="5"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition resize-none"
-                  ></textarea>
-                </div>
-
-                <div className="flex space-x-4">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition glow-effect"
-                  >
-                    Xabar yuborish
-                  </button>
-                  <button
-                    type="reset"
-                    className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:border-blue-500 hover:text-blue-600 transition"
-                  >
-                    Tozalash
-                  </button>
-                </div>
-
-                <p className="text-sm text-gray-500 text-center">
-                  Odatda 24 soat ichida javob beramiz.
-                </p>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        {/* Fade-in animatsiya */}
-        <style jsx>{`
-          .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 1.2s ease-out forwards;
-          }
-
-          @keyframes fadeInUp {
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-
-          .glassmorphic {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-          }
-
-          .glow-effect {
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
-          }
-        `}</style>
+            <motion.h1 
+               initial={{ y: 30, opacity: 0 }}
+               animate={{ y: 0, opacity: 1 }}
+               className="text-6xl md:text-7xl font-black text-[#1F2937] mb-6 tracking-tight leading-tight"
+            >
+               Biz har doim <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1F2937] to-[#96C7B9]">aloqadamiz</span>
+            </motion.h1>
+            
+            <motion.p 
+               initial={{ y: 20, opacity: 0 }}
+               animate={{ y: 0, opacity: 1 }}
+               transition={{ delay: 0.2 }}
+               className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto font-medium"
+            >
+               Savollaringiz bormi yoki hamkorlik qilmoqchimisiz? <br className="hidden md:block"/>
+               Quyidagi forma orqali bizga xabar yo&apos;llang.
+            </motion.p>
+         </div>
       </section>
-      <section
-        id="alternative-contact"
-        className="py-20 bg-gray-50"
-        ref={sectionRef}
-      >
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center text-gray-800 mb-16 fade-in">
-            Biz bilan bog‘lanishning boshqa usullari
-          </h2>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Telegram */}
-            <div className="gradient-border glow-effect fade-in">
-              <div className="gradient-border-inner text-center p-8">
-                <FaTelegram className="text-4xl text-blue-500 mb-4 mx-auto" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                  Telegram
-                </h3>
-                <p className="text-gray-600 mb-4">Tez javob olish uchun</p>
-                <button className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">
-                  Telegramda yozish
-                </button>
-              </div>
+      {/* --- CONTENT GRID --- */}
+      <section className="max-w-7xl mx-auto px-6 pb-32">
+         <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="grid lg:grid-cols-12 gap-12 items-start"
+         >
+            
+            {/* LEFT: Contact Info (4 cols) */}
+            <div className="lg:col-span-4 space-y-6">
+               
+               {/* Info Cards */}
+               <motion.div variants={itemVariants} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group">
+                  <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-[#96C7B9] text-2xl mb-6 group-hover:bg-[#1F2937] group-hover:text-white transition-colors duration-300">
+                     <FaPhoneAlt />
+                  </div>
+                  <h3 className="text-xl font-black text-[#1F2937] mb-2">Qo&apos;ng&apos;iroq qiling</h3>
+                  <p className="text-slate-400 font-medium mb-4">Dushanba - Shanba, 9:00 - 18:00</p>
+                  <a href="tel:+998901234567" className="text-2xl font-black text-[#96C7B9] group-hover:underline decoration-2 underline-offset-4">
+                     +998 90 123 45 67
+                  </a>
+               </motion.div>
+
+               <motion.div variants={itemVariants} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 group">
+                  <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-[#96C7B9] text-2xl mb-6 group-hover:bg-[#1F2937] group-hover:text-white transition-colors duration-300">
+                     <FaEnvelopeOpenText />
+                  </div>
+                  <h3 className="text-xl font-black text-[#1F2937] mb-2">Email yuboring</h3>
+                  <p className="text-slate-400 font-medium mb-4">Bizga istalgan vaqtda yozing</p>
+                  <a href="mailto:info@kitobdosh.uz" className="text-xl font-bold text-[#1F2937] group-hover:text-[#96C7B9] transition-colors">
+                     info@kitobdosh.uz
+                  </a>
+               </motion.div>
+
+               <motion.div variants={itemVariants} className="bg-[#1F2937] p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-[#96C7B9] opacity-10 rounded-bl-full transition-transform duration-700 group-hover:scale-150" />
+                  <h3 className="text-2xl font-bold text-white mb-6 relative z-10">Bizni kuzating</h3>
+                  <div className="flex gap-4 relative z-10">
+                     {[FaTelegramPlane, FaInstagram, FaLinkedinIn].map((Icon, i) => (
+                        <a key={i} href="#" className="w-14 h-14 rounded-2xl bg-white/10 hover:bg-[#96C7B9] flex items-center justify-center text-xl text-white transition-all hover:-translate-y-2 hover:shadow-lg">
+                           <Icon />
+                        </a>
+                     ))}
+                  </div>
+               </motion.div>
             </div>
 
-            {/* Email */}
-            <div className="gradient-border glow-effect fade-in">
-              <div className="gradient-border-inner text-center p-8">
-                <FaEnvelope className="text-4xl text-yellow-500 mb-4 mx-auto" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                  Email
-                </h3>
-                <p className="text-gray-600 mb-4">contact@feruzabook.uz</p>
-                <button className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition">
-                  Email yuborish
-                </button>
-              </div>
+            {/* MIDDLE: Form (5 cols) */}
+            <motion.div 
+               variants={itemVariants} 
+               className="lg:col-span-5 bg-white p-8 md:p-10 rounded-[3rem] shadow-[0_20px_80px_-20px_rgba(0,0,0,0.1)] border border-slate-100 relative overflow-hidden"
+            >
+               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#D1F0E0] to-[#96C7B9]" />
+               
+               <h2 className="text-3xl font-black text-[#1F2937] mb-8">Xabar qoldiring</h2>
+               
+               <form className="space-y-5">
+                  <div className="group">
+                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-4 mb-2 block group-focus-within:text-[#96C7B9] transition-colors">To&apos;liq ism</label>
+                     <input 
+                        type="text" 
+                        placeholder="Ism sharifingiz"
+                        className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-[#D1F0E0] outline-none transition-all font-bold text-[#1F2937] placeholder-slate-300"
+                     />
+                  </div>
+
+                  <div className="group">
+                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-4 mb-2 block group-focus-within:text-[#96C7B9] transition-colors">Aloqa</label>
+                     <div className="grid grid-cols-2 gap-4">
+                        <input 
+                           type="text" 
+                           placeholder="+998 -- --- -- --"
+                           className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-[#D1F0E0] outline-none transition-all font-bold text-[#1F2937] placeholder-slate-300"
+                        />
+                        <input 
+                           type="email" 
+                           placeholder="Email (ixtiyoriy)"
+                           className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-[#D1F0E0] outline-none transition-all font-bold text-[#1F2937] placeholder-slate-300"
+                        />
+                     </div>
+                  </div>
+
+                  <div className="group">
+                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-4 mb-2 block group-focus-within:text-[#96C7B9] transition-colors">Xabar</label>
+                     <textarea 
+                        rows={6}
+                        placeholder="Bizga nima demoqchisiz?..."
+                        className="w-full p-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-[#D1F0E0] outline-none transition-all font-bold text-[#1F2937] placeholder-slate-300 resize-none"
+                     />
+                  </div>
+
+                  <button className="w-full py-5 bg-[#1F2937] text-white rounded-2xl font-bold text-lg shadow-xl shadow-slate-300 hover:bg-[#96C7B9] hover:shadow-[#96C7B9]/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 group">
+                     <span className="group-hover:-translate-y-1 transition-transform">Yuborish</span> <FaPaperPlane className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                  </button>
+               </form>
+            </motion.div>
+
+            {/* RIGHT: Visual/Map (3 cols) */}
+            <div className="lg:col-span-3 space-y-6">
+                <motion.div variants={itemVariants} className="h-full min-h-[400px] bg-slate-100 rounded-[2.5rem] relative overflow-hidden border-4 border-white shadow-xl group cursor-pointer">
+                  <Image 
+                    src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80"
+                    alt="Office Map"
+                    fill
+                    className="object-cover opacity-60 group-hover:scale-110 transition-transform duration-700"
+                  />
+                  
+                  {/* Overlay Content */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#1F2937]/80 via-transparent to-transparent flex flex-col justify-end p-8">
+                      <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 mb-4 border border-white/20">
+                          <div className="flex items-center gap-3 text-white mb-1">
+                              <FaClock className="text-[#96C7B9]" /> <span className="font-bold text-sm">Ish vaqti</span>
+                          </div>
+                          <p className="text-white text-xs opacity-80">Har kuni 24/7 onlayn</p>
+                      </div>
+                      
+                      <button className="w-full py-3 bg-white text-[#1F2937] rounded-xl font-bold text-sm shadow-lg flex items-center justify-center gap-2 hover:bg-[#96C7B9] hover:text-white transition-colors">
+                         <FaMapMarkerAlt /> Lokatsiyani ochish
+                      </button>
+                  </div>
+                </motion.div>
             </div>
 
-            {/* Manzil */}
-            <div className="gradient-border glow-effect fade-in">
-              <div className="gradient-border-inner text-center p-8">
-                <FaLocationDot className="text-4xl text-green-500 mb-4 mx-auto" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                  Manzil
-                </h3>
-                <p className="text-gray-600 mb-4">Termiz, O‘zbekiston</p>
-                <button className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition">
-                  Xaritada ko‘rish
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stil va animatsiya */}
-        <style jsx>{`
-          .gradient-border {
-            border-radius: 1rem;
-            padding: 2px;
-            background: linear-gradient(
-              135deg,
-              rgba(59, 130, 246, 0.8),
-              rgba(147, 51, 234, 0.8)
-            );
-          }
-
-          .gradient-border-inner {
-            border-radius: 1rem;
-            background: white;
-          }
-
-          .glow-effect {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-          }
-          .glow-effect:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
-          }
-
-          /* Scroll paytida chiqadigan animatsiya */
-          .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 1s ease-out;
-          }
-          .fade-in-visible {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        `}</style>
+         </motion.div>
       </section>
+
     </div>
   );
 }
-
-export default Page;

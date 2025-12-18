@@ -7,91 +7,127 @@ import {
   FaCheck,
   FaCar,
   FaCheckDouble,
+  FaPhoneAlt,
+  FaLocationArrow,
+  FaChevronRight
 } from "react-icons/fa";
 
-export default function OrderCard() {
+export default function ActiveOrder() {
   const [order, setOrder] = useState({
     customer: "Javohir Usmonov",
+    phone: "+998 93 270 22 74",
     address: "Toshkent sh., Shayxontohur tumani, 15-mavze, 33-uy",
     book: "Fizika 11-sinf",
-    status: "Qabul qildim", // Boshlang'ich status
+    status: "Yo'ldaman", 
   });
 
   const steps = ["Qabul qildim", "Kitobni oldim", "Yo'ldaman", "Yetkazdim"];
-  const stepIcons = {
-    "Qabul qildim": <FaCheck />,
-    "Kitobni oldim": <FaBook />,
-    "Yo'ldaman": <FaCar />,
-    Yetkazdim: <FaCheckDouble />,
-  };
-
-  const getStepClass = (currentStatus, step) => {
-    const currentIndex = steps.indexOf(currentStatus);
-    const stepIndex = steps.indexOf(step);
-    if (stepIndex < currentIndex)
-      return "bg-gradient-to-r from-blue-500 to-green-500 text-white";
-    if (stepIndex === currentIndex) return "bg-blue-500 text-white";
-    return "bg-gray-200 text-gray-400";
-  };
-
-  const getProgressWidth = (currentStatus) => {
-    const currentIndex = steps.indexOf(currentStatus);
-    return ((currentIndex + 1) / steps.length) * 100;
+  
+  const handleNextStep = () => {
+     const currentIndex = steps.indexOf(order.status);
+     if(currentIndex < steps.length - 1) {
+         setOrder({...order, status: steps[currentIndex + 1]});
+     }
   };
 
   return (
-    <div className="bg-white rounded-xl mt-15 shadow-sm p-6 max-w-md mx-auto my-6">
-      {/* Customer va status */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-4">
-        <div>
-          <h3 className="font-semibold text-gray-800 text-lg">
-            {order.customer}
-          </h3>
-          <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
-            <FaMapMarkerAlt className="text-gray-400" /> {order.address}
-          </p>
-          <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
-            <FaBook className="text-gray-400" /> {order.book}
-          </p>
-        </div>
-        <span className="bg-blue-100 text-blue-600 px-4 py-2 rounded-full text-sm font-medium self-start">
-          {order.status}
-        </span>
-      </div>
+    <div className="pb-24 max-w-lg mx-auto">
+      <h1 className="text-xl font-bold text-gray-800 mb-4 px-2">Faol topshiriq</h1>
 
-      {/* Progress steps */}
-      <div className="relative">
-        <div className="flex justify-between mb-2">
-          {steps.map((step, i) => (
-            <div key={i} className="flex flex-col items-center flex-1">
-              <div
-                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-semibold text-sm mb-2 transition-all ${getStepClass(
-                  order.status,
-                  step
-                )}`}
-              >
-                {stepIcons[step]}
-              </div>
-              <p
-                className={`text-xs text-center hidden sm:block ${
-                  steps.indexOf(order.status) >= i
-                    ? "text-blue-600 font-medium"
-                    : "text-gray-400"
-                }`}
-              >
-                {step}
-              </p>
+      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+         {/* Map Placeholder / Header */}
+         <div className="h-40 bg-gray-200 relative group cursor-pointer">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-300">
+               <span className="flex items-center gap-2 text-gray-600 font-medium"><FaLocationArrow /> Xarita yuklanmoqda...</span>
             </div>
-          ))}
-        </div>
+            {/* Real app would have Google Maps/Yandex Maps here */}
+            <div className="absolute bottom-4 right-4">
+                 <button className="bg-blue-600 text-white px-4 py-2 rounded-xl shadow-lg font-semibold flex items-center gap-2 text-sm hover:bg-blue-700 transition">
+                    <FaLocationArrow /> Navigatsiya
+                 </button>
+            </div>
+         </div>
 
-        {/* Progress bar */}
-        <div className="absolute top-4 sm:top-5 left-0 right-0 h-1 bg-gray-200 -z-10 rounded-full">
-          <div
-            className="h-full bg-gradient-to-r from-blue-500 to-green-500 transition-all duration-500 rounded-full"
-            style={{ width: `${getProgressWidth(order.status)}%` }}
-          ></div>
-        </div>
+         <div className="p-6">
+            {/* Customer Info */}
+            <div className="flex justify-between items-start mb-6">
+               <div>
+                  <h2 className="text-xl font-bold text-gray-900">{order.customer}</h2>
+                  <p className="text-gray-500 text-sm mt-1">{order.address}</p>
+               </div>
+               <a href={`tel:${order.phone.replace(/\s/g, '')}`} className="bg-green-100 text-green-600 p-3 rounded-full hover:bg-green-200 transition">
+                  <FaPhoneAlt />
+               </a>
+            </div>
+
+            {/* Book Info */}
+            <div className="bg-blue-50 rounded-xl p-4 flex items-center gap-4 mb-6">
+               <div className="w-12 h-16 bg-blue-200 rounded-lg flex-shrink-0 flex items-center justify-center text-blue-400">
+                  <FaBook className="text-xl" />
+               </div>
+               <div>
+                  <p className="text-xs text-blue-600 font-bold uppercase tracking-wide">Yetkazish kerak</p>
+                  <p className="font-bold text-gray-800">{order.book}</p>
+               </div>
+            </div>
+
+            {/* Stepper (Vertical for better mobile context or large horizontal) */}
+            <div className="relative pl-4 space-y-6">
+               {/* Line */}
+               <div className="absolute left-[27px] top-2 bottom-4 w-1 bg-gray-100 -z-10"></div>
+               
+               {steps.map((step, i) => {
+                   const currentIndex = steps.indexOf(order.status);
+                   const isCompleted = i <= currentIndex;
+                   const isCurrent = i === currentIndex;
+                   
+                   let icon = <div className="w-2 h-2 rounded-full bg-gray-300"></div>;
+                   if (isCompleted) icon = <FaCheck className="text-white text-xs" />;
+                   if (isCurrent) icon = <div className="w-3 h-3 rounded-full bg-white"></div>;
+                   
+                   let bgClass = "bg-gray-100 text-gray-400";
+                   if (isCompleted) bgClass = "bg-green-500 text-white shadow-green-200 shadow-md";
+                   if (isCurrent) bgClass = "bg-blue-600 text-white ring-4 ring-blue-100 shadow-blue-300 shadow-lg";
+
+                   return (
+                       <div key={i} className={`flex items-center gap-4 transition-all duration-300 ${isCurrent ? "scale-105 origin-left" : "opacity-80"}`}>
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-300 z-10 ${bgClass}`}>
+                               {i === 0 && <FaCheck />}
+                               {i === 1 && <FaBook />}
+                               {i === 2 && <FaCar />}
+                               {i === 3 && <FaCheckDouble />}
+                           </div>
+                           <div>
+                               <p className={`font-semibold text-sm ${isCurrent ? "text-blue-700" : isCompleted ? "text-green-600" : "text-gray-400"}`}>{step}</p>
+                               {isCurrent && <p className="text-xs text-blue-400 animate-pulse">Hozirgi holat</p>}
+                           </div>
+                       </div>
+                   )
+               })}
+            </div>
+            
+            {/* Big Action Button */}
+            <div className="mt-8">
+               <button 
+                 onClick={handleNextStep}
+                 disabled={order.status === "Yetkazdim"}
+                 className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95
+                   ${order.status === "Yetkazdim" 
+                     ? "bg-green-100 text-green-600 cursor-default" 
+                     : "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-300"}`}
+               >
+                  {order.status === "Yetkazdim" ? (
+                      <>
+                        <FaCheckDouble /> Vazifa yakunlandi
+                      </>
+                  ) : (
+                      <>
+                        Keyingi bosqich <FaChevronRight />
+                      </>
+                  )}
+               </button>
+            </div>
+         </div>
       </div>
     </div>
   );

@@ -1,160 +1,283 @@
 "use client";
-import React from "react";
-import { FaStar, FaHeart, FaCommentAlt, FaShoppingCart } from "react-icons/fa";
-import { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
-const books = [
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  FaStar, 
+  FaHeart, 
+  FaRegHeart, 
+  FaSearch, 
+  FaFilter, 
+  FaClock,
+  FaCalendarAlt,
+  FaShoppingCart
+} from "react-icons/fa";
+
+// --- MOCK RENTAL DATA ---
+const RENTAL_BOOKS = [
   {
     id: 1,
     title: "O‘tkan kunlar",
     author: "Abdulla Qodiriy",
-    price: "5 000 so‘m / kun",
+    dailyPrice: 5000,
     rating: 4.8,
-    img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=500&q=60",
+    reviews: 120,
+    image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=500&q=60",
+    condition: "Yangi",
+    minDays: 3,
+    category: "Badiiy",
+    store: "Kitoblar.uz"
   },
   {
     id: 2,
     title: "Kecha va kunduz",
-    author: "Cho‘lpon",
-    price: "4 500 so‘m / kun",
+    author: "Abdulhamid Cho‘lpon",
+    dailyPrice: 4500,
     rating: 4.6,
-    img: "https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&w=500&q=60",
+    reviews: 85,
+    image: "https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&w=500&q=60",
+    condition: "Yaxshi",
+    minDays: 2,
+    category: "Badiiy",
+    store: "BookCity"
   },
   {
     id: 3,
     title: "Odam bo‘lish qiyin",
     author: "Xudoyberdi To‘xtaboyev",
-    price: "3 000 so‘m / kun",
+    dailyPrice: 3000,
     rating: 4.9,
-    img: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=500&q=60",
+    reviews: 200,
+    image: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=500&q=60",
+    condition: "O'rta",
+    minDays: 5,
+    category: "Bolalar",
+    store: "ReadMore"
   },
   {
     id: 4,
     title: "Mehrigiyo",
     author: "Erkin Vohidov",
-    price: "4 000 so‘m / kun",
+    dailyPrice: 4000,
     rating: 4.7,
-    img: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=500&q=60",
+    reviews: 95,
+    image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=500&q=60",
+    condition: "Yangi",
+    minDays: 3,
+    category: "She'riyat",
+    store: "Kitoblar.uz"
   },
 ];
 
-export default function IjaraBookPage() {
-  const [price, setPrice] = useState(50); // default qiymat 50%
+// --- COMPONENTS ---
 
-  // 0-100 oralig‘ini 0-10000 so‘m ga o‘zgartiramiz
-  const minPrice = 0;
-  const maxPrice = 10000;
-  const displayPrice = Math.round((price / 100) * maxPrice);
+const SkeletonRentalCard = () => (
+  <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm animate-pulse">
+    <div className="w-full h-64 bg-gray-200 rounded-2xl mb-4" />
+    <div className="flex justify-between items-center mb-3">
+       <div className="h-5 w-24 bg-gray-200 rounded-full" />
+       <div className="h-4 w-12 bg-gray-200 rounded" />
+    </div>
+    <div className="h-6 w-3/4 bg-gray-200 rounded mb-2" />
+    <div className="h-4 w-1/2 bg-gray-200 rounded mb-4" />
+    <div className="flex gap-2 mt-4">
+       <div className="h-10 flex-1 bg-gray-200 rounded-xl" />
+       <div className="h-10 flex-1 bg-gray-200 rounded-xl" />
+    </div>
+  </div>
+);
+
+const RentalCard = ({ book }) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [days, setDays] = useState(book.minDays);
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 pt-28 pb-16 px-6">
-      {/* FILTER BO‘LIMI */}
-      <section id="search-filter">
-        <div className="max-w-7xl mx-auto px-6 ">
-          <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-xl p-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-center">
-              {/* QIDIRUV */}
-              <div className="flex-1 w-full">
-                <input
-                  type="text"
-                  placeholder="Kitob, muallif yoki do‘kon nomi..."
-                  className="w-full text-gray-900 pl-4 pr-4 py-3 border border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300"
-                />
-              </div>
-
-              {/* FILTRLAR */}
-              <div className="flex flex-wrap gap-3">
-                <select className="px-4 py-3 border text-gray-900 border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-400 transition-all duration-300">
-                  <option>Barcha toifalar</option>
-                  <option>Biologiya</option>
-                  <option>Kimyo</option>
-                  <option>Adabiyot</option>
-                </select>
-
-                <select className="px-4 py-3 border text-gray-900 border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-400 transition-all duration-300">
-                  <option>Barcha do‘konlar</option>
-                  <option>BookCity</option>
-                  <option>Kitoblar.uz</option>
-                  <option>ReadMore</option>
-                </select>
-
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="w-32 accent-blue-400"
-                  />
-                  <span className="text-blue-700 font-semibold">
-                    {displayPrice.toLocaleString()} so‘m
-                  </span>
-                </div>
-
-                <select className="px-4 py-3 border text-gray-900 border-blue-300 rounded-xl focus:ring-2 focus:ring-blue-400 transition-all duration-300">
-                  <option>Saralash</option>
-                  <option>Eng arzon</option>
-                  <option>Eng yuqori reyting</option>
-                  <option>Eng yangi</option>
-                </select>
-
-                <button className="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-300">
-                  Qidirish
-                </button>
-              </div>
-            </div>
-          </div>
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -8 }}
+      className="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-lg shadow-slate-100/50 hover:shadow-2xl hover:shadow-[#D1F0E0]/40 hover:border-[#96C7B9] transition-all duration-300 group relative"
+    >
+      {/* Image Container */}
+      <div className="relative w-full h-72 rounded-3xl overflow-hidden mb-4 bg-gray-50 group">
+        <Image
+          src={book.image}
+          alt={book.title}
+          fill
+          className="object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        
+        {/* Top Badges */}
+        <div className="absolute top-4 left-4 flex gap-2">
+            <span className="bg-[#D1F0E0]/90 backdrop-blur text-[#1F2937] text-xs font-bold px-3 py-1 rounded-lg">
+                <FaClock className="inline mr-1 mb-0.5" />
+                Min: {book.minDays} kun
+            </span>
         </div>
-      </section>
 
-      {/* KITOBLAR GRID */}
-      <div className="max-w-7xl mx-auto mt-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {books.map((book) => (
-            <div
-              key={book.id}
-              className="relative bg-white/70 backdrop-blur-md rounded-2xl p-4 shadow-lg hover:shadow-2xl hover:scale-105 transition-transform duration-300"
-            >
-              <div className="absolute top-4 right-4 text-red-500 hover:text-red-600 cursor-pointer transition-colors">
-                <FaHeart />
-              </div>
+        {/* Favorite */}
+        <button 
+          onClick={() => setIsLiked(!isLiked)}
+          className="absolute top-4 right-4 w-10 h-10 bg-white/60 backdrop-blur rounded-full flex items-center justify-center text-[#1F2937] hover:bg-white hover:text-red-500 transition-all shadow-sm"
+        >
+          {isLiked ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
+        </button>
 
-              <Image
-                src={book.img}
-                alt={book.title}
-                className="w-full h-56 object-cover rounded-xl mb-4"
-                width={300}
-                height={224}
-              />
-
-              <h3 className="text-lg font-semibold text-blue-900">
-                {book.title}
-              </h3>
-              <p className="text-sm text-blue-700 mb-2">{book.author}</p>
-
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-1 text-yellow-400">
-                  <FaStar />
-                  <span className="text-sm text-blue-800">{book.rating}</span>
-                </div>
-                <FaCommentAlt className="text-blue-400 cursor-pointer hover:scale-110 transition-transform" />
-              </div>
-
-              <p className="text-green-600 font-semibold mb-3">{book.price}</p>
-
-              <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-2 bg-green-400 text-black font-semibold  rounded-2xl hover:bg-green-500 transition-all duration-300">
-                  <FaShoppingCart className="w-10 text-blue-700" /> Savatga
-                  qo‘shish
-                </button>
-                <button className="flex-1 bg-blue-500 text-white font-semibold py-2 rounded-2xl hover:bg-blue-600 transition-all duration-300">
-                  Ijaraga olish
-                </button>
-              </div>
-            </div>
-          ))}
+        {/* Condition Badge */}
+        <div className="absolute bottom-4 left-4">
+           <span className={`px-3 py-1 rounded-lg text-xs font-bold backdrop-blur
+              ${book.condition === 'Yangi' ? 'bg-green-100/90 text-green-700' : 'bg-orange-100/90 text-orange-700'}
+           `}>
+             Holati: {book.condition}
+           </span>
         </div>
       </div>
-    </main>
+
+      {/* Info */}
+      <div className="px-2">
+         <div className="flex justify-between items-start mb-2">
+            <div>
+               <h3 className="text-xl font-bold text-[#1F2937] line-clamp-1 group-hover:text-[#96C7B9] transition-colors">{book.title}</h3>
+               <p className="text-sm text-gray-400 font-medium">{book.author}</p>
+            </div>
+            <div className="flex flex-col items-end">
+               <span className="text-lg font-black text-[#96C7B9]">{book.dailyPrice.toLocaleString()}</span>
+               <span className="text-[10px] text-gray-400">so&apos;m / kun</span>
+            </div>
+         </div>
+
+         {/* Duration Select */}
+         <div className="bg-[#F9FAFB] rounded-xl p-3 mb-4 border border-gray-100 flex justify-between items-center group-hover:border-[#D1F0E0] transition-colors">
+            <span className="text-xs font-bold text-gray-500 flex items-center gap-1">
+                <FaCalendarAlt /> Muddat:
+            </span>
+            <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setDays(d => Math.max(book.minDays, d - 1))}
+                  className="w-6 h-6 rounded-lg bg-white shadow-sm flex items-center justify-center text-gray-500 hover:text-[#1F2937]"
+                >
+                    -
+                </button>
+                <span className="font-bold text-[#1F2937] w-4 text-center">{days}</span>
+                <button 
+                  onClick={() => setDays(d => d + 1)}
+                  className="w-6 h-6 rounded-lg bg-white shadow-sm flex items-center justify-center text-gray-500 hover:text-[#1F2937]"
+                >
+                    +
+                </button>
+            </div>
+         </div>
+
+         {/* Actions */}
+         <div className="flex gap-2">
+            <button className="flex-1 bg-white border-2 border-[#D1F0E0] text-[#1F2937] py-3 rounded-xl font-bold text-sm hover:bg-[#D1F0E0] transition-colors flex items-center justify-center gap-2">
+                <FaShoppingCart />
+            </button>
+            <button className="flex-[3] bg-[#1F2937] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#96C7B9] hover:shadow-lg transition-all shadow-gray-200">
+                Ijaraga Olish
+            </button>
+         </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- MAIN PAGE ---
+
+export default function RentalPage() {
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("Barchasi");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-white font-sans">
+      
+      {/* HEADER & FILTERS */}
+      <div className="sticky top-[80px] z-30 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-6 space-y-4">
+           {/* Top Row: Search */}
+           <div className="flex gap-4">
+              <div className="relative flex-1 group">
+                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#96C7B9] transition-colors" />
+                 <input 
+                   type="text" 
+                   placeholder="Kitob nomini kiriting..." 
+                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-transparent rounded-2xl outline-none focus:bg-white focus:border-[#D1F0E0] transition-all font-bold text-[#1F2937] placeholder-gray-400"
+                 />
+              </div>
+              <button className="bg-[#1F2937] text-white px-8 rounded-2xl font-bold hover:bg-[#96C7B9] transition-colors shadow-lg shadow-gray-200">
+                 Qidirsh
+              </button>
+           </div>
+
+           {/* Bottom Row: Chips */}
+           <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+              <span className="text-sm font-bold text-gray-400 mr-2 flex items-center gap-1"><FaFilter /> Saralash:</span>
+              {["Barchasi", "Badiiy", "Darsliklar", "Bolalar", "Ilmiy"].map((cat) => (
+                 <button 
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all border
+                        ${activeCategory === cat 
+                            ? "bg-[#D1F0E0] border-[#D1F0E0] text-[#1F2937]" 
+                            : "bg-white border-gray-100 text-gray-500 hover:border-[#D1F0E0] hover:text-[#1F2937]"
+                        }
+                    `}
+                 >
+                    {cat}
+                 </button>
+              ))}
+           </div>
+        </div>
+      </div>
+
+      {/* CONTENT */}
+      <main className="max-w-7xl mx-auto px-6 py-10">
+         <AnimatePresence mode="wait">
+            {loading ? (
+                <motion.div 
+                   key="loading"
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   exit={{ opacity: 0 }}
+                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+                >
+                   {[1, 2, 3, 4].map(i => <SkeletonRentalCard key={i} />)}
+                </motion.div>
+            ) : (
+                <motion.div 
+                   key="content"
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+                >
+                   {RENTAL_BOOKS.map(book => (
+                      <RentalCard key={book.id} book={book} />
+                   ))}
+                </motion.div>
+            )}
+         </AnimatePresence>
+      </main>
+
+      {/* FLOATING CART BUTTON (Shared) */}
+      <motion.button
+         whileHover={{ scale: 1.1 }}
+         whileTap={{ scale: 0.9 }}
+         className="fixed bottom-8 right-8 w-16 h-16 bg-[#1F2937] text-white rounded-full shadow-2xl flex items-center justify-center z-50 group hover:shadow-[#96C7B9]/50"
+      >
+          <div className="relative">
+             <FaShoppingCart className="text-2xl group-hover:text-[#96C7B9] transition-colors" />
+             <span className="absolute -top-3 -right-3 w-6 h-6 bg-[#96C7B9] text-[#1F2937] text-xs font-bold rounded-full flex items-center justify-center border-2 border-[#1F2937]">
+                0
+             </span>
+          </div>
+      </motion.button>
+    </div>
   );
 }

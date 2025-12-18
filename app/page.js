@@ -49,12 +49,15 @@ export default function AuthPage() {
       // 📱💻 DEVICE AUTO REDIRECT
       if (typeof window !== "undefined") {
         const isMobile = window.innerWidth < 728;
+        
+        console.log("Login response data:", data); // Debugging uchun
+        const role = data.role ? data.role.toLowerCase().trim() : "";
 
-        if (data.role === "admin") {
+        if (role === "admin") {
           router.push("/AdminPanel");
-        } else if (data.role === "kurier") {
+        } else if (role === "kurier") {
           router.push("/KurierPanel");
-        } else if (data.role === "user") {
+        } else if (role === "user") {
           // User uchun mobil yoki desktopga yo‘naltirish
           if (isMobile) router.push("/mobile");
           else router.push("/mainPage"); // desktop
