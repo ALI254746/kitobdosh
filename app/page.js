@@ -459,10 +459,6 @@ export default function AuthPage() {
             
         </div>
         
-        {/* Footer info */}
-        <div className="absolute bottom-6 w-full text-center lg:text-left lg:pl-12">
-             <p className="text-xs text-gray-300 font-bold">&copy; 2025 Kitobdosh Inc.</p>
-        </div>
       </div>
     </motion.div>
   );
