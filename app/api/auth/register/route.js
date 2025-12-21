@@ -53,9 +53,11 @@ export async function POST(req) {
     try {
         await sendOTP(email, otp);
     } catch (emailError) {
-        console.error("Email yuborishda xato (Lekin davom etyapmiz):", emailError.message);
-        // Agar SMTP sozlanmagan bo'lsa, xatoni yutib yuboramiz, 
-        // shunda frontend "Kod yuborildi" deb OTP oynasini ochadi.
+        console.error("Email yuborishda xato:", emailError.message);
+        return NextResponse.json(
+          { message: "Email yuborishda xatolik yuz berdi: " + emailError.message }, 
+          { status: 500 }
+        );
     }
 
     return NextResponse.json(
