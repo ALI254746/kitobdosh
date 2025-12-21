@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, UserPlus, MoreHorizontal, X, ArrowUpRight, BookOpen, Quote, PenLine, ChevronLeft, Grid, Bookmark, User as UserIcon, Instagram, Send, Heart, MessageSquare, Star, ExternalLink, Hash } from "lucide-react";
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 // --- Configuration ---
 const ACCENT_COLOR = "#52C6DA";
 
-export default function MyBooksPage() {
+function MyBooksContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -561,6 +561,25 @@ export default function MyBooksPage() {
 
       </motion.div>
     </div>
+  );
+}
+
+export default function MyBooksPage() {
+  return (
+    <Suspense fallback={
+        <div className="min-h-screen bg-[#FDFBF7] dark:bg-slate-900 pb-24 font-sans transition-colors duration-300">
+            <div className="animate-pulse">
+                <div className="pt-12 pb-6 px-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="w-20 h-20 bg-gray-200 dark:bg-slate-800 rounded-full" />
+                        <div className="w-32 h-6 bg-gray-200 dark:bg-slate-800 rounded" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }>
+        <MyBooksContent />
+    </Suspense>
   );
 }
 

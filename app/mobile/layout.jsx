@@ -6,7 +6,6 @@ export const metadata = {
   title: "Kitobdosh",
   description: "Qiziqishlarni kashf qil",
   manifest: "/manifest.json",
-  themeColor: "#52C6DA",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -15,6 +14,10 @@ export const metadata = {
   icons: {
     apple: "/icon-192x192.png",
   },
+};
+
+export const viewport = {
+  themeColor: "#52C6DA",
 };
 
 export default function RootLayout({ children }) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import SafeImage from "../../components/SafeImage";
 import {
@@ -68,7 +68,7 @@ import { useSearchParams } from "next/navigation";
 
 import Pusher from "pusher-js";
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { darkMode } = useMain(); // Changed from useAdmin() to useMain() as per original code context
   const searchParams = useSearchParams();
   const queryUserId = searchParams.get('userId');
@@ -747,6 +747,18 @@ export default function ProfilePage() {
 
     </div>
   );
+}
+
+export default function ProfilePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-900">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#96C7B9]"></div>
+            </div>
+        }>
+            <ProfileContent />
+        </Suspense>
+    );
 }
 
 // --- SUB COMPONENTS ---

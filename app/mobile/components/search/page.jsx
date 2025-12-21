@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { FaStar, FaRegStar } from "react-icons/fa";
 
 function debounce(func, wait) {
@@ -62,7 +62,7 @@ const IconMap = {
   LayoutGrid
 };
 
-export default function SearchWithCategories() {
+function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialCat = searchParams.get("category");
@@ -334,5 +334,17 @@ export default function SearchWithCategories() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function SearchWithCategories() {
+  return (
+    <Suspense fallback={
+        <div className="flex items-center justify-center p-20">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+    }>
+        <SearchContent />
+    </Suspense>
   );
 }
