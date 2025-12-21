@@ -14,6 +14,8 @@ import {
   FaCog,
   FaTimes,
   FaSignOutAlt,
+  FaBullhorn,
+  FaStore,
 } from "react-icons/fa";
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
@@ -47,6 +49,16 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
       icon: <FaBell />,
       href: "/AdminPanel/BildirishNomalar",
       badge: 5,
+    },
+    {
+      name: "Promo Bannerlar",
+      icon: <FaBullhorn />,
+      href: "/AdminPanel/promo",
+    },
+    {
+      name: "Do'konlar",
+      icon: <FaStore />,
+      href: "/AdminPanel/stores",
     },
     { name: "Sozlamalar", icon: <FaCog />, href: "/AdminPanel/Sozlamalar" },
   ];

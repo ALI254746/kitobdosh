@@ -11,18 +11,30 @@ import {
   FaShieldAlt, 
   FaKey, 
   FaEnvelope, 
-  FaChevronRight 
+  FaChevronRight,
+  FaCog,
+  FaTruck,
+  FaHandHoldingUsd,
+  FaMapMarkerAlt,
+  FaTelegramPlane,
+  FaPhoneAlt,
+  FaFont,
+  FaLeaf,
+  FaSun
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "../AdminContext";
+import toast from "react-hot-toast";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import Image from "next/image";
 
 // Color Palette Constants
 const COLORS = {
   white: "#FFFFFF",
   mint: "#D1F0E0",
   sage: "#96C7B9",
-  darkText: "#1F2937", // Slate-800 for contrast
-  lightText: "#6B7280", // Slate-500
+  darkText: "#1F2937",
+  lightText: "#6B7280",
 };
 
 // Animation Variants
@@ -44,11 +56,6 @@ const itemVariants = {
     opacity: 1,
     transition: { type: "spring", stiffness: 100, damping: 10 }
   }
-};
-
-const titleVariant = {
-  hidden: { opacity: 0, x: -20 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "easeOut" } }
 };
 
 // --- COMPONENTS ---
@@ -94,7 +101,7 @@ const SectionTitle = ({ title, description, darkMode }) => (
   </motion.div>
 );
 
-const InputGroup = ({ label, type = "text", placeholder, defaultValue, icon: Icon, darkMode }) => (
+const InputGroup = ({ label, type = "text", placeholder, value, onChange, icon: Icon, darkMode }) => (
   <motion.div variants={itemVariants} className="space-y-2 group">
     <label className={`text-xs font-bold uppercase tracking-wider ml-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
       {label}
@@ -105,7 +112,8 @@ const InputGroup = ({ label, type = "text", placeholder, defaultValue, icon: Ico
       />
       <input 
         type={type} 
-        defaultValue={defaultValue}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className={`w-full pl-12 pr-4 py-4 rounded-2xl font-bold border-2 outline-none transition-all duration-300
           ${darkMode 
@@ -162,16 +170,7 @@ const WelcomeText = ({ darkMode }) => {
           transition={{ duration: 0.8, delay: i * 0.2, ease: [0.2, 0.65, 0.3, 0.9] }}
           className={`text-4xl md:text-5xl font-black ${darkMode ? "text-white" : "text-[#1F2937]"}`}
         >
-          {line.split("").map((char, index) => (
-             <motion.span
-               key={index}
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               transition={{ duration: 0.2, delay: 0.5 + (i * 0.2) + (index * 0.03) }}
-             >
-               {char}
-             </motion.span>
-          ))}
+          {line}
         </motion.h1>
       ))}
       <motion.p 
@@ -187,19 +186,191 @@ const WelcomeText = ({ darkMode }) => {
 };
 
 export default function SettingsPage() {
-  const { darkMode, setDarkMode } = useAdmin();
+  const { appearance, setAppearance, fontFamily, setFontFamily, darkMode, setDarkMode } = useAdmin();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   
-  // Toggle States
-  const [emailNotif, setEmailNotif] = useState(true);
-  const [pushNotif, setPushNotif] = useState(false);
-  const [twoFactor, setTwoFactor] = useState(true);
+  const [adminData, setAdminData] = useState(null);
+  const [configData, setConfigData] = useState(null);
 
+  // Form States
+  const [profileForm, setProfileForm] = useState({ fullName: "", phone: "", avatar: "" });
+  const [securityForm, setSecurityForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [configForm, setConfigForm] = useState({
+      deliveryPrices: { standard: 0, express: 0 },
+      rentalRules: { maxDays: 0, penaltyPerDay: 0, minDeposit: 0 },
+      contactInfo: { phone: "", address: "", tgBotLink: "", email: "" }
+  });
+
+  // Fetch Data
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [profileRes, configRes] = await Promise.all([
+                fetch('/api/admin/settings/profile'),
+                fetch('/api/admin/settings/config')
+            ]);
+            
+            const profile = await profileRes.json();
+            const config = await configRes.json();
+            
+            if (profile.success) {
+                setAdminData(profile.data);
+                setProfileForm({ 
+                    fullName: profile.data.fullName || "", 
+                    phone: profile.data.phone || "",
+                    avatar: profile.data.avatar || ""
+                });
+                
+                // Set Theme from DB
+                if (profile.data.settings?.theme) {
+                    setAppearance(profile.data.settings.theme);
+                } else {
+                    setAppearance(profile.data.settings?.darkMode ? 'dark' : 'light');
+                }
+                
+                // Set Font from DB
+                if (profile.data.settings?.fontFamily) {
+                    setFontFamily(profile.data.settings.fontFamily);
+                }
+            }
+            
+            if (config.success) {
+                setConfigData(config.data);
+                setConfigForm(config.data);
+            }
+        } catch (error) {
+            toast.error("Ma'lumotlarni yuklashda xato!");
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchData();
+  }, [setAppearance, setFontFamily]);
+
+  // Update Profile
+  const handleUpdateProfile = async (e) => {
+      e.preventDefault();
+      try {
+          setUpdating(true);
+          const res = await fetch('/api/admin/settings/profile', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type: 'profile', ...profileForm })
+          });
+          const data = await res.json();
+          if (data.success) toast.success("Profil muvaffaqiyatli yangilandi!");
+          else toast.error(data.message);
+      } catch (error) {
+          toast.error("Profilni yangilashda xato!");
+      } finally {
+          setUpdating(false);
+      }
+  };
+
+  // Update Security
+  const handleUpdateSecurity = async (e) => {
+      e.preventDefault();
+      if (!securityForm.currentPassword || !securityForm.newPassword) {
+          return toast.error("Barcha maydonlarni to'ldiring!");
+      }
+      if (securityForm.newPassword !== securityForm.confirmPassword) {
+          return toast.error("Yangi parollar mos kelmadi!");
+      }
+      try {
+          setUpdating(true);
+          const res = await fetch('/api/admin/settings/security', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(securityForm)
+          });
+          const data = await res.json();
+          if (data.success) {
+              toast.success("Parol muvaffaqiyatli o'zgartirildi!");
+              setSecurityForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+          } else toast.error(data.message);
+      } catch (error) {
+          toast.error("Parolni o'zgartirishda xato!");
+      } finally {
+          setUpdating(false);
+      }
+  };
+
+  // Update Config
+  const handleUpdateConfig = async (e) => {
+      e.preventDefault();
+      try {
+          setUpdating(true);
+          const res = await fetch('/api/admin/settings/config', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(configForm)
+          });
+          const data = await res.json();
+          if (data.success) toast.success("Tizim sozlamalari saqlandi!");
+          else toast.error(data.message);
+      } catch (error) {
+          toast.error("Sozlamalarni saqlashda xato!");
+      } finally {
+          setUpdating(false);
+      }
+  };
+
+  // Handle Avatar Upload
+  const handleAvatarUpload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+          setUpdating(true);
+          const { url } = await uploadToCloudinary(file);
+          setProfileForm(prev => ({ ...prev, avatar: url }));
+          toast.success("Rasm yuklandi! Saqlash tugmasini bosing.");
+      } catch (error) {
+          toast.error("Rasm yuklashda xato!");
+      } finally {
+          setUpdating(false);
+      }
+  };
+
+  // Theme update
+  const handleAppearanceToggle = async (theme) => {
+      setAppearance(theme);
+      try {
+          await fetch('/api/admin/settings/profile', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                  type: 'profile', 
+                  settings: { 
+                      theme: theme, 
+                      darkMode: theme === 'dark' 
+                  } 
+              })
+          });
+      } catch (error) {
+          console.error(error);
+      }
+  };
+
+  // Font update
+  const handleFontChange = async (font) => {
+      setFontFamily(font);
+      try {
+          await fetch('/api/admin/settings/profile', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                  type: 'profile', 
+                  settings: { fontFamily: font } 
+              })
+          });
+          toast.success("Font o'zgartirildi!");
+      } catch (error) {
+          console.error(error);
+      }
+  };
 
   return (
     <div className={`min-h-screen p-6 sm:p-10 transition-colors duration-500 font-sans
@@ -228,13 +399,14 @@ export default function SettingsPage() {
                className="flex flex-col md:flex-row gap-8 items-start"
              >
                 {/* Sidebar Navigation */}
-                <div className={`w-full md:w-80 p-4 rounded-3xl backdrop-blur-xl border sticky top-8
+                <div className={`w-full md:w-80 p-4 rounded-3xl backdrop-blur-xl border sticky top-8 z-20
                    ${darkMode 
                      ? "bg-white/5 border-white/5" 
                      : "bg-white border-[#D1F0E0] shadow-xl shadow-[#D1F0E0]/20"
                    }
                 `}>
                     <TabButton id="profile" label="Profil" icon={FaUser} activeTab={activeTab} onClick={setActiveTab} darkMode={darkMode} />
+                    <TabButton id="config" label="Tizim Sozlamalari" icon={FaCog} activeTab={activeTab} onClick={setActiveTab} darkMode={darkMode} />
                     <TabButton id="security" label="Xavfsizlik" icon={FaShieldAlt} activeTab={activeTab} onClick={setActiveTab} darkMode={darkMode} />
                     <TabButton id="notifications" label="Xabarnomalar" icon={FaBell} activeTab={activeTab} onClick={setActiveTab} darkMode={darkMode} />
                     <TabButton id="appearance" label="Ko'rinish" icon={FaMoon} activeTab={activeTab} onClick={setActiveTab} darkMode={darkMode} />
@@ -252,6 +424,16 @@ export default function SettingsPage() {
                       ${darkMode ? "bg-[#96C7B9]/20" : "bg-[#D1F0E0]"}
                     `} />
 
+                    {updating && (
+                        <div className="absolute inset-0 bg-white/20 dark:bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+                            <motion.div 
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                className="w-12 h-12 border-4 border-[#96C7B9] border-t-transparent rounded-full"
+                            />
+                        </div>
+                    )}
+
                     <AnimatePresence mode="wait">
                         {activeTab === "profile" && (
                             <motion.div 
@@ -268,50 +450,236 @@ export default function SettingsPage() {
                                    ${darkMode ? 'border-white/10 bg-white/5' : 'border-[#96C7B9] bg-[#F0FDF8]'}
                                 `}>
                                     <div className="relative group cursor-pointer">
-                                        <div className={`w-32 h-32 rounded-full flex items-center justify-center text-4xl font-black border-4 shadow-2xl transition-transform duration-300 group-hover:scale-105
+                                        <div className={`w-32 h-32 rounded-full overflow-hidden flex items-center justify-center text-4xl font-black border-4 shadow-2xl transition-transform duration-300 group-hover:scale-105
                                              ${darkMode ? "bg-[#96C7B9] text-[#0b1a00] border-[#0b1a00]" : "bg-white text-[#96C7B9] border-[#D1F0E0]"}
                                         `}>
-                                            AK
+                                            {profileForm.avatar ? (
+                                                <Image src={profileForm.avatar} alt="Avatar" width={128} height={128} className="object-cover w-full h-full" />
+                                            ) : (
+                                                profileForm.fullName ? profileForm.fullName.substring(0, 2).toUpperCase() : "AK"
+                                            )}
                                         </div>
-                                        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-[2px]">
+                                        <label className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-[2px] cursor-pointer">
                                             <FaCamera className="text-white text-3xl drop-shadow-lg" />
-                                        </div>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                                        </label>
                                     </div>
                                     <div>
                                         <h3 className={`font-bold text-xl mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>Profil Rasmi</h3>
-                                        <p className={`text-sm mb-4 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>PNG, JPG (max. 2MB)</p>
-                                        <button className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors
+                                        <p className={`text-sm mb-4 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>PNG, JPG (max. 5MB)</p>
+                                        <label className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors cursor-pointer
                                             ${darkMode ? "bg-white/10 hover:bg-white/20" : "bg-white hover:bg-gray-50 border border-gray-200 text-gray-600"}
                                         `}>
                                             Rasmni O&apos;zgartirish
-                                        </button>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+                                        </label>
                                     </div>
                                 </motion.div>
 
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <InputGroup label="Ism" defaultValue="Alisher" icon={FaUser} darkMode={darkMode} />
-                                    <InputGroup label="Familiya" defaultValue="Karimov" icon={FaUser} darkMode={darkMode} />
-                                    <div className="md:col-span-2">
-                                         <InputGroup label="Email Manzil" type="email" defaultValue="admin@kitobdosh.uz" icon={FaEnvelope} darkMode={darkMode} />
+                                <form onSubmit={handleUpdateProfile} className="space-y-6">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <InputGroup 
+                                            label="To'liq Ism" 
+                                            value={profileForm.fullName} 
+                                            onChange={(val) => setProfileForm(p => ({ ...p, fullName: val }))}
+                                            icon={FaUser} 
+                                            darkMode={darkMode} 
+                                        />
+                                        <InputGroup 
+                                            label="Telefon" 
+                                            value={profileForm.phone} 
+                                            onChange={(val) => setProfileForm(p => ({ ...p, phone: val }))}
+                                            icon={FaPhoneAlt} 
+                                            darkMode={darkMode} 
+                                        />
+                                        <div className="md:col-span-2 opacity-60">
+                                             <InputGroup label="Email Manzil" value={adminData?.email || ""} icon={FaEnvelope} darkMode={darkMode} />
+                                             <p className="text-xs ml-1 mt-1 font-medium text-gray-400 italic">Emailni o'zgartirib bo'lmaydi</p>
+                                        </div>
                                     </div>
-                                    <div className="md:col-span-2">
-                                         <InputGroup label="Lavozim" defaultValue="Bosh Administrator" icon={FaShieldAlt} darkMode={darkMode} />
-                                    </div>
-                                </div>
 
-                                <motion.div variants={itemVariants} className="pt-6">
-                                    <motion.button 
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.95 }}
-                                      className={`px-10 py-4 rounded-2xl font-black text-lg shadow-xl flex items-center gap-3
-                                        ${darkMode 
-                                          ? "bg-[#96C7B9] text-[#0b1a00] hover:bg-white" 
-                                          : "bg-[#96C7B9] text-white hover:bg-[#7fae9f] shadow-[#96C7B9]/40"
-                                        }
-                                    `}>
-                                        <FaSave /> Saqlash
-                                    </motion.button>
-                                </motion.div>
+                                    <motion.div variants={itemVariants} className="pt-6">
+                                        <motion.button 
+                                          type="submit"
+                                          whileHover={{ scale: 1.05 }}
+                                          whileTap={{ scale: 0.95 }}
+                                          disabled={updating}
+                                          className={`px-10 py-4 rounded-2xl font-black text-lg shadow-xl flex items-center gap-3 disabled:opacity-50
+                                            ${darkMode 
+                                              ? "bg-[#96C7B9] text-[#0b1a00] hover:bg-white" 
+                                              : "bg-[#96C7B9] text-white hover:bg-[#7fae9f] shadow-[#96C7B9]/40"
+                                            }
+                                        `}>
+                                            <FaSave /> Saqlash
+                                        </motion.button>
+                                    </motion.div>
+                                </form>
+                            </motion.div>
+                        )}
+
+                        {activeTab === "config" && (
+                            <motion.div 
+                                key="config"
+                                variants={containerVariants}
+                                initial="hidden"
+                                animate="visible"
+                                exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+                                className="space-y-12 max-w-4xl relative z-10"
+                            >
+                                <SectionTitle title="Tizim Sozlamalari" description="Marketplace narxlari va qoidalarini boshqarish" darkMode={darkMode} />
+                                
+                                <form onSubmit={handleUpdateConfig} className="space-y-12">
+                                    {/* Delivery Prices */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3">
+                                            <FaTruck className="text-2xl text-[#96C7B9]" />
+                                            <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-800"}`}>Yetkazib Berish Narxlari</h3>
+                                        </div>
+                                        <div className="grid md:grid-cols-2 gap-6 p-6 rounded-3xl bg-white/5 dark:bg-white/5 border border-white/5">
+                                            <InputGroup 
+                                                label="Standart Yetkazib Berish" 
+                                                type="number"
+                                                value={configForm.deliveryPrices.standard} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    deliveryPrices: { ...c.deliveryPrices, standard: Number(val) } 
+                                                }))}
+                                                icon={FaTruck} 
+                                                darkMode={darkMode} 
+                                            />
+                                            <InputGroup 
+                                                label="Ekspress Yetkazib Berish" 
+                                                type="number"
+                                                value={configForm.deliveryPrices.express} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    deliveryPrices: { ...c.deliveryPrices, express: Number(val) } 
+                                                }))}
+                                                icon={FaTruck} 
+                                                darkMode={darkMode} 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Rental Rules */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3">
+                                            <FaHandHoldingUsd className="text-2xl text-[#96C7B9]" />
+                                            <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-800"}`}>Ijaraga Berish Qoidalari</h3>
+                                        </div>
+                                        <div className="grid md:grid-cols-3 gap-6 p-6 rounded-3xl bg-white/5 dark:bg-white/5 border border-white/5">
+                                            <InputGroup 
+                                                label="Maksimal Ijara (kun)" 
+                                                type="number"
+                                                value={configForm.rentalRules.maxDays} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    rentalRules: { ...c.rentalRules, maxDays: Number(val) } 
+                                                }))}
+                                                icon={FaHandHoldingUsd} 
+                                                darkMode={darkMode} 
+                                            />
+                                            <InputGroup 
+                                                label="Jarima (har kunga)" 
+                                                type="number"
+                                                value={configForm.rentalRules.penaltyPerDay} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    rentalRules: { ...c.rentalRules, penaltyPerDay: Number(val) } 
+                                                }))}
+                                                icon={FaHandHoldingUsd} 
+                                                darkMode={darkMode} 
+                                            />
+                                            <InputGroup 
+                                                label="Minimal Depozit" 
+                                                type="number"
+                                                value={configForm.rentalRules.minDeposit} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    rentalRules: { ...c.rentalRules, minDeposit: Number(val) } 
+                                                }))}
+                                                icon={FaHandHoldingUsd} 
+                                                darkMode={darkMode} 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Contact Info */}
+                                    <div className="space-y-6">
+                                        <div className="flex items-center gap-3">
+                                            <FaTelegramPlane className="text-2xl text-[#96C7B9]" />
+                                            <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-800"}`}>Kontakt Ma'lumotlari</h3>
+                                        </div>
+                                        <div className="grid md:grid-cols-2 gap-6 p-6 rounded-3xl bg-white/5 dark:bg-white/5 border border-white/5">
+                                            <InputGroup 
+                                                label="Telefon" 
+                                                value={configForm.contactInfo.phone} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    contactInfo: { ...c.contactInfo, phone: val } 
+                                                }))}
+                                                icon={FaPhoneAlt} 
+                                                darkMode={darkMode} 
+                                            />
+                                            <InputGroup 
+                                                label="Email" 
+                                                value={configForm.contactInfo.email} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    contactInfo: { ...c.contactInfo, email: val } 
+                                                }))}
+                                                icon={FaEnvelope} 
+                                                darkMode={darkMode} 
+                                            />
+                                            <InputGroup 
+                                                label="Manzil" 
+                                                value={configForm.contactInfo.address} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    contactInfo: { ...c.contactInfo, address: val } 
+                                                }))}
+                                                icon={FaMapMarkerAlt} 
+                                                darkMode={darkMode} 
+                                            />
+                                            <InputGroup 
+                                                label="Telegram Bot Link" 
+                                                value={configForm.contactInfo.tgBotLink} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    contactInfo: { ...c.contactInfo, tgBotLink: val } 
+                                                }))}
+                                                icon={FaTelegramPlane} 
+                                                darkMode={darkMode} 
+                                            />
+                                            <InputGroup 
+                                                label="Admin Telegram (Direct Chat)" 
+                                                value={configForm.contactInfo.adminTelegram || ""} 
+                                                onChange={(val) => setConfigForm(c => ({ 
+                                                    ...c, 
+                                                    contactInfo: { ...c.contactInfo, adminTelegram: val } 
+                                                }))}
+                                                icon={FaTelegramPlane} 
+                                                darkMode={darkMode} 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <motion.div variants={itemVariants} className="pt-6">
+                                        <motion.button 
+                                          type="submit"
+                                          whileHover={{ scale: 1.05 }}
+                                          whileTap={{ scale: 0.95 }}
+                                          disabled={updating}
+                                          className={`px-10 py-4 rounded-2xl font-black text-lg shadow-xl flex items-center gap-3 disabled:opacity-50
+                                            ${darkMode 
+                                              ? "bg-[#96C7B9] text-[#0b1a00] hover:bg-white" 
+                                              : "bg-[#96C7B9] text-white hover:bg-[#7fae9f] shadow-[#96C7B9]/40"
+                                            }
+                                        `}>
+                                            <FaSave /> Sozlamalarni Saqlash
+                                        </motion.button>
+                                    </motion.div>
+                                </form>
                             </motion.div>
                         )}
 
@@ -326,20 +694,60 @@ export default function SettingsPage() {
                             >
                                 <SectionTitle title="Xavfsizlik" description="Parol va himoya sozlamalari" darkMode={darkMode} />
                                 
-                                <div className="space-y-4">
-                                    <InputGroup label="Joriy Parol" type="password" placeholder="••••••••" icon={FaKey} darkMode={darkMode} />
-                                    <InputGroup label="Yangi Parol" type="password" placeholder="••••••••" icon={FaLock} darkMode={darkMode} />
-                                    <InputGroup label="Parolni Tasdiqlang" type="password" placeholder="••••••••" icon={FaLock} darkMode={darkMode} />
-                                </div>
+                                <form onSubmit={handleUpdateSecurity} className="space-y-4">
+                                    <InputGroup 
+                                        label="Joriy Parol" 
+                                        type="password" 
+                                        placeholder="••••••••" 
+                                        value={securityForm.currentPassword}
+                                        onChange={(val) => setSecurityForm(s => ({ ...s, currentPassword: val }))}
+                                        icon={FaKey} 
+                                        darkMode={darkMode} 
+                                    />
+                                    <InputGroup 
+                                        label="Yangi Parol" 
+                                        type="password" 
+                                        placeholder="••••••••" 
+                                        value={securityForm.newPassword}
+                                        onChange={(val) => setSecurityForm(s => ({ ...s, newPassword: val }))}
+                                        icon={FaLock} 
+                                        darkMode={darkMode} 
+                                    />
+                                    <InputGroup 
+                                        label="Parolni Tasdiqlang" 
+                                        type="password" 
+                                        placeholder="••••••••" 
+                                        value={securityForm.confirmPassword}
+                                        onChange={(val) => setSecurityForm(s => ({ ...s, confirmPassword: val }))}
+                                        icon={FaLock} 
+                                        darkMode={darkMode} 
+                                    />
+
+                                    <motion.div variants={itemVariants} className="pt-6">
+                                        <motion.button 
+                                          type="submit"
+                                          whileHover={{ scale: 1.05 }}
+                                          whileTap={{ scale: 0.95 }}
+                                          disabled={updating}
+                                          className={`px-10 py-4 rounded-2xl font-black text-lg shadow-xl flex items-center gap-3 disabled:opacity-50
+                                            ${darkMode 
+                                              ? "bg-[#96C7B9] text-[#0b1a00] hover:bg-white" 
+                                              : "bg-[#96C7B9] text-white hover:bg-[#7fae9f] shadow-[#96C7B9]/40"
+                                            }
+                                        `}>
+                                            <FaSave /> Parolni O'zgartirish
+                                        </motion.button>
+                                    </motion.div>
+                                </form>
 
                                 <motion.div variants={itemVariants} className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-white/10 my-8" />
                                 
                                 <SectionTitle title="Ikki Bosqichli Himoya" description="Hisobingiz xavfsizligini kuchaytiring" darkMode={darkMode} />
                                 <ToggleSwitch 
                                     label="2FA ni yoqish" 
-                                    description="Kirishda SMS kod orqali tasdiqlash" 
-                                    checked={twoFactor} 
-                                    onChange={setTwoFactor} 
+                                    description="Kirishda SMS kod orqali tasdiqlash (Kelgusida)" 
+                                    checked={false} 
+                                    onChange={() => toast.info("Tez kunda!")} 
                                     darkMode={darkMode} 
                                 />
                             </motion.div>
@@ -360,15 +768,15 @@ export default function SettingsPage() {
                                     <ToggleSwitch 
                                         label="Email Xabarlari" 
                                         description="Yangi buyurtmalar va xabarlar haqida email olish" 
-                                        checked={emailNotif} 
-                                        onChange={setEmailNotif} 
+                                        checked={true} 
+                                        onChange={() => {}} 
                                         darkMode={darkMode} 
                                     />
                                     <ToggleSwitch 
                                         label="Push Bildirishnomalar" 
                                         description="Saytda pop-up xabarlarni ko'rsatish" 
-                                        checked={pushNotif} 
-                                        onChange={setPushNotif} 
+                                        checked={true} 
+                                        onChange={() => {}} 
                                         darkMode={darkMode} 
                                     />
                                 </div>
@@ -382,46 +790,102 @@ export default function SettingsPage() {
                                 initial="hidden"
                                 animate="visible"
                                 exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
-                                className="space-y-8 max-w-3xl relative z-10"
+                                className="space-y-12 max-w-4xl relative z-10"
                             >
-                                <SectionTitle title="Tizim Ko'rinishi" description="O'zingizga qulay rejimni tanlang" darkMode={darkMode} />
-                                
-                                <div className="grid grid-cols-2 gap-6">
-                                    <motion.button 
-                                        variants={itemVariants}
-                                        whileHover={{ scale: 1.03 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={() => setDarkMode(false)}
-                                        className={`p-8 rounded-3xl border-2 flex flex-col items-center gap-6 transition-all duration-300
-                                            ${!darkMode 
-                                                ? "border-[#96C7B9] bg-white ring-8 ring-[#D1F0E0] shadow-2xl" 
-                                                : "border-gray-700 bg-white/5 opacity-50 hover:opacity-100"
-                                            }
-                                        `}
-                                    >
-                                        <div className="w-24 h-16 bg-[#F3F4F6] rounded-xl shadow-inner border border-gray-200 flex items-center justify-center">
-                                            <FaUser className="text-gray-300 text-2xl" />
-                                        </div>
-                                        <span className={`font-black text-lg ${darkMode ? "text-gray-300" : "text-gray-800"}`}>Yorug&apos; (Light)</span>
-                                    </motion.button>
+                                <div>
+                                    <SectionTitle title="Tizim Ko'rinishi" description="O'zingizga qulay rejimni tanlang" darkMode={darkMode} />
                                     
-                                    <motion.button 
-                                        variants={itemVariants}
-                                        whileHover={{ scale: 1.03 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        onClick={() => setDarkMode(true)}
-                                        className={`p-8 rounded-3xl border-2 flex flex-col items-center gap-6 transition-all duration-300
-                                            ${darkMode 
-                                                ? "border-[#96C7B9] bg-[#0b1a00] ring-8 ring-[#96C7B9]/20 shadow-2xl" 
-                                                : "border-gray-200 bg-gray-100 opacity-50 hover:opacity-100"
-                                            }
-                                        `}
-                                    >
-                                        <div className="w-24 h-16 bg-[#1a3a00] rounded-xl shadow-inner border border-white/10 flex items-center justify-center">
-                                             <FaUser className="text-white/20 text-2xl" />
-                                        </div>
-                                        <span className={`font-black text-lg ${darkMode ? "text-[#96C7B9]" : "text-gray-600"}`}>Tungi (Dark)</span>
-                                    </motion.button>
+                                    <div className="grid grid-cols-3 gap-6">
+                                        <motion.button 
+                                            variants={itemVariants}
+                                            whileHover={{ scale: 1.03 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => handleAppearanceToggle('light')}
+                                            className={`p-6 rounded-3xl border-2 flex flex-col items-center gap-4 transition-all duration-300
+                                                ${appearance === 'light' 
+                                                    ? "border-[#96C7B9] bg-white ring-8 ring-[#D1F0E0] shadow-2xl" 
+                                                    : "border-gray-100 bg-gray-50 opacity-50 hover:opacity-100"
+                                                }
+                                            `}
+                                        >
+                                            <div className="w-16 h-12 bg-[#F3F4F6] rounded-xl shadow-inner border border-gray-200 flex items-center justify-center">
+                                                <FaSun className="text-orange-400 text-xl" />
+                                            </div>
+                                            <span className={`font-black text-sm ${darkMode ? "text-gray-300" : "text-gray-800"}`}>Yorug&apos;</span>
+                                        </motion.button>
+                                        
+                                        <motion.button 
+                                            variants={itemVariants}
+                                            whileHover={{ scale: 1.03 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => handleAppearanceToggle('dark')}
+                                            className={`p-6 rounded-3xl border-2 flex flex-col items-center gap-4 transition-all duration-300
+                                                ${appearance === 'dark' 
+                                                    ? "border-[#96C7B9] bg-[#0b1a00] ring-8 ring-[#96C7B9]/20 shadow-2xl" 
+                                                    : "border-gray-200 bg-gray-100 opacity-50 hover:opacity-100 dark:bg-white/5"
+                                                }
+                                            `}
+                                        >
+                                            <div className="w-16 h-12 bg-[#1a3a00] rounded-xl shadow-inner border border-white/10 flex items-center justify-center">
+                                                 <FaMoon className="text-yellow-200 text-xl" />
+                                            </div>
+                                            <span className={`font-black text-sm ${darkMode ? "text-[#96C7B9]" : "text-gray-600"}`}>Tungi</span>
+                                        </motion.button>
+
+                                        <motion.button 
+                                            variants={itemVariants}
+                                            whileHover={{ scale: 1.03 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => handleAppearanceToggle('celery')}
+                                            className={`p-6 rounded-3xl border-2 flex flex-col items-center gap-4 transition-all duration-300
+                                                ${appearance === 'celery' 
+                                                    ? "border-[#b1c44d] bg-[#f9fdf2] ring-8 ring-[#b1c44d]/20 shadow-2xl" 
+                                                    : "border-gray-200 bg-gray-100 opacity-50 hover:opacity-100 dark:bg-white/5"
+                                                }
+                                            `}
+                                        >
+                                            <div className="w-16 h-12 bg-[#b1c44d] rounded-xl shadow-inner border border-[#6CCFF6]/30 flex items-center justify-center">
+                                                 <FaLeaf className="text-[#6CCFF6] text-xl" />
+                                            </div>
+                                            <span className={`font-black text-sm ${appearance === 'celery' ? "text-[#b1c44d]" : "text-gray-600"}`}>Celery</span>
+                                        </motion.button>
+                                    </div>
+                                </div>
+
+                                <motion.div variants={itemVariants} className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-white/10 my-8" />
+
+                                <div>
+                                    <SectionTitle title="Matin Fontlari" description="O'zingizga yoqqan yozuv uslubini tanlang" darkMode={darkMode} />
+                                    
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                        {[
+                                            { id: 'Inter', label: 'Inter (Standart)', class: 'font-inter' },
+                                            { id: 'Outfit', label: 'Outfit (Zamonaviy)', class: 'font-outfit' },
+                                            { id: 'Montserrat', label: 'Montserrat (Chiroyli)', class: 'font-montserrat' },
+                                            { id: 'Fraktur', label: 'Fraktur (Blackletter)', class: 'font-fraktur' }
+                                        ].map((font) => (
+                                            <motion.button 
+                                                key={font.id}
+                                                variants={itemVariants}
+                                                whileHover={{ scale: 1.03 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                onClick={() => handleFontChange(font.id)}
+                                                className={`p-6 rounded-3xl border-2 flex flex-col items-center gap-4 transition-all duration-300
+                                                    ${fontFamily === font.id 
+                                                        ? "border-[#96C7B9] bg-white ring-8 ring-[#D1F0E0] shadow-2xl" 
+                                                        : "border-gray-100 bg-gray-50 opacity-50 hover:opacity-100 dark:bg-white/5"
+                                                    }
+                                                `}
+                                            >
+                                                <div className="w-16 h-12 bg-gray-100 dark:bg-white/10 rounded-xl flex items-center justify-center">
+                                                    <FaFont className={`${darkMode ? 'text-white' : 'text-gray-700'}`} />
+                                                </div>
+                                                <span className={`font-bold text-center text-xs ${darkMode ? "text-gray-300" : "text-gray-800"}`} style={{ fontFamily: font.id === 'Fraktur' ? 'UnifrakturMaguntia' : font.id }}>
+                                                    {font.label}
+                                                </span>
+                                            </motion.button>
+                                        ))}
+                                    </div>
                                 </div>
                             </motion.div>
                         )}

@@ -29,15 +29,17 @@ import {
   FaEnvelopeOpenText,
 } from "react-icons/fa";
 
-function SettingItem({ icon, title, description, enabled, onToggle }) {
+import { useMain } from "../MainContext";
+
+function SettingItem({ icon, title, description, enabled, onToggle, darkMode }) {
   return (
     <div className="pb-6 border-b border-gray-200">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-3">
           {icon}
           <div>
-            <p className="font-medium text-[#2d4a42]">{title}</p>
-            <p className="text-sm text-[#4a7a6d]">{description}</p>
+            <p className={`font-medium ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>{title}</p>
+            <p className={`text-sm ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>{description}</p>
           </div>
         </div>
         <button
@@ -57,6 +59,7 @@ function SettingItem({ icon, title, description, enabled, onToggle }) {
   );
 }
 export default function SettingsPage() {
+  const { darkMode } = useMain();
   const [activeTab, setActiveTab] = useState("account");
   const [emailNotif, setEmailNotif] = useState(true);
   const [smsNotif, setSmsNotif] = useState(false);
@@ -94,16 +97,16 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="bg-gray-50 py-15 min-h-screen font-sans">
+    <div className={`py-15 min-h-screen font-sans transition-colors duration-300 ${darkMode ? "bg-slate-900" : "bg-gray-50"}`}>
       {/* Header */}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#2d4a42] mb-2">
+          <h2 className={`text-2xl sm:text-3xl font-bold mb-2 ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
             Sozlamalar
           </h2>
-          <p className="text-sm sm:text-base text-[#4a7a6d]">
+          <p className={`text-sm sm:text-base ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>
             Hisobingizni va afzalliklaringizni boshqaring
           </p>
         </div>
@@ -111,7 +114,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <aside className="lg:col-span-1">
-            <nav className="bg-white rounded-lg shadow-sm p-2 space-y-1">
+            <nav className={`rounded-lg shadow-sm p-2 space-y-1 ${darkMode ? "bg-slate-800" : "bg-white"}`}>
               {[
                 { id: "account", icon: <FaUser />, name: "Hisob" },
                 { id: "rental", icon: <FaBook />, name: "Ijara" },
@@ -127,8 +130,8 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
                     activeTab === tab.id
-                      ? "bg-[#D1F0E0] text-[#96C7B9]"
-                      : "text-[#4a7a6d] hover:bg-[#F8FDFA]"
+                      ? (darkMode ? "bg-blue-600 text-white" : "bg-[#D1F0E0] text-[#96C7B9]")
+                      : (darkMode ? "text-gray-400 hover:bg-slate-700 hover:text-white" : "text-[#4a7a6d] hover:bg-[#F8FDFA]")
                   }`}
                 >
                   {tab.icon}
@@ -142,58 +145,58 @@ export default function SettingsPage() {
           <div className="lg:col-span-3 space-y-6">
             {/* Account Settings */}
             {activeTab === "account" && (
-              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+              <div className={`rounded-lg shadow-sm p-4 sm:p-6 ${darkMode ? "bg-slate-800" : "bg-white"}`}>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg sm:text-xl font-bold text-[#2d4a42]">
+                  <h3 className={`text-lg sm:text-xl font-bold ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                     Hisob sozlamalari
                   </h3>
                   <FaInfoCircle className="text-gray-400 cursor-help" />
                 </div>
 
                 {/* Profile Picture */}
-                <div className="mb-6 pb-6 border-b border-gray-200">
-                  <label className="block text-sm font-medium text-[#4a7a6d] mb-3">
+                <div className={`mb-6 pb-6 border-b ${darkMode ? "border-slate-700" : "border-gray-200"}`}>
+                  <label className={`block text-sm font-medium mb-3 ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>
                     Profil rasmi
                   </label>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#96C7B9] to-[#86b5a8] flex items-center justify-center text-white text-2xl font-bold shadow-lg">
                       AK
                     </div>
-                    <div className="flex gap-3">
-                      <button className="px-4 py-2 bg-[#96C7B9] text-white rounded-lg hover:bg-[#86b5a8] text-sm font-medium flex items-center shadow-md">
-                        <FaUpload className="mr-2" /> Yangi rasm yuklash
-                      </button>
-                      <button className="px-4 py-2 border border-gray-300 text-[#4a7a6d] rounded-lg hover:bg-gray-50 text-sm font-medium flex items-center">
-                        <FaTrash className="mr-2" /> O‘chirish
-                      </button>
-                    </div>
+                      <div className="flex gap-3">
+                        <button className={`px-4 py-2 text-white rounded-lg text-sm font-medium flex items-center shadow-md ${darkMode ? "bg-blue-600 hover:bg-blue-500" : "bg-[#96C7B9] hover:bg-[#86b5a8]"}`}>
+                          <FaUpload className="mr-2" /> Yangi rasm yuklash
+                        </button>
+                        <button className={`px-4 py-2 border rounded-lg text-sm font-medium flex items-center ${darkMode ? "border-slate-600 text-gray-400 hover:bg-slate-700" : "border-gray-300 text-[#4a7a6d] hover:bg-gray-50"}`}>
+                          <FaTrash className="mr-2" /> O‘chirish
+                        </button>
+                      </div>
                   </div>
                 </div>
 
                 {/* Name, Email, Password */}
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-[#4a7a6d] mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>
                       To‘liq ism
                     </label>
                     <input
                       type="text"
                       defaultValue="Alisher Karimov"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#96C7B9]"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#96C7B9] outline-none ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-white border-gray-300"}`}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#4a7a6d] mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>
                       Elektron pochta
                     </label>
                     <input
                       type="email"
                       defaultValue="alisher.karimov@example.com"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#96C7B9]"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#96C7B9] outline-none ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-white border-gray-300"}`}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#4a7a6d] mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>
                       Parol
                     </label>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -201,9 +204,9 @@ export default function SettingsPage() {
                         type="password"
                         value="••••••••"
                         readOnly
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#96C7B9]"
+                        className={`flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#96C7B9] outline-none ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-white border-gray-300"}`}
                       />
-                      <button className="px-4 py-3 bg-gray-100 text-[#4a7a6d] rounded-lg hover:bg-gray-200 flex items-center">
+                      <button className={`px-4 py-3 rounded-lg flex items-center ${darkMode ? "bg-slate-700 text-gray-300 hover:bg-slate-600" : "bg-gray-100 text-[#4a7a6d] hover:bg-gray-200"}`}>
                         <FaKey className="mr-2" /> Parolni o‘zgartirish
                       </button>
                     </div>
@@ -211,24 +214,24 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex justify-end mt-6">
-                  <button className="px-6 py-3 bg-[#96C7B9] text-white rounded-lg hover:bg-[#86b5a8] flex items-center shadow-md transition-colors">
+                  <button className={`px-6 py-3 text-white rounded-lg flex items-center shadow-md transition-colors ${darkMode ? "bg-blue-600 hover:bg-blue-500" : "bg-[#96C7B9] hover:bg-[#86b5a8]"}`}>
                     <FaSave className="mr-2" /> O‘zgarishlarni saqlash
                   </button>
                 </div>
               </div>
             )}
             {activeTab === "rental" && (
-              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                <h3 className="text-lg sm:text-xl font-bold text-[#2d4a42] mb-6">
+              <div className={`rounded-lg shadow-sm p-4 sm:p-6 ${darkMode ? "bg-slate-800" : "bg-white"}`}>
+                <h3 className={`text-lg sm:text-xl font-bold mb-6 ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                   Ijara afzalliklari
                 </h3>
 
                 {/* Kutubxona joyi */}
-                <div className="mb-6 pb-6 border-b border-gray-200">
-                  <label className="block text-sm font-medium text-[#4a7a6d] mb-2">
+                <div className={`mb-6 pb-6 border-b ${darkMode ? "border-slate-700" : "border-gray-200"}`}>
+                  <label className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>
                     Standart kutubxona joyi
                   </label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#96C7B9] focus:border-transparent transition-all">
+                  <select className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#96C7B9] focus:border-transparent transition-all outline-none ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-white border-gray-300"}`}>
                     <option>Toshkent, Chilonzor filiali</option>
                     <option>Toshkent, Yunusobod filiali</option>
                     <option>Samarqand, Markaz filiali</option>
@@ -237,8 +240,8 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Bildirishnoma usullari */}
-                <div className="mb-6 pb-6 border-b border-gray-200">
-                  <label className="block text-sm font-medium text-[#2d4a42] mb-4">
+                <div className={`mb-6 pb-6 border-b ${darkMode ? "border-slate-700" : "border-gray-200"}`}>
+                  <label className={`block text-sm font-medium mb-4 ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                     Bildirishnoma usullari
                   </label>
 
@@ -247,7 +250,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <FaEnvelope className="text-[#96C7B9]" />
-                        <span className="text-sm text-[#4a7a6d]">
+                        <span className={`text-sm ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>
                           Email orqali
                         </span>
                       </div>
@@ -269,7 +272,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <FaSms className="text-[#96C7B9]" />
-                        <span className="text-sm text-[#4a7a6d]">
+                        <span className={`text-sm ${darkMode ? "text-gray-400" : "text-[#4a7a6d]"}`}>
                           SMS orqali
                         </span>
                       </div>
@@ -291,7 +294,7 @@ export default function SettingsPage() {
 
                 {/* Sevimli janrlar */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-[#2d4a42] mb-3">
+                  <label className={`block text-sm font-medium mb-3 ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                     Sevimli janrlar
                   </label>
 
@@ -309,8 +312,8 @@ export default function SettingsPage() {
                         onClick={() => toggleGenre(genre.id)}
                         className={`px-4 py-2 rounded-lg hover:shadow-md transition-all text-sm font-medium flex items-center justify-center gap-2 ${
                           genres.includes(genre.id)
-                            ? "bg-[#96C7B9] text-white shadow-md"
-                            : "bg-gray-100 text-[#4a7a6d]"
+                            ? (darkMode ? "bg-blue-600 text-white shadow-md" : "bg-[#96C7B9] text-white shadow-md")
+                            : (darkMode ? "bg-slate-700 text-gray-400" : "bg-gray-100 text-[#4a7a6d]")
                         }`}
                       >
                         {genre.icon} {genre.name}
@@ -321,20 +324,20 @@ export default function SettingsPage() {
 
                 {/* Saqlash tugmasi */}
                 <div className="flex justify-end">
-                  <button className="px-6 py-3 bg-[#96C7B9] text-white rounded-lg hover:bg-[#86b5a8] transition-colors font-medium shadow-md flex items-center gap-2">
+                  <button className={`px-6 py-3 text-white rounded-lg hover:bg-[#86b5a8] transition-colors font-medium shadow-md flex items-center gap-2 ${darkMode ? "bg-blue-600 hover:bg-blue-500" : "bg-[#96C7B9] hover:bg-[#86b5a8]"}`}>
                     <FaSave /> Saqlash
                   </button>
                 </div>
               </div>
             )}
             {activeTab === "payment" && (
-              <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+              <div className={`rounded-lg shadow-sm p-4 sm:p-6 ${darkMode ? "bg-slate-800" : "bg-white"}`}>
                 {/* Sarlavha va tugma */}
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg sm:text-xl font-bold text-[#2d4a42]">
+                  <h3 className={`text-lg sm:text-xl font-bold ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                     To‘lov usullari
                   </h3>
-                  <button className="px-4 py-2 bg-[#96C7B9] text-white rounded-lg hover:bg-[#86b5a8] transition-colors text-sm font-medium flex items-center shadow-md">
+                  <button className={`px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium flex items-center shadow-md ${darkMode ? "bg-blue-600 hover:bg-blue-500" : "bg-[#96C7B9] hover:bg-[#86b5a8]"}`}>
                     <FaPlus className="mr-2" /> Yangi qo‘shish
                   </button>
                 </div>
@@ -342,17 +345,17 @@ export default function SettingsPage() {
                 {/* Kartalar */}
                 <div className="space-y-4">
                   {/* Karta 1 */}
-                  <div className="border border-gray-200 rounded-lg p-4 hover:border-[#96C7B9] transition-colors">
+                  <div className={`border rounded-lg p-4 transition-colors ${darkMode ? "border-slate-700 hover:border-blue-500" : "border-gray-200 hover:border-[#96C7B9]"}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-8 bg-gradient-to-r from-[#96C7B9] to-[#86b5a8] rounded flex items-center justify-center">
                           <FaCreditCard className="text-white" />
                         </div>
                         <div>
-                          <p className="font-medium text-[#2d4a42]">
+                          <p className={`font-medium ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                             •••• •••• •••• 4532
                           </p>
-                          <p className="text-sm text-[#6EA092]">
+                          <p className={`text-sm ${darkMode ? "text-gray-400" : "text-[#6EA092]"}`}>
                             Amal qilish: 12/25
                           </p>
                         </div>
@@ -369,17 +372,17 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Karta 2 */}
-                  <div className="border border-gray-200 rounded-lg p-4 hover:border-[#96C7B9] transition-colors">
+                  <div className={`border rounded-lg p-4 transition-colors ${darkMode ? "border-slate-700 hover:border-blue-500" : "border-gray-200 hover:border-[#96C7B9]"}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-8 bg-gradient-to-r from-purple-600 to-purple-400 rounded flex items-center justify-center">
                           <FaCreditCard className="text-white" />
                         </div>
                         <div>
-                          <p className="font-medium text-[#2d4a42]">
+                          <p className={`font-medium ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                             •••• •••• •••• 8721
                           </p>
-                          <p className="text-sm text-[#6EA092]">
+                          <p className={`text-sm ${darkMode ? "text-gray-400" : "text-[#6EA092]"}`}>
                             Amal qilish: 08/26
                           </p>
                         </div>
@@ -390,8 +393,8 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-bold text-[#2d4a42] mb-4">
+                <div className={`rounded-lg shadow-sm p-4 sm:p-6 mt-6 ${darkMode ? "bg-slate-800" : "bg-white"}`}>
+                  <h3 className={`text-lg sm:text-xl font-bold mb-4 ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                     Tranzaksiya tarixi
                   </h3>
 
@@ -400,22 +403,22 @@ export default function SettingsPage() {
                     {transactions.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-3 border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                        className={`flex items-center justify-between p-3 border-b transition-colors ${darkMode ? "border-slate-700 hover:bg-slate-700" : "border-gray-100 hover:bg-gray-50"}`}
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-[#D1F0E0] rounded-full flex items-center justify-center">
-                            <FaCheck className="text-[#96C7B9]" />
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${darkMode ? "bg-slate-700 text-[#96C7B9]" : "bg-[#D1F0E0] text-[#96C7B9]"}`}>
+                            <FaCheck />
                           </div>
                           <div>
-                            <p className="font-medium text-[#2d4a42] text-sm sm:text-base">
+                            <p className={`font-medium text-sm sm:text-base ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                               {item.title}
                             </p>
-                            <p className="text-xs sm:text-sm text-[#6EA092]">
+                            <p className={`text-xs sm:text-sm ${darkMode ? "text-gray-400" : "text-[#6EA092]"}`}>
                               {item.date}
                             </p>
                           </div>
                         </div>
-                        <span className="font-bold text-[#2d4a42] text-sm sm:text-base">
+                        <span className={`font-bold text-sm sm:text-base ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                           {item.amount}
                         </span>
                       </div>
@@ -423,24 +426,24 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Barchasini ko‘rish tugmasi */}
-                  <button className="w-full mt-4 px-4 py-2 text-[#96C7B9] hover:bg-[#D1F0E0] rounded-lg transition-colors font-medium text-sm flex items-center justify-center gap-2">
+                  <button className={`w-full mt-4 px-4 py-2 rounded-lg transition-colors font-medium text-sm flex items-center justify-center gap-2 ${darkMode ? "text-blue-400 hover:bg-slate-700" : "text-[#96C7B9] hover:bg-[#D1F0E0]"}`}>
                     Barchasini ko‘rish <FaArrowRight />
                   </button>
                 </div>
-                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-bold text-[#2d4a42] mb-4">
+                <div className={`rounded-lg shadow-sm p-4 sm:p-6 mt-6 ${darkMode ? "bg-slate-800" : "bg-white"}`}>
+                  <h3 className={`text-lg sm:text-xl font-bold mb-4 ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                     Avtomatik yangilash
                   </h3>
 
-                  <div className="flex items-center justify-between p-4 bg-[#D1F0E0] rounded-lg">
+                  <div className={`flex items-center justify-between p-4 rounded-lg ${darkMode ? "bg-slate-700" : "bg-[#D1F0E0]"}`}>
                     {/* Chap tomondagi matn va icon */}
                     <div className="flex items-center space-x-3">
-                      <FaSyncAlt className="text-[#96C7B9] text-xl" />
+                      <FaSyncAlt className={`text-xl ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`} />
                       <div>
-                        <p className="font-medium text-[#2d4a42]">
+                        <p className={`font-medium ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                           Obunani avtomatik yangilash
                         </p>
-                        <p className="text-sm text-[#4a7a6d]">
+                        <p className={`text-sm ${darkMode ? "text-gray-300" : "text-[#4a7a6d]"}`}>
                           Har oyda avtomatik to‘lov
                         </p>
                       </div>
@@ -450,7 +453,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => setAutoRenewal(!autoRenewal)}
                       className={`relative w-14 h-7 rounded-full transition-colors duration-300 ${
-                        autoRenewal ? "bg-[#96C7B9]" : "bg-gray-300"
+                        autoRenewal ? (darkMode ? "bg-blue-600" : "bg-[#96C7B9]") : "bg-gray-300"
                       }`}
                     >
                       <span
@@ -465,8 +468,8 @@ export default function SettingsPage() {
             )}
             {activeTab === "notifications" && (
               <>
-                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 ">
-                  <h3 className="text-lg sm:text-xl font-bold text-[#2d4a42] mb-6">
+                <div className={`rounded-lg shadow-sm p-4 sm:p-6 ${darkMode ? "bg-slate-800" : "bg-white"}`}>
+                  <h3 className={`text-lg sm:text-xl font-bold mb-6 ${darkMode ? "text-white" : "text-[#2d4a42]"}`}>
                     Bildirishnoma sozlamalari
                   </h3>
 
@@ -480,6 +483,7 @@ export default function SettingsPage() {
                       description="Kitob qaytarish muddati yaqinlashganda xabar berish"
                       enabled={dueDateReminders}
                       onToggle={() => setDueDateReminders(!dueDateReminders)}
+                      darkMode={darkMode}
                     />
 
                     {/* Aksiyalar va chegirmalar */}
@@ -489,6 +493,7 @@ export default function SettingsPage() {
                       description="Maxsus takliflar haqida xabardor bo‘lish"
                       enabled={promotions}
                       onToggle={() => setPromotions(!promotions)}
+                      darkMode={darkMode}
                     />
 
                     {/* Yangi kitoblar */}
@@ -498,6 +503,7 @@ export default function SettingsPage() {
                       description="Sevimli janrlaringizda yangi kitoblar qo‘shilganda"
                       enabled={newBooks}
                       onToggle={() => setNewBooks(!newBooks)}
+                      darkMode={darkMode}
                     />
 
                     {/* Tavsiyalar */}
@@ -507,6 +513,7 @@ export default function SettingsPage() {
                       description="Sizga mos kitoblar tavsiya qilish"
                       enabled={recommendations}
                       onToggle={() => setRecommendations(!recommendations)}
+                      darkMode={darkMode}
                     />
 
                     {/* Haftalik xabarlar */}
@@ -518,12 +525,13 @@ export default function SettingsPage() {
                       description="Haftalik yangiliklar va tavsiyalar"
                       enabled={newsletter}
                       onToggle={() => setNewsletter(!newsletter)}
+                      darkMode={darkMode}
                     />
                   </div>
 
                   {/* Saqlash tugmasi */}
                   <div className="flex justify-end mt-6">
-                    <button className="px-6 py-3 bg-[#96C7B9] text-white rounded-lg hover:bg-[#86b5a8] transition-colors font-medium shadow-md flex items-center">
+                    <button className={`px-6 py-3 text-white rounded-lg transition-colors font-medium shadow-md flex items-center ${darkMode ? "bg-blue-600 hover:bg-blue-500" : "bg-[#96C7B9] hover:bg-[#86b5a8]"}`}>
                       <FaSave className="mr-2" /> Saqlash
                     </button>
                   </div>

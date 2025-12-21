@@ -1,0 +1,21 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { FaStar, FaBookOpen, FaHeart, FaRegHeart, FaTimes } from "react-icons/fa";
+import toast from "react-hot-toast";
+
+export const dynamic = 'force-dynamic';
+
+export const metadata = {
+  title: "My Books - Kitobdosh",
+  description: "Manage your rented and purchased books",
+};
+
+// Component code will follow...
+export default function MyBooksPage() {
+  // Your existing component code
+  return <div>My Books Page - Add your component code here</div>;
+}

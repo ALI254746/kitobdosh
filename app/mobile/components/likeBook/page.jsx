@@ -1,9 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect } from "react";
+import Image from "next/image";
+
 import { motion } from "framer-motion";
-import { FaStar, FaHeart } from "react-icons/fa";
+import { FaStar, FaHeart, FaRegHeart, FaCartPlus } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/app/CartContext";
+import { useFavorites } from "@/app/FavoritesContext";
+
 function BookSkeleton() {
   return (
     <div className="min-w-[160px] bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse">
@@ -20,39 +25,29 @@ function BookSkeleton() {
   );
 }
 
-const books = [
-  {
-    id: 1,
-    title: "Ingliz tili",
-    author: "M. Azimova",
-    rating: 4.5,
-    image:
-      "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=240&fit=crop",
-  },
-  {
-    id: 2,
-    title: "Geografiya",
-    author: "R. Qodirov",
-    rating: 4.2,
-    image:
-      "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=240&fit=crop",
-  },
-  {
-    id: 3,
-    title: "Informatika",
-    author: "O. Sharipov",
-    rating: 4.8,
-    image:
-      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=240&fit=crop",
-  },
-];
-
-export default function RecommendedBooks() {
-  const [loading, setLoading] = useState(true);
-  const [liked, setLiked] = useState({});
+export default function RecommendedBooks({ data }) {
+  const [loading, setLoading] = useState(!data);
+  const [books, setBooks] = useState(data || []);
+  const router = useRouter();
+  const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 1200);
+    if (data) return; // Skip fetch if data provided via props
+    async function fetchRecommended() {
+        try {
+            const res = await fetch("/api/books?limit=6&page=2"); // Fetch different books for variety
+            const data = await res.json();
+            if (data.success) {
+                setBooks(data.data);
+            }
+        } catch (e) {
+            console.error("Recommended fetch error:", e);
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchRecommended();
   }, []);
 
   return (
@@ -66,19 +61,20 @@ export default function RecommendedBooks() {
       <div className="flex gap-4 overflow-x-auto hide-scrollbar px-5">
         {loading
           ? Array.from({ length: 3 }).map((_, i) => <BookSkeleton key={i} />)
-          : books.map((book, index) => (
+          : Array.isArray(books) && books.map((book, index) => (
               <motion.div
-                key={book.id}
+                key={book._id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.15 }}
                 whileHover={{ scale: 1.03 }}
-                className="min-w-[160px] bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex-shrink-0"
+                className="min-w-[160px] bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex-shrink-0 cursor-pointer"
+                onClick={() => router.push(`/mobile/book/${book._id}`)}
               >
                 {/* Image */}
                 <div className="relative w-full h-48">
                   <Image
-                    src={book.image}
+                    src={book.images?.[0] || "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=240&fit=crop"}
                     alt={book.title}
                     fill
                     className="object-cover"
@@ -86,16 +82,17 @@ export default function RecommendedBooks() {
 
                   {/* Like */}
                   <button
-                    onClick={() =>
-                      setLiked({ ...liked, [book.id]: !liked[book.id] })
-                    }
-                    className="absolute top-3 right-3 bg-white/80 p-2 rounded-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(book._id);
+                    }}
+                    className="absolute top-3 right-3 bg-white/80 dark:bg-slate-800/80 p-2 rounded-full z-10"
                   >
-                    <FaHeart
-                      className={`text-sm transition ${
-                        liked[book.id] ? "text-red-500" : "text-gray-400"
-                      }`}
-                    />
+                    {isFavorite(book._id) ? (
+                        <FaHeart className="text-sm text-red-500 transition" />
+                    ) : (
+                        <FaRegHeart className="text-sm text-gray-400 transition" />
+                    )}
                   </button>
                 </div>
 
@@ -109,17 +106,30 @@ export default function RecommendedBooks() {
                   {/* Rating */}
                   <div className="flex items-center gap-1 mb-3">
                     <FaStar className="text-yellow-400 text-sm" />
-                    <span className="text-xs font-semibold text-gray-700">
-                      {book.rating}
+                    <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                      {book.rating || "5.0"}
                     </span>
                   </div>
 
                   <div className="flex gap-2">
-                    <button className="flex-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 py-2 rounded-xl text-xs font-semibold hover:bg-blue-200 dark:hover:bg-blue-900/50 transition">
+                    <button 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(book, 'rent');
+                            router.push('/mobile/components/checkout');
+                        }}
+                        className="flex-1 bg-[#52C6DA] text-white py-2 rounded-xl text-xs font-black uppercase tracking-tighter hover:bg-[#52C6DA]/90 shadow-md shadow-[#52C6DA]/20 transition active:scale-95"
+                    >
                       Ijara
                     </button>
-                    <button className="flex-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 py-2 rounded-xl text-xs font-semibold hover:bg-purple-200 dark:hover:bg-purple-900/50 transition">
-                      Sotib
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(book, 'rent');
+                      }}
+                      className="w-10 h-9 bg-slate-50 dark:bg-slate-700/50 text-slate-400 dark:text-slate-300 rounded-xl flex items-center justify-center hover:bg-[#52C6DA]/10 hover:text-[#52C6DA] transition"
+                    >
+                      <FaCartPlus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

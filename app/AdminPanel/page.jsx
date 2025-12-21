@@ -160,22 +160,39 @@ import { useAdmin } from "./AdminContext";
 
 export default function DashboardPage() {
   const { darkMode } = useAdmin();
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 2 soniya davomida Skeleton Loader ko'rsatish
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+        if (data.success) {
+          setStats(data.stats);
+        } else {
+          setError(data.message);
+        }
+      } catch (err) {
+        setError("Ma'lumotlarni yuklashda xatolik yuz berdi");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
   }, []);
 
   const chartData = {
-    labels: ["Yan", "Fev", "Mar", "Apr", "May", "Iyun"],
+    labels: stats?.monthlySales?.map(s => {
+        const months = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
+        return months[s._id.month - 1];
+    }) || ["-", "-", "-", "-", "-", "-"],
     datasets: [
       {
-        label: "Savdo ($)",
-        data: [5000, 7000, 6500, 8000, 9500, 11000],
+        label: "Savdo (so'm)",
+        data: stats?.monthlySales?.map(s => s.total) || [0, 0, 0, 0, 0, 0],
         borderColor: "#A3ED96", // Neon Green
         backgroundColor: (context) => {
             const ctx = context.chart.ctx;
@@ -202,7 +219,7 @@ export default function DashboardPage() {
         beginAtZero: true,
         ticks: {
           color: darkMode ? "#A3ED96" : "#163201",
-          callback: (val) => `$${val}`,
+          callback: (val) => `${val.toLocaleString()} so'm`,
           font: { family: 'inherit' }
         },
         grid: {
@@ -249,41 +266,40 @@ export default function DashboardPage() {
           <p className={`text-sm ${darkMode ? "text-[#A3ED96]/70" : "text-gray-500"}`}>Bugungi statistikani ko&apos;rib chiqing.</p>
       </div>
 
-      {/* Stats Cards */}
       <motion.div variants={containerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <motion.div variants={itemVariants}>
             <StatsCard
             icon={<FaBook className="text-2xl" />}
-            value="1,247"
+            value={stats?.totalBooks || 0}
             label="Jami Kitoblar"
-            percent="12%"
+            percent="Yangi"
             darkMode={darkMode}
             />
         </motion.div>
         <motion.div variants={itemVariants}>
             <StatsCard
             icon={<FaUsers className="text-2xl" />}
-            value="3,842"
-            label="Faol Foydalanuvchilar"
-            percent="8%"
+            value={stats?.totalUsers || 0}
+            label="Jami Foydalanuvchilar"
+            percent="A'zo"
             darkMode={darkMode}
             />
         </motion.div>
         <motion.div variants={itemVariants}>
             <StatsCard
             icon={<FaHandshake className="text-2xl" />}
-            value="156"
-            label="Ijara So'rovlari"
-            percent="24%"
+            value={stats?.pendingRentRequests || 0}
+            label="Kutilayotgan Ijaralar"
+            percent="So'rov"
             darkMode={darkMode}
             />
         </motion.div>
         <motion.div variants={itemVariants}>
             <StatsCard
             icon={<FaDollarSign className="text-2xl" />}
-            value="$24,580"
+            value={`${(stats?.totalIncome || 0).toLocaleString()} so'm`}
             label="Umumiy Daromad"
-            percent="18%"
+            percent="Jami"
             darkMode={darkMode}
             />
         </motion.div>
@@ -294,28 +310,28 @@ export default function DashboardPage() {
         <motion.div variants={itemVariants}>
             <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-blue-900/20 border-blue-500/30 text-blue-200" : "bg-blue-50 border-blue-100 text-blue-900"}`}>
                 <div>
-                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Bugun Qabul</span>
-                    <h3 className="text-3xl font-black mt-1">25 ta</h3>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Faol Ijaralar</span>
+                    <h3 className="text-3xl font-black mt-1">{stats?.activeRentals || 0} ta</h3>
                 </div>
                 <FaBookOpen className="text-4xl opacity-50" />
             </div>
         </motion.div>
          <motion.div variants={itemVariants}>
-            <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-green-900/20 border-green-500/30 text-green-200" : "bg-green-50 border-green-100 text-green-900"}`}>
+            <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-red-900/20 border-red-500/30 text-red-200" : "bg-red-50 border-red-100 text-red-900"}`}>
                 <div>
-                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Topshirilgan</span>
-                    <h3 className="text-3xl font-black mt-1">12 ta</h3>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Ijara muddati o'tgan</span>
+                    <h3 className="text-3xl font-black mt-1">{stats?.overdueRentals || 0} ta</h3>
                 </div>
-                <FaCheckCircle className="text-4xl opacity-50" />
+                <FaExclamationTriangle className="text-4xl opacity-50" />
             </div>
         </motion.div>
          <motion.div variants={itemVariants}>
-            <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-red-900/20 border-red-500/30 text-red-200" : "bg-red-50 border-red-100 text-red-900"}`}>
+            <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-green-900/20 border-green-500/30 text-green-200" : "bg-green-50 border-green-100 text-green-900"}`}>
                 <div>
-                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Zarar Yetgan</span>
-                    <h3 className="text-3xl font-black mt-1">3 ta</h3>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Eng faol kategoriya</span>
+                    <h3 className="text-xl font-black mt-1 line-clamp-1">{stats?.topCategory || "Barcha"}</h3>
                 </div>
-                <FaExclamationTriangle className="text-4xl opacity-50" />
+                <FaCheckCircle className="text-4xl opacity-50" />
             </div>
         </motion.div>
       </motion.div>
@@ -353,34 +369,19 @@ export default function DashboardPage() {
         >
           <h3 className={`text-xl font-bold mb-6 ${darkMode ? "text-white" : "text-[#163201]"}`}>Faol Kitobxonlar</h3>
           <div className="space-y-4">
-            <ActiveUser
-              img="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop"
-              name="Malika Karimova"
-              desc="42 kitob"
-              rating="4.9"
-              darkMode={darkMode}
-            />
-            <ActiveUser
-              img="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop"
-              name="Sardor Aliyev"
-              desc="38 kitob"
-              rating="4.8"
-              darkMode={darkMode}
-            />
-            <ActiveUser
-              img="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop"
-              name="Nilufar Rahimova"
-              desc="35 kitob"
-              rating="4.7"
-              darkMode={darkMode}
-            />
-             <ActiveUser
-              img="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop"
-              name="Jasur Toshmatov"
-              desc="32 kitob"
-              rating="4.6"
-              darkMode={darkMode}
-            />
+            {stats?.topReaders?.map((reader, index) => (
+                <ActiveUser
+                key={index}
+                img={reader.avatar}
+                name={reader.name}
+                desc={`${reader.count} ta buyurtma`}
+                rating="5.0"
+                darkMode={darkMode}
+                />
+            ))}
+            {(!stats?.topReaders || stats.topReaders.length === 0) && (
+                <p className="text-center text-gray-500 py-10">Ma'lumot yo'q</p>
+            )}
           </div>
           <button className={`w-full mt-6 py-3 rounded-xl text-sm font-bold border transition-all
               ${darkMode 

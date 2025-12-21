@@ -2,8 +2,10 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, ChevronDown, Info, ShoppingBag, Calendar } from 'lucide-react';
+import { Trash2, ChevronDown, Info, ShoppingBag, Calendar, Loader2 } from 'lucide-react';
 import Image from 'next/image';
+import { useCart } from "@/app/CartContext";
+import { useRouter } from "next/navigation";
 
 // --- Constants & Types ---
 const RENTAL_DURATIONS = [
@@ -12,90 +14,58 @@ const RENTAL_DURATIONS = [
   { days: 30, label: '30 kun', multiplier: 2.5 },
 ];
 
-const MOCK_CART_ITEMS = [
-  {
-    id: 1,
-    type: 'rent',
-    title: 'O‘tgan kunlar',
-    author: 'Abdulla Qodiriy',
-    cover: 'https://placehold.co/120x180/e2e8f0/1e293b?text=Otgan+Kunlar',
-    basePrice: 15000,
-    duration: 7,
-    readersCount: 12,
-  },
-  {
-    id: 2,
-    type: 'buy',
-    title: 'Atomic Habits',
-    author: 'James Clear',
-    cover: 'https://placehold.co/120x180/fed7aa/9a3412?text=Atomic',
-    price: 85000,
-  },
-  {
-    id: 3,
-    type: 'rent',
-    title: 'Sariq devni minib',
-    author: 'Xudoyberdi To‘xtaboyev',
-    cover: 'https://placehold.co/120x180/bfdbfe/1e40af?text=Sariq+Dev',
-    basePrice: 12000,
-    duration: 14,
-    readersCount: 5,
-  }
-];
-
 // --- Main Component ---
 export default function SavatchaPage() {
-  const [items, setItems] = useState(MOCK_CART_ITEMS);
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'rent', 'buy'
-
-  // --- Logic Helpers ---
+  const { cartItems, removeFromCart, updateQuantity, updateRentDays } = useCart();
+  const [activeTab, setActiveTab] = useState('all'); 
+  const router = useRouter();
 
   // Handle removing item
   const handleRemove = (id) => {
-    // In a real app, show confirmation modal here
-    if (window.confirm("Rostdan ham o'chirmoqchimisiz?")) {
-      setItems(prev => prev.filter(item => item.id !== id));
-    }
+    removeFromCart(id);
   };
 
   // Handle changing rental duration
   const handleDurationChange = (id, newDuration) => {
-    setItems(prev => prev.map(item => 
-      item.id === id ? { ...item, duration: newDuration } : item
-    ));
+    updateRentDays(id, newDuration);
   };
 
   // Calculate prices
-  const { rentTotal, buyTotal, totalCount } = useMemo(() => {
+    const { rentTotal, buyTotal, totalCount, displayedItems } = useMemo(() => {
     let rObj = 0;
     let bObj = 0;
     
-    items.forEach(item => {
+    const filtered = activeTab === 'all' 
+      ? (cartItems || []) 
+      : (cartItems || []).filter(item => item.type === activeTab);
+
+    (cartItems || []).forEach(item => {
       if (item.type === 'rent') {
-        const durationOption = RENTAL_DURATIONS.find(d => d.days === item.duration) || RENTAL_DURATIONS[0];
-        rObj += item.basePrice * durationOption.multiplier;
+        const base = item.bookId?.rentalPrice || item.rentalPrice || 0;
+        const durationOption = RENTAL_DURATIONS.find(d => d.days === item.rentDays) || RENTAL_DURATIONS[0];
+        rObj += base * durationOption.multiplier;
       } else {
-        bObj += item.price;
+        bObj += (item.bookId?.price || item.price || 0);
       }
     });
 
-    return { rentTotal: rObj, buyTotal: bObj, totalCount: items.length };
-  }, [items]);
+    return { 
+      rentTotal: rObj, 
+      buyTotal: bObj, 
+      totalCount: cartItems?.length || 0,
+      displayedItems: filtered
+    };
+  }, [cartItems, activeTab]);
 
   // Format currency
   const formatPrice = (price) => {
     return new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
   };
 
-  // Filter items for display
-  const displayedItems = activeTab === 'all' 
-    ? items 
-    : items.filter(item => item.type === activeTab);
-
   // CTA Text Logic
   const getCtaText = () => {
-    const hasRent = items.some(i => i.type === 'rent');
-    const hasBuy = items.some(i => i.type === 'buy');
+    const hasRent = cartItems?.some(i => i.type === 'rent');
+    const hasBuy = cartItems?.some(i => i.type === 'buy');
 
     if (hasRent && hasBuy) return "Davom etish";
     if (hasRent) return "Ijarani tasdiqlash";
@@ -106,7 +76,7 @@ export default function SavatchaPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
+    const timer = setTimeout(() => setLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -131,14 +101,20 @@ export default function SavatchaPage() {
   );
 
   // --- Empty State ---
-  if (!loading && items.length === 0) {
+  if (!loading && (cartItems?.length || 0) === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 text-center p-6 transition-colors duration-300">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 text-center p-6 transition-colors duration-300 pb-24">
         <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
           <ShoppingBag className="w-10 h-10 text-blue-400 dark:text-blue-500" />
         </div>
         <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Savatcha hozircha bo‘sh</h2>
-        <p className="text-gray-500 dark:text-slate-400">Kitob seni kutyapti.</p>
+        <p className="text-gray-500 dark:text-slate-400 mb-6">Kitob seni kutyapti.</p>
+        <button 
+            onClick={() => router.push('/mobile')}
+            className="px-8 py-3 bg-[#52C6DA] text-white font-bold rounded-2xl shadow-lg"
+        >
+            Kitob qidirish
+        </button>
       </div>
     );
   }
@@ -217,100 +193,122 @@ export default function SavatchaPage() {
 
       {/* 3. Items List */}
       <div className="px-4 space-y-4">
-        <AnimatePresence>
-          {displayedItems.map((item) => (
-            <motion.div
-              key={item.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-700 relative overflow-hidden transition-colors"
-            >
-              <div className="flex gap-4">
-                {/* Book Cover */}
-                <div className="w-[80px] h-[110px] relative rounded-lg overflow-hidden flex-shrink-0 shadow-inner bg-gray-100 dark:bg-slate-700">
-                    <Image
-                        src={item.cover}
-                        alt={item.title}
+        <AnimatePresence mode="popLayout">
+          {displayedItems.map((item) => {
+            const book = item.bookId || item;
+            // Use cartId as unique identifier
+            const uniqueKey = item.cartId || `${item._id}-${item.type}`;
+            
+            return (
+              <motion.div
+                key={uniqueKey}
+                layout
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
+                className="relative overflow-hidden rounded-2xl group"
+              >
+                {/* Background Delete Action - Fixed behind the swipable content */}
+                <div className="absolute inset-0 bg-red-500 flex items-center justify-end px-6 z-0">
+                  <Trash2 className="text-white animate-pulse" size={24} />
+                </div>
+
+                {/* Swipable Content Wrapper */}
+                <motion.div
+                  drag="x"
+                  dragConstraints={{ right: 0, left: -100 }}
+                  dragElastic={0.1}
+                  onDragEnd={(e, info) => {
+                    // Lowered threshold to -70 for more responsive deletion
+                    if (info.offset.x < -70) {
+                      handleRemove(uniqueKey);
+                    }
+                  }}
+                  whileDrag={{ scale: 1.02 }}
+                  className="bg-white dark:bg-slate-800 p-4 border border-gray-100 dark:border-slate-700 relative z-10 transition-colors"
+                  style={{ x: 0 }}
+                >
+                  <div className="flex gap-4">
+                    {/* Book Cover */}
+                    <div className="w-[80px] h-[110px] relative rounded-lg overflow-hidden flex-shrink-0 shadow-inner bg-gray-100 dark:bg-slate-700">
+                      <Image
+                        src={book.images?.[0] || book.image || "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=800&auto=format&fit=crop"}
+                        alt={book.title}
                         className="w-full h-full object-cover"
-                        width={80}
-                        height={110}
+                        fill
                         unoptimized
-                    />
-                </div>
+                      />
+                    </div>
 
-                {/* Content */}
-                <div className="flex-1 flex flex-col justify-between">
-                   <div>
-                       <div className="flex justify-between items-start">
-                           {/* Badge */}
-                           <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full mb-2 inline-block ${
-                               item.type === 'rent' 
-                                 ? 'bg-blue-50 text-blue-600' 
-                                 : 'bg-green-50 text-green-600'
-                           }`}>
-                               {item.type === 'rent' ? 'Ijara' : 'Sotib olish'}
-                           </span>
-                           
-                           {/* Remove Button */}
-                           <button 
-                             onClick={() => handleRemove(item.id)}
-                             className="text-gray-400 hover:text-red-400 dark:text-slate-500 dark:hover:text-red-400 p-1"
-                           >
-                               <Trash2 size={16} />
-                           </button>
-                       </div>
+                    {/* Content */}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full mb-2 inline-block ${
+                            item.type === 'rent' 
+                              ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
+                              : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                          }`}>
+                            {item.type === 'rent' ? 'Ijara' : 'Sotib olish'}
+                          </span>
+                          
+                          <button 
+                            onClick={() => handleRemove(uniqueKey)}
+                            className="text-gray-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 p-1 active:scale-90 transition-all"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
 
-                       <h3 className="font-bold text-gray-900 dark:text-white leading-tight mb-1">{item.title}</h3>
-                       <p className="text-xs text-gray-500 dark:text-slate-400">{item.author}</p>
-                   </div>
+                        <h3 className="font-bold text-gray-900 dark:text-white leading-tight mb-1 line-clamp-1">{book.title}</h3>
+                        <p className="text-xs text-gray-500 dark:text-slate-400">{book.author}</p>
+                      </div>
 
-                   {/* Variable Footer Section per type */}
-                   <div className="mt-3">
-                       {item.type === 'rent' ? (
-                           <div className="flex flex-col gap-2">
-                               {/* Duration Selector */}
-                               <div className="flex bg-gray-50 rounded-lg p-1 gap-1">
-                                   {RENTAL_DURATIONS.map((dur) => (
-                                       <button
-                                           key={dur.days}
-                                           onClick={() => handleDurationChange(item.id, dur.days)}
-                                           className={`flex-1 text-[10px] py-1 rounded-md transition-all ${
-                                               item.duration === dur.days 
-                                                 ? 'bg-white dark:bg-slate-700 shadow text-blue-600 dark:text-blue-400 font-bold border border-gray-100 dark:border-slate-600' 
-                                                 : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
-                                           }`}
-                                       >
-                                           {dur.label}
-                                       </button>
-                                   ))}
-                               </div>
-                               <div className="flex items-center justify-between mt-1">
-                                   <p className="text-[10px] text-gray-400 flex items-center gap-1">
-                                       <Info size={10} />
-                                       avval {item.readersCount} kishi o‘qigan
-                                   </p>
-                                   <span className="font-bold text-blue-600">
-                                       {formatPrice(item.basePrice * (RENTAL_DURATIONS.find(d => d.days === item.duration)?.multiplier || 1))}
-                                   </span>
-                               </div>
-                           </div>
-                       ) : (
-                           <div className="flex items-end justify-between">
-                                <p className="text-[10px] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-md">
-                                    Bu kitob seniki bo‘ladi
-                                </p>
-                                <span className="font-bold text-green-600 dark:text-green-400 text-lg">
-                                    {formatPrice(item.price)}
-                                </span>
-                           </div>
-                       )}
-                   </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                      <div className="mt-3">
+                        {item.type === 'rent' ? (
+                          <div className="flex flex-col gap-2">
+                            <div className="flex bg-gray-50 dark:bg-slate-700/50 rounded-lg p-1 gap-1">
+                              {RENTAL_DURATIONS.map((dur) => (
+                                <button
+                                  key={dur.days}
+                                  onClick={() => handleDurationChange(uniqueKey, dur.days)}
+                                  className={`flex-1 text-[10px] py-1 rounded-md transition-all ${
+                                    item.rentDays === dur.days 
+                                      ? 'bg-white dark:bg-slate-600 shadow text-blue-600 dark:text-blue-400 font-bold border border-gray-100 dark:border-slate-500' 
+                                      : 'text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300'
+                                  }`}
+                                >
+                                  {dur.label}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                                <Info size={10} />
+                                {book.rating ? `${book.rating} reyting` : 'Siz uchun tanlov'}
+                              </p>
+                              <span className="font-bold text-blue-600 dark:text-blue-400">
+                                {formatPrice((book.rentalPrice || 0) * (RENTAL_DURATIONS.find(d => d.days === item.rentDays)?.multiplier || 1))}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-end justify-between">
+                            <p className="text-[10px] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-md">
+                              Bu kitob seniki bo‘ladi
+                            </p>
+                            <span className="font-bold text-green-600 dark:text-green-400 text-lg">
+                              {formatPrice(book.price || 0)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
 
@@ -343,7 +341,10 @@ export default function SavatchaPage() {
            </div>
         </div>
 
-        <button className="w-full py-4 bg-[#3A7BD5] hover:bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 dark:shadow-blue-900/50 transition-all active:scale-[0.98]">
+        <button 
+          onClick={() => router.push('/mobile/components/checkout')}
+          className="w-full py-4 bg-[#3A7BD5] hover:bg-blue-600 text-white font-bold rounded-2xl shadow-lg shadow-blue-200 dark:shadow-blue-900/50 transition-all active:scale-[0.98]"
+        >
             {getCtaText()}
         </button>
         <p className="text-center text-[10px] text-gray-400 dark:text-slate-500 mt-3">

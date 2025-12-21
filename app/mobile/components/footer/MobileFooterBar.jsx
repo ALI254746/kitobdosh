@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Search, ShoppingBasket, Bookmark, User } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useCart } from "@/app/CartContext";
 
 export default function MobileFooter() {
   const pathname = usePathname();
+  const { cartItems } = useCart();
 
   const navItems = [
     {
@@ -43,28 +45,38 @@ export default function MobileFooter() {
   ];
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 z-50 pb-safe transition-colors duration-300">
-      <div className="flex justify-around items-end h-16 px-2 pb-2">
+    <footer className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100/50 dark:border-slate-800/50 z-50 pb-safe shadow-[0_-8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all duration-500">
+      <div className="flex justify-around items-end h-18 px-2 pb-3">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
 
           if (item.isFloating) {
             return (
-              <div key={item.id} className="relative -top-5">
-                <Link href={item.href}>
+              <div key={item.id} className="relative -top-6">
+                <Link href={item.href} prefetch={true}>
                   <motion.div
-                    whileTap={{ scale: 0.9 }}
-                    className="w-14 h-14 rounded-full shadow-xl flex items-center justify-center relative"
+                    whileHover={{ y: -4, scale: 1.05 }}
+                    whileTap={{ scale: 0.9, y: 0 }}
+                    className="w-16 h-16 rounded-3xl shadow-2xl flex items-center justify-center relative transition-all"
                     style={{
-                      backgroundColor: "#52C6DA", // Brand Turquoise
-                      boxShadow: "0 8px 20px rgba(82, 198, 218, 0.4)",
+                      background: "linear-gradient(135deg, #52C6DA 0%, #3A7BD5 100%)",
+                      boxShadow: "0 10px 25px rgba(82, 198, 218, 0.5)",
                     }}
                   >
-                    <Icon className="w-6 h-6 text-white" />
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 text-[10px] font-bold text-white flex items-center justify-center">
-                      2
-                    </span>
+                    <Icon className="w-7 h-7 text-white" />
+                    <AnimatePresence>
+                        {cartItems.length > 0 && (
+                        <motion.span 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0 }}
+                            className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 text-[10px] font-black text-white flex items-center justify-center shadow-md"
+                        >
+                            {cartItems.length}
+                        </motion.span>
+                        )}
+                    </AnimatePresence>
                   </motion.div>
                 </Link>
               </div>
@@ -75,39 +87,42 @@ export default function MobileFooter() {
             <Link
               key={item.id}
               href={item.href}
+              prefetch={true}
               className="group flex flex-col items-center justify-center w-16 h-full relative"
             >
-              <div className="relative p-1">
-                {isActive && (
-                    <motion.div
-                        layoutId="active-pill"
-                        className="absolute inset-0 bg-[#52C6DA]/10 dark:bg-[#52C6DA]/20 rounded-xl"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                    />
-                )}
+              <div className="relative p-2">
+                <AnimatePresence>
+                    {isActive && (
+                        <motion.div
+                            layoutId="active-nav-glow"
+                            className="absolute inset-0 bg-[#52C6DA]/15 dark:bg-[#52C6DA]/25 rounded-2xl blur-sm"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                        />
+                    )}
+                </AnimatePresence>
                 <motion.div
                   animate={{
-                    scale: isActive ? 1.1 : 1,
-                    y: isActive ? -2 : 0,
+                    scale: isActive ? 1.15 : 1,
+                    y: isActive ? -3 : 0,
                   }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
                   <Icon
-                    className={`w-6 h-6 mb-1 transition-colors duration-300 ${
-                      isActive ? "text-[#52C6DA]" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-400"
+                    className={`w-6 h-6 mb-1 transition-all duration-300 ${
+                      isActive ? "text-[#52C6DA] drop-shadow-[0_0_8px_rgba(82,198,218,0.5)]" : "text-slate-400 dark:text-slate-500"
                     }`}
-                    strokeWidth={isActive ? 2.5 : 2}
+                    strokeWidth={isActive ? 3 : 2}
                   />
                 </motion.div>
               </div>
               
               <span
-                className={`text-xs transition-all duration-300 ${
+                className={`text-[9px] uppercase tracking-tighter font-black transition-all duration-300 ${
                   isActive
-                    ? "font-extrabold text-[#52C6DA]"
-                    : "font-bold text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-400"
+                    ? "text-[#52C6DA] scale-110"
+                    : "text-slate-400 dark:text-slate-500"
                 }`}
               >
                 {item.label}

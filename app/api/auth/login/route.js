@@ -34,7 +34,7 @@ export async function POST(req) {
     );
 
     const cookieStore = await cookies();
-    cookieStore.set("unihub_token", token, {
+    cookieStore.set("kitobdosh_token", token, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60,
       path: "/",

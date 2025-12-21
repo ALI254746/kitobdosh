@@ -7,6 +7,7 @@ import { useAdmin } from "../AdminContext";
 import PickupTab from "./kitobolish";
 import ReturnTab from "./kitobtopshirish";
 import KurierControl from "./kuriernazorat";
+import toast, { Toaster } from 'react-hot-toast';
 
 // --- SKELETON COMPONENTS ---
 
@@ -70,12 +71,77 @@ export default function CourierStats() {
   const [activeTab, setActiveTab] = useState("kuriernazorat");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  
+  // Modal State
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({ fullName: '', email: '', password: '', phone: '' });
+  const [creating, setCreating] = useState(false);
 
-  // Simulate loading
+  // Stats state
+  const [stats, setStats] = useState({
+      total: 0,
+      online: 0,
+      todayDeliveries: 0,
+      todayReturns: 0
+  });
+
+  // Fetch Stats
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000); // 2 seconds delay
-    return () => clearTimeout(timer);
+    const fetchStats = async () => {
+        try {
+            const res = await fetch('/api/admin/couriers');
+            const result = await res.json();
+            if(result.success) {
+                const couriers = result.data;
+                const total = couriers.length;
+                const online = couriers.filter(c => c.status !== 'blocked').length; 
+                
+                const deliveries = couriers.reduce((acc, curr) => acc + (curr.todayDeliveries || 0), 0);
+                const returns = couriers.reduce((acc, curr) => acc + (curr.todayReturns || 0), 0);
+                
+                setStats({
+                    total,
+                    online,
+                    todayDeliveries: deliveries,
+                    todayReturns: returns
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error("Statistikani yuklashda xatolik");
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    fetchStats();
   }, []);
+
+  const handleCreate = async (e) => {
+      e.preventDefault();
+      setCreating(true);
+      try {
+          const res = await fetch('/api/admin/couriers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData)
+          });
+          const data = await res.json();
+          if(data.success) {
+              toast.success("Kuryer qo'shildi!");
+              setShowModal(false);
+              setFormData({ fullName: '', email: '', password: '', phone: '' });
+              // Reload to refresh data
+              setTimeout(() => window.location.reload(), 1000);
+          } else {
+              toast.error(data.message);
+          }
+      } catch (err) {
+          toast.error("Xatolik yuz berdi");
+      } finally {
+          setCreating(false);
+      }
+  };
 
   const tabs = [
       { id: 'kuriernazorat', label: 'Asosiy Oyna' },
@@ -85,6 +151,7 @@ export default function CourierStats() {
 
   return (
     <div className={`min-h-screen p-6 sm:p-8 transition-colors duration-300 ${darkMode ? "bg-[#0b1a00]" : "bg-[#f8fafc]"}`}>
+      <Toaster />
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
@@ -93,10 +160,12 @@ export default function CourierStats() {
                 Kuryerlar Boshqaruvi
             </h1>
             <p className={`text-sm ${darkMode ? "text-[#A3ED96]/60" : "text-gray-500"}`}>
-                Jami 6 ta kuryer faoliyat olib bormoqda
+                Jami {stats.total} ta kuryer faoliyat olib bormoqda
             </p>
          </div>
-         <button className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-transform hover:scale-105 active:scale-95
+         <button 
+            onClick={() => setShowModal(true)}
+            className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-transform hover:scale-105 active:scale-95
             ${darkMode 
                 ? "bg-[#A3ED96] text-[#163201]" 
                 : "bg-[#163201] text-white"
@@ -119,10 +188,10 @@ export default function CourierStats() {
         <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatCard title="Jami Kuryerlar" value="6" icon={FaMotorcycle} color="blue" darkMode={darkMode} />
-                <StatCard title="Online" value="4" icon={FaCircle} color="green" darkMode={darkMode} />
-                <StatCard title="Bugungi Yetkazish" value="52" icon={FaBox} color="orange" darkMode={darkMode} />
-                <StatCard title="Qaytarishlar" value="21" icon={FaUndo} color="purple" darkMode={darkMode} />
+                <StatCard title="Jami Kuryerlar" value={stats.total} icon={FaMotorcycle} color="blue" darkMode={darkMode} />
+                <StatCard title="Online" value={stats.online} icon={FaCircle} color="green" darkMode={darkMode} />
+                <StatCard title="Bugungi Yetkazish" value={stats.todayDeliveries} icon={FaBox} color="orange" darkMode={darkMode} />
+                <StatCard title="Qaytarishlar" value={stats.todayReturns} icon={FaUndo} color="purple" darkMode={darkMode} />
             </div>
 
             {/* Main Content Card */}
@@ -186,6 +255,85 @@ export default function CourierStats() {
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* Modal */}
+            <AnimatePresence>
+                {showModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className={`w-full max-w-md rounded-2xl p-6 shadow-2xl ${darkMode ? "bg-[#0b1a00] border border-[#A3ED96]/20" : "bg-white"}`}
+                        >
+                            <h2 className={`text-xl font-bold mb-6 ${darkMode ? "text-white" : "text-gray-900"}`}>Yangi Kuryer Qo'shish</h2>
+                            
+                            <form onSubmit={handleCreate} className="space-y-4">
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>F.I.SH</label>
+                                    <input 
+                                        required
+                                        type="text" 
+                                        className={`w-full p-3 rounded-xl outline-none border ${darkMode ? "bg-white/5 border-white/10 text-white" : "bg-gray-50 border-gray-200"}`}
+                                        value={formData.fullName}
+                                        onChange={e => setFormData({...formData, fullName: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Telefon</label>
+                                    <input 
+                                        required
+                                        type="text" 
+                                        className={`w-full p-3 rounded-xl outline-none border ${darkMode ? "bg-white/5 border-white/10 text-white" : "bg-gray-50 border-gray-200"}`}
+                                        value={formData.phone}
+                                        onChange={e => setFormData({...formData, phone: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Email</label>
+                                    <input 
+                                        required
+                                        type="email" 
+                                        className={`w-full p-3 rounded-xl outline-none border ${darkMode ? "bg-white/5 border-white/10 text-white" : "bg-gray-50 border-gray-200"}`}
+                                        value={formData.email}
+                                        onChange={e => setFormData({...formData, email: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={`block text-xs font-bold mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Parol</label>
+                                    <input 
+                                        required
+                                        type="password" 
+                                        className={`w-full p-3 rounded-xl outline-none border ${darkMode ? "bg-white/5 border-white/10 text-white" : "bg-gray-50 border-gray-200"}`}
+                                        value={formData.password}
+                                        onChange={e => setFormData({...formData, password: e.target.value})}
+                                    />
+                                </div>
+
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setShowModal(false)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold ${darkMode ? "text-gray-400 hover:bg-white/5" : "text-gray-500 hover:bg-gray-100"}`}
+                                    >
+                                        Bekor qilish
+                                    </button>
+                                    <button 
+                                        type="submit"
+                                        disabled={creating}
+                                        className={`px-6 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2
+                                            ${darkMode ? "bg-[#A3ED96] text-[#163201]" : "bg-[#163201] text-white"}
+                                            ${creating ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg"}
+                                        `}
+                                    >
+                                        {creating ? "Saqlanmoqda..." : "Saqlash"}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </>
       )}
     </div>

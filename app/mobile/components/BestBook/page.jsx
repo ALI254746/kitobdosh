@@ -1,8 +1,13 @@
 "use client";
 
-import Image from "next/image";
-import { Star, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import SafeImage from "@/app/components/SafeImage";
+
+import { useCart } from "@/app/CartContext";
+import { useFavorites } from "@/app/FavoritesContext";
+import { FaHeart, FaRegHeart, FaStar, FaCartPlus } from "react-icons/fa";
+import { useRouter } from "next/navigation";
 function BookSkeleton() {
   return (
     <div className="min-w-[160px] bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse">
@@ -19,54 +24,35 @@ function BookSkeleton() {
   );
 }
 
-export default function PopularBooks() {
-  const [liked, setLiked] = useState({});
-  const [loading, setLoading] = useState(true);
-  const books = [
-    {
-      id: 1,
-      title: "Biologiya asoslari",
-      author: "A. Karimov",
-      image:
-        "https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&h=240&fit=crop",
-      rating: 4.5,
-    },
-    {
-      id: 2,
-      title: "Fizika qonunlari",
-      author: "B. Rahimov",
-      image:
-        "https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=240&fit=crop",
-      rating: 4.9,
-    },
-    {
-      id: 3,
-      title: "Kimyo tarixi",
-      author: "D. Aliyev",
-      image:
-        "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=240&fit=crop",
-      rating: 5.0,
-    },
-    {
-      id: 4,
-      title: "O'zbek adabiyoti",
-      author: "N. Yusupov",
-      image:
-        "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=240&fit=crop",
-      rating: 4.4,
-    },
-    {
-      id: 5,
-      title: "Matematika",
-      author: "S. Toshmatov",
-      image:
-        "https://images.unsplash.com/photo-1532012197267-da84d127e765?w=400&h=240&fit=crop",
-      rating: 4.7,
-    },
-  ];
+export default function PopularBooks({ data }) {
+  const router = useRouter();
+  const { addToCart } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
+
+  const [books, setBooks] = useState(data || []);
+  const [loading, setLoading] = useState(!data);
+
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 1200);
-    return () => clearTimeout(t);
+    if (data) return; // Skip fetch if data provided via props
+    async function fetchBooks() {
+      try {
+        const res = await fetch("/api/books/best");
+        const data = await res.json();
+        
+        if (data.success && data.data.length > 0) {
+            setBooks(data.data);
+        } else {
+            // Fallback if no books found
+             console.log("Kitoblar topilmadi, API bo'sh qaytdi");
+        }
+      } catch (err) {
+        console.error("Kitoblarni yuklashda xatolik:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchBooks();
   }, []);
 
   return (
@@ -81,39 +67,38 @@ export default function PopularBooks() {
         {loading &&
           Array.from({ length: 4 }).map((_, i) => <BookSkeleton key={i} />)}
 
-        {!loading &&
+        {!loading && Array.isArray(books) &&
           books.map((book) => (
             <div
-              key={book.id}
+              key={book._id}
+              onClick={() => router.push(`/mobile/book/${book._id}`)}
               className="min-w-[160px] bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden flex-shrink-0 
-              transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg"
+              transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer"
             >
               {/* Image + Like */}
               <div className="relative w-full h-48">
-                <Image
-                  src={book.image}
+                <SafeImage
+                  src={book.images?.[0] || book.image}
+                  fallbackSrc="https://images.unsplash.com/photo-1589998059171-988d887df646?w=400&h=240&fit=crop"
                   alt={book.title}
                   fill
                   className="object-cover"
+                  priority={books.indexOf(book) < 2}
                 />
 
                 <button
-                  onClick={() =>
-                    setLiked((prev) => ({
-                      ...prev,
-                      [book.id]: !prev[book.id],
-                    }))
-                  }
-                  className="absolute top-2 right-2 bg-white/90 rounded-full p-1.5 
-                  hover:scale-110 transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(book._id);
+                  }}
+                  className="absolute top-2 right-2 bg-white/90 dark:bg-slate-800/90 rounded-full p-1.5 
+                  hover:scale-110 transition z-10"
                 >
-                  <Heart
-                    className={`w-4 h-4 ${
-                      liked[book.id]
-                        ? "fill-red-500 text-red-500"
-                        : "text-gray-400"
-                    }`}
-                  />
+                  {isFavorite(book._id) ? (
+                    <FaHeart className="w-4 h-4 text-red-500" />
+                  ) : (
+                    <FaRegHeart className="w-4 h-4 text-gray-400" />
+                  )}
                 </button>
               </div>
 
@@ -126,19 +111,33 @@ export default function PopularBooks() {
 
                 {/* ⭐ Rating */}
                 <div className="flex items-center gap-1 mb-3">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs font-medium text-gray-700">
-                    {book.rating}
+                  <FaStar className="w-4 h-4 text-yellow-400" />
+                  <span className="text-xs font-medium text-gray-700 dark:text-slate-300">
+                    {book.rating || "5.0"}
                   </span>
                 </div>
 
-                {/* Buttons */}
+                {/* Actions: Rent Only */}
                 <div className="flex gap-2">
-                  <button className="flex-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 py-2 rounded-xl text-xs font-semibold hover:bg-blue-200 dark:hover:bg-blue-900/50 transition">
-                    Ijara
-                  </button>
-                  <button className="flex-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 py-2 rounded-xl text-xs font-semibold hover:bg-purple-200 dark:hover:bg-purple-900/50 transition">
-                    Sotib
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(book, 'rent');
+                        router.push('/mobile/components/checkout');
+                      }}
+                      className="flex-1 bg-[#52C6DA] text-white py-2 rounded-xl text-xs font-black uppercase tracking-tighter hover:bg-[#52C6DA]/90 shadow-md shadow-[#52C6DA]/20 transition active:scale-95"
+                    >
+                      Ijara
+                    </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // This will add to cart as rent by default
+                      addToCart(book, 'rent');
+                    }}
+                    className="w-10 h-9 bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-300 rounded-xl flex items-center justify-center hover:bg-[#52C6DA]/10 hover:text-[#52C6DA] transition"
+                  >
+                    <FaCartPlus className="w-4 h-4" />
                   </button>
                 </div>
               </div>

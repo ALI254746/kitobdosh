@@ -13,12 +13,14 @@ import {
   FaPhoneAlt,
   FaArrowRight
 } from "react-icons/fa";
+import { useMain } from "./MainContext";
 
 export default function Footer() {
+  const { darkMode } = useMain();
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative bg-[#1F2937] text-white pt-24 pb-10 overflow-hidden font-sans rounded-t-[3rem]">
+    <footer className={`relative pt-24 pb-10 overflow-hidden font-sans rounded-t-[3rem] transition-colors duration-300 ${darkMode ? "bg-slate-950 text-white" : "bg-[#1F2937] text-white"}`}>
       
       {/* Decorative Blob */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#96C7B9] opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />

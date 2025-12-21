@@ -3,8 +3,18 @@ import MobileFooterBar from "./components/footer/MobileFooterBar";
 import { ThemeProvider } from "./context/ThemeContext";
 
 export const metadata = {
-  title: "Kitobdoash",
+  title: "Kitobdosh",
   description: "Qiziqishlarni kashf qil",
+  manifest: "/manifest.json",
+  themeColor: "#52C6DA",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Kitobdosh",
+  },
+  icons: {
+    apple: "/icon-192x192.png",
+  },
 };
 
 export default function RootLayout({ children }) {

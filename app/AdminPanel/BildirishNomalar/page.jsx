@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaSearch, FaFilter, FaDownload, FaUser, FaIdCard, FaPhone, FaClock, FaReply, FaTrash, FaLightbulb, FaExclamationCircle, FaComment, FaCheckDouble, FaEnvelopeOpen } from "react-icons/fa";
+import { FaSearch, FaFilter, FaDownload, FaUser, FaIdCard, FaPhone, FaClock, FaReply, FaTrash, FaLightbulb, FaExclamationCircle, FaComment, FaCheckDouble, FaEnvelopeOpen, FaTimes, FaPlane } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "../AdminContext";
+import toast from "react-hot-toast";
 
 // --- SKELETON COMPONENTS ---
 
@@ -45,59 +46,108 @@ export default function MessagesPage() {
   const [filterType, setFilterType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState([]);
 
-  // Initial Data
-  const messages = [
-    {
-      id: 1,
-      name: "Alisher Karimov",
-      phone: "+998 90 123 45 67",
-      date: "Bugun, 14:30",
-      status: "unread",
-      type: "suggestion",
-      title: "Yangi funksiya taklifi",
-      text: "Assalomu alaykum! Tizimga yangi statistika bo'limini qo'shsak yaxshi bo'lardi deb o'ylayman.",
-    },
-    {
-      id: 2,
-      name: "Dilshod Rahimov",
-      phone: "+998 91 234 56 78",
-      date: "Bugun, 10:15",
-      status: "read",
-      type: "complaint",
-      title: "Tizimda xatolik",
-      text: "Salom! Sahifa yuklanishida muammo bo'lyapti, iltimos tekshirib ko'ring.",
-    },
-    {
-      id: 3,
-      name: "Nodira Toshmatova",
-      phone: "+998 93 345 67 89",
-      date: "Kecha, 16:45",
-      status: "unread",
-      type: "general",
-      title: "Umumiy savol",
-      text: "Qanday qilib kuryerlikka ariza topshirsam bo'ladi?",
-    },
-    {
-        id: 4,
-        name: "Botir Zokirov",
-        phone: "+998 90 999 88 77",
-        date: "Kecha, 09:20",
-        status: "read",
-        type: "suggestion",
-        title: "Dizayn bo'yicha",
-        text: "Mobil ilovadagi ranglarni biroz yorqinroq qilishni taklif qilaman.",
-    },
-  ];
+  // Reply Modal State
+  const [replyModal, setReplyModal] = useState({ show: false, messageId: null, userId: null, replyText: "" });
+
+  // Fetch Messages from API
+  const fetchMessages = async () => {
+      try {
+          const res = await fetch("/api/contact");
+          const data = await res.json();
+          if (data.success) {
+              setMessages(data.data);
+          }
+      } catch (error) {
+          console.error("Error fetching messages:", error);
+      } finally {
+          setLoading(false);
+      }
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 30000);
+      return () => clearInterval(interval);
   }, []);
+
+  const handleDelete = async (id) => {
+      if(!confirm("Haqiqatan ham bu xabarni o'chirmoqchimisiz?")) return;
+      
+      const toastId = toast.loading("O'chirilmoqda...");
+      try {
+          const res = await fetch("/api/contact", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id })
+          });
+          
+          if(res.ok) {
+              toast.success("O'chirildi", { id: toastId });
+              setMessages(prev => prev.filter(m => m._id !== id));
+          } else {
+              toast.error("Xatolik", { id: toastId });
+          }
+      } catch (e) {
+          toast.error("Xatolik", { id: toastId });
+      }
+  };
+
+  const markAsRead = async (id, currentStatus) => {
+      if(currentStatus === 'read' || currentStatus === 'replied') return;
+      try {
+          await fetch("/api/contact", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, updates: { status: "read" } })
+          });
+          setMessages(prev => prev.map(m => m._id === id ? { ...m, status: "read" } : m));
+      } catch (e) {
+          console.error(e);
+      }
+  };
+
+  const openReplyModal = (msg) => {
+      if (!msg.user) {
+          toast.error("Faqat ro'yxatdan o'tgan foydalanuvchilarga javob berish mumkin.");
+          return;
+      }
+      setReplyModal({ show: true, messageId: msg._id, userId: msg.user, replyText: `Assalomu alaykum, ${msg.name}! Murojaatingiz uchun rahmat. \n\n` });
+  };
+
+  const sendReply = async () => {
+      if(!replyModal.replyText.trim()) return toast.error("Matn yozing");
+
+      const toastId = toast.loading("Javob yuborilmoqda...");
+      try {
+          const res = await fetch("/api/contact", {
+             method: "POST",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify({
+                 action: 'reply',
+                 messageId: replyModal.messageId,
+                 userId: replyModal.userId,
+                 replyText: replyModal.replyText
+             })
+          });
+
+          const data = await res.json();
+          if(data.success) {
+              toast.success("Javob yuborildi!", { id: toastId });
+              setMessages(prev => prev.map(m => m._id === replyModal.messageId ? { ...m, status: "replied" } : m));
+              setReplyModal({ show: false, messageId: null, userId: null, replyText: "" });
+          } else {
+              toast.error(data.message, { id: toastId });
+          }
+      } catch (e) {
+          toast.error("Xatolik", { id: toastId });
+      }
+  };
 
   const filteredMessages = messages.filter(msg => 
       (filterType === 'all' || msg.type === filterType) &&
-      (msg.name.toLowerCase().includes(searchQuery.toLowerCase()) || msg.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      (msg.name.toLowerCase().includes(searchQuery.toLowerCase()) || (msg.message && msg.message.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
   const getTypeIcon = (type) => {
@@ -107,6 +157,12 @@ export default function MessagesPage() {
           default: return <FaComment className="text-blue-400" />;
       }
   };
+
+  const getStatusLabel = (status) => {
+        if(status === 'replied') return <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Javob berilgan</span>;
+        if(status === 'read') return <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">O'qilgan</span>;
+        return <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Yangi</span>;
+  }
 
   const getTypeLabel = (type) => {
       switch(type) {
@@ -127,19 +183,16 @@ export default function MessagesPage() {
                 Bildirishnomalar
             </h1>
             <p className={`text-sm font-medium ${darkMode ? "text-[#A3ED96]/60" : "text-gray-500"}`}>
-                Foydalanuvchilardan kelgan xabarlar markazi
+                Foydalanuvchilardan kelgan xabarlar markazi ({messages.filter(m => m.status === 'unread').length} yangi)
             </p>
          </div>
          <div className="flex gap-3">
-             <button className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 border transition-all
-                ${darkMode ? "bg-white/5 border-white/10 text-white hover:bg-white/10" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}
-             `}>
-                 <FaDownload /> Eksport
-             </button>
-             <button className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all
+             <button 
+                 onClick={fetchMessages}
+                 className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all
                 ${darkMode ? "bg-[#A3ED96] text-[#163201]" : "bg-[#163201] text-white"}
              `}>
-                 <FaCheckDouble /> Barchasini O&apos;qish
+                 <FaCheckDouble /> Yangilash
              </button>
          </div>
       </div>
@@ -171,22 +224,25 @@ export default function MessagesPage() {
       </div>
 
       {loading ? (
-        // SKELETON STATE
         <div className="space-y-4">
              {[1,2,3,4].map(i => <MessageSkeleton key={i} darkMode={darkMode} />)}
         </div>
       ) : (
-        // CONTENT STATE
         <div className="space-y-4 max-w-5xl mx-auto lg:mx-0">
             <AnimatePresence>
+                {filteredMessages.length === 0 && (
+                    <div className={`p-8 rounded-2xl border text-center opacity-50 ${darkMode ? "border-white/10 bg-white/5" : "border-gray-100 bg-white"}`}>
+                        <p>Xabarlar topilmadi</p>
+                    </div>
+                )}
                 {filteredMessages.map((msg) => (
                     <motion.div
-                        key={msg.id}
+                        key={msg._id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
-                        whileHover={{ scale: 1.01 }}
-                        className={`group relative rounded-2xl border p-5 sm:p-6 transition-all duration-300
+                        onClick={() => markAsRead(msg._id, msg.status)}
+                        className={`group relative rounded-2xl border p-5 sm:p-6 transition-all duration-300 cursor-pointer
                             ${darkMode 
                                 ? `bg-[#163201]/40 border-[#A3ED96]/10 hover:border-[#A3ED96]/30 ${msg.status === 'unread' ? "bg-white/5 border-l-4 border-l-[#A3ED96]" : ""}`
                                 : `bg-white border-gray-100 hover:shadow-lg ${msg.status === 'unread' ? "bg-blue-50/30 border-l-4 border-l-[#163201]" : ""}`
@@ -213,33 +269,37 @@ export default function MessagesPage() {
                                          `}>
                                              {getTypeLabel(msg.type)}
                                          </span>
+                                         {getStatusLabel(msg.status)}
                                      </div>
                                      <div className={`flex items-center gap-2 text-xs font-bold ${darkMode ? "text-[#A3ED96]" : "text-gray-400"}`}>
-                                         <FaClock /> {msg.date}
+                                         <FaClock /> {new Date(msg.createdAt).toLocaleString()}
                                      </div>
                                  </div>
 
                                  <h4 className={`font-bold mb-1 ${darkMode ? "text-gray-200" : "text-gray-800"}`}>
-                                     {msg.title}
+                                     {msg.title || "Xabar"}
                                  </h4>
                                  <p className={`text-sm mb-4 leading-relaxed ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                                     {msg.text}
+                                     {msg.message}
                                  </p>
 
                                  {/* Footer Info & Actions */}
                                  <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-dashed border-gray-200 dark:border-white/10">
                                      <div className="flex items-center gap-4 text-xs font-medium text-gray-400">
                                          <span className="flex items-center gap-1"><FaPhone /> {msg.phone}</span>
-                                         <span className="flex items-center gap-1"><FaIdCard /> ID: #{1000 + msg.id}</span>
                                      </div>
 
                                      <div className="flex gap-2">
-                                         <button className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors
+                                         <button 
+                                             onClick={(e) => { e.stopPropagation(); openReplyModal(msg); }}
+                                             className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors
                                              ${darkMode ? "bg-[#A3ED96]/20 text-[#A3ED96] hover:bg-[#A3ED96]/30" : "bg-blue-50 text-blue-600 hover:bg-blue-100"}
                                          `}>
                                              <FaReply /> Javob
                                          </button>
-                                         <button className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors
+                                         <button 
+                                             onClick={(e) => { e.stopPropagation(); handleDelete(msg._id); }}
+                                             className={`px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors
                                              ${darkMode ? "bg-red-500/10 text-red-400 hover:bg-red-500/20" : "bg-red-50 text-red-500 hover:bg-red-100"}
                                          `}>
                                              <FaTrash /> O&apos;chirish
@@ -253,6 +313,48 @@ export default function MessagesPage() {
             </AnimatePresence>
         </div>
       )}
+
+      {/* --- REPLY MODAL --- */}
+      <AnimatePresence>
+        {replyModal.show && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className={`w-full max-w-lg rounded-2xl shadow-xl overflow-hidden
+                        ${darkMode ? "bg-[#0f172a] border border-slate-700" : "bg-white"}
+                    `}
+                >
+                    <div className="p-5 border-b flex justify-between items-center bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700">
+                        <h3 className={`font-bold ${darkMode ? "text-white" : "text-gray-900"}`}>Javob yozish</h3>
+                        <button onClick={() => setReplyModal({ ...replyModal, show: false })} className="text-gray-400 hover:text-red-500">
+                            <FaTimes />
+                        </button>
+                    </div>
+                    <div className="p-5">
+                        <textarea 
+                            rows={6}
+                            value={replyModal.replyText}
+                            onChange={(e) => setReplyModal({ ...replyModal, replyText: e.target.value })}
+                            className={`w-full p-4 rounded-xl border outline-none font-medium
+                                ${darkMode ? "bg-slate-900 border-slate-700 text-white focus:border-[#A3ED96]" : "bg-white border-gray-200 focus:border-blue-500"}
+                            `}
+                            placeholder="Javobingizni shu yerga yozing..."
+                        />
+                    </div>
+                    <div className="p-5 border-t bg-gray-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 flex justify-end gap-3">
+                         <button onClick={() => setReplyModal({ ...replyModal, show: false })} className="px-5 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">
+                            Bekor qilish
+                         </button>
+                         <button onClick={sendReply} className="px-5 py-2.5 rounded-xl font-bold bg-[#163201] text-white hover:bg-[#A3ED96] hover:text-[#163201] transition-colors flex items-center gap-2">
+                            <FaReply /> Yuborish
+                         </button>
+                    </div>
+                </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

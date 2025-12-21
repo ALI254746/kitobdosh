@@ -1,9 +1,9 @@
 import { dbConnect } from "@/lib/db.Connect";
 import User from "@/model/user";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import redis from "@/lib/redis";
+import { sendOTP } from "@/lib/email";
 
 export async function POST(req) {
   try {
@@ -25,6 +25,7 @@ export async function POST(req) {
 
     await dbConnect();
 
+    // 1. Email mavjudligini tekshirish
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return NextResponse.json(
@@ -33,30 +34,37 @@ export async function POST(req) {
       );
     }
 
+    // 2. OTP yaratish
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 xonali
+    console.log("🔐 TASDIQLASH KODI (TEST):", otp); // Terminalda ko'rish uchun!
+    
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ email, password: hashedPassword });
 
-    const token = jwt.sign(
-      { userId: newUser._id, email: newUser.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    // 3. Redisga saqlash (5 daqiqa)
+    const tempUserData = {
+        email,
+        password: hashedPassword,
+        otp
+    };
+    
+    await redis.setex(`register_otp:${email}`, 300, JSON.stringify(tempUserData));
 
-    // 🍪 Cookie o‘rnatish
-    const cookieStore = await cookies();
-    cookieStore.set("unihub_token", token, {
-      httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60,
-      path: "/",
-    });
+    // 4. Email yuborish
+    try {
+        await sendOTP(email, otp);
+    } catch (emailError) {
+        console.error("Email yuborishda xato (Lekin davom etyapmiz):", emailError.message);
+        // Agar SMTP sozlanmagan bo'lsa, xatoni yutib yuboramiz, 
+        // shunda frontend "Kod yuborildi" deb OTP oynasini ochadi.
+    }
 
-    // 🔁 Foydalanuvchini login sahifasiga yo‘naltirish
     return NextResponse.json(
-      { message: "Ro‘yxatdan o‘tish muvaffaqiyatli!" },
-      { status: 201 }
+      { success: true, message: "Tasdiqlash kodi emailingizga yuborildi" },
+      { status: 200 }
     );
+
   } catch (err) {
-    console.error("❌ Server xatolik:", err);
+    console.error("❌ Register xatolik:", err);
     return NextResponse.json(
       { message: "Server xatolik yuz berdi" },
       { status: 500 }

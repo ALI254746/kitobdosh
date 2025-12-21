@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   FaBookOpenReader,
@@ -9,44 +8,138 @@ import {
   FaChevronRight,
 } from "react-icons/fa6";
 import { Star, Heart } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import SerachBar from "./components/search/page";
 import LikeBook from "./components/likeBook/page";
 import BeastBook from "./components/BestBook/page";
 import BookCollections from "./components/bookCollection/page";
 import PopularAuthorCard from "./components/PopularAuthors/page";
+import HomeSkeleton from "./components/HomeSkeleton";
 export default function DiscountCard() {
+  const [homeData, setHomeData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const scrollRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    async function fetchHomeData() {
+      try {
+        const res = await fetch("/api/mobile/home", { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success) {
+          setHomeData(data.data);
+          console.log("HOME DEBUG - PROMOS:", data.data?.promos); // 👉 Buni tekshirish kerak
+        }
+      } catch (error) {
+        console.error("Home Data Fetch Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchHomeData();
+  }, []);
+
+  // Auto-scroll logic
+  useEffect(() => {
+    if (!homeData?.promos || homeData.promos.length <= 1) return;
+
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const nextIndex = (currentIndex + 1) % homeData.promos.length;
+        const scrollAmount = scrollRef.current.offsetWidth * nextIndex;
+        
+        scrollRef.current.scrollTo({
+          left: scrollAmount,
+          behavior: "smooth"
+        });
+        setCurrentIndex(nextIndex);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [homeData?.promos, currentIndex]);
+
+  if (loading) {
+    return <HomeSkeleton />;
+  }
+
   return (
-    <div className="p-4">
+    <div className="p-4 px-3">
       <SerachBar />
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-500 to-[#6DD5FA] shadow-soft text-white p-6">
-        {/* Dekorativ blur doiralar */}
-        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+      {homeData?.promos?.length > 0 && (
+        <div className="relative w-screen -ml-4 overflow-hidden">
+          <div 
+            ref={scrollRef}
+            onScroll={(e) => {
+              const scrollLeft = e.currentTarget.scrollLeft;
+              const width = e.currentTarget.offsetWidth;
+              const index = Math.round(scrollLeft / width);
+              if (index !== currentIndex) setCurrentIndex(index);
+            }}
+            className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+          >
+            {homeData.promos.map((promo, idx) => (
+              <div key={promo._id || idx} className="min-w-full flex justify-center snap-center px-2">
+                <section 
+                  className="relative w-full overflow-hidden rounded-3xl shadow-soft text-white p-6 min-h-[170px] flex flex-col justify-center"
+                >
+                  {/* Background Layer */}
+                  <div className="absolute inset-0 z-0 bg-gradient-to-br from-blue-600 to-indigo-700">
+                    {promo.image ? (
+                      <>
+                        <img 
+                          src={promo.image} 
+                          alt=""
+                          className="w-full h-full object-cover opacity-90"
+                          style={{ display: 'block' }}
+                          loading="eager"
+                        />
+                        {/* Darker Overlay for readability */}
+                        <div className="absolute inset-0 bg-black/40 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full relative overflow-hidden">
+                        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl animate-pulse"></div>
+                        <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+                        <div className="absolute inset-0 bg-black/10"></div>
+                      </div>
+                    )}
+                  </div>
 
-        <div className="relative z-10 flex justify-between items-center">
-          {/* Matn qismi */}
-          <div className="w-full">
-            <span className="inline-block text-xl px-3 py-1 bg-white/20 backdrop-blur-md rounded-lg  font-semibold mb-2">
-              🔥 Bugungi chegirma
-            </span>
+                  <div className="relative z-10">
+                    <span className="inline-block text-lg px-3 py-1 bg-white/20 backdrop-blur-md rounded-lg font-semibold mb-2">
+                      {promo.badge || "🔥 Bugungi chegirma"}
+                    </span>
 
-            <p className="text-white/80 text-sm mb-4">
-              Barcha bestsellerlarga 20% chegirma
-            </p>
+                    <p className="text-white text-sm font-bold mb-4 line-clamp-2 min-h-[40px] drop-shadow-2xl">
+                      {promo.text}
+                    </p>
 
-            {/* Sahifaga o'tish (Link) */}
-            <Link
-              href="/books" // 👉 redirect qilinadigan sahifa
-              className="px-5 py-2 bg-white text-blue-400 rounded-2xl text-sm font-bold shadow-lg hover:bg-gray-50 transition-colors inline-block"
-            >
-              Ko&apos;rish
-            </Link>
+                    <Link
+                      href={promo.link || "/mobile/components/search?type=sale"}
+                      className="px-6 py-2 bg-white text-blue-500 rounded-2xl text-sm font-black shadow-xl hover:scale-105 active:scale-95 transition-all inline-block uppercase tracking-wider"
+                    >
+                      Ko&apos;rish
+                    </Link>
+                  </div>
+                </section>
+              </div>
+            ))}
           </div>
-
-          {/* Rasm qismi */}
+          
+          {/* Pagination Dots */}
+          <div className="flex justify-center gap-2 mt-2">
+            {homeData.promos.map((_, idx) => (
+              <div 
+                key={idx}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  currentIndex === idx ? "w-6 bg-blue-500" : "w-1.5 bg-gray-300"
+                }`}
+              />
+            ))}
+          </div>
         </div>
-      </section>
+      )}
 
       <section className="grid pt-4 grid-cols-2 gap-4">
         {/* Rent */}
@@ -73,10 +166,10 @@ export default function DiscountCard() {
           </div>
         </Link>
       </section>
-      <LikeBook />
-      <BeastBook />
-      <BookCollections />
-      <PopularAuthorCard />
+      <LikeBook data={homeData?.recommended} />
+      <BeastBook data={homeData?.best} />
+      <BookCollections data={homeData?.collections} />
+      <PopularAuthorCard data={homeData?.authors} />
     </div>
   );
 }

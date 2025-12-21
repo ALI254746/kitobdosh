@@ -17,11 +17,13 @@ import {
   FaLinkedinIn,
   FaQuoteRight
 } from "react-icons/fa";
+import { useMain } from "../MainContext";
 
 // --- COMPONENTS ---
 
 // 1. MAGNETIC HERO TITLE
 const HeroTitle = () => {
+  const { darkMode } = useMain();
   return (
     <div className="relative z-10 text-center">
       <motion.div
@@ -30,12 +32,12 @@ const HeroTitle = () => {
          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
          className="mb-4"
       >
-         <span className="inline-block px-6 py-2 rounded-full border border-[#96C7B9] text-[#96C7B9] font-bold tracking-[0.2em] text-sm uppercase bg-white/5 backdrop-blur-sm">
+         <span className={`inline-block px-6 py-2 rounded-full border font-bold tracking-[0.2em] text-sm uppercase backdrop-blur-sm ${darkMode ? "border-[#96C7B9] text-[#96C7B9] bg-white/5" : "border-[#96C7B9] text-[#96C7B9] bg-white/5"}`}>
             Bizning Tariximiz
          </span>
       </motion.div>
       
-      <h1 className="text-[12vw] leading-[0.85] font-black text-[#1F2937] tracking-tighter mix-blend-multiply overflow-hidden">
+      <h1 className={`text-[12vw] leading-[0.85] font-black tracking-tighter mix-blend-multiply overflow-hidden ${darkMode ? "text-white mix-blend-normal" : "text-[#1F2937]"}`}>
         <motion.span 
           initial={{ y: "100%" }} 
           animate={{ y: 0 }} 
@@ -59,6 +61,7 @@ const HeroTitle = () => {
 
 // 2. SCROLL REVEAL TEXT (MANIFESTO)
 const Manifesto = () => {
+  const { darkMode } = useMain();
   const container = useRef(null);
   const { scrollYProgress } = useScroll({
     target: container,
@@ -68,7 +71,7 @@ const Manifesto = () => {
   const words = "Biz shunchaki kitob do'koni emasmiz. Biz — bilim ulashuvchi hamjamiyat, talabalar kelajagi uchun ko'prik va O'zbekistondagi eng yirik akademik ekotizimmiz.".split(" ");
 
   return (
-    <p ref={container} className="flex flex-wrap text-3xl md:text-5xl font-bold leading-tight max-w-5xl mx-auto px-6 text-[#1F2937]/20">
+    <p ref={container} className={`flex flex-wrap text-3xl md:text-5xl font-bold leading-tight max-w-5xl mx-auto px-6 ${darkMode ? "text-white/20" : "text-[#1F2937]/20"}`}>
       {words.map((word, i) => {
         const start = i / words.length;
         const end = start + (1 / words.length);
@@ -78,7 +81,7 @@ const Manifesto = () => {
         return (
           <span key={i} className="relative mr-3 mb-2 inline-block">
             <span className="absolute opacity-20">{word}</span>
-            <motion.span style={{ opacity }} className="text-[#1F2937]">
+            <motion.span style={{ opacity }} className={darkMode ? "text-white" : "text-[#1F2937]"}>
               {word}
             </motion.span>
           </span>
@@ -115,6 +118,7 @@ const Card = ({ i, title, desc, color }) => {
 
 // 4. FOUNDER SPOTLIGHT
 const Founder = ({ name, role, img, align = "left" }) => {
+  const { darkMode } = useMain();
   const ref = useRef(null);
   const isInView = useInView(ref, { margin: "-100px" });
 
@@ -139,15 +143,15 @@ const Founder = ({ name, role, img, align = "left" }) => {
          className="w-full md:w-1/2 space-y-6"
        >
           <FaQuoteRight className="text-6xl text-[#D1F0E0]" />
-          <h2 className="text-6xl font-black text-[#1F2937] leading-none">{name}</h2>
+          <h2 className={`text-6xl font-black leading-none ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{name}</h2>
           <p className="text-[#96C7B9] text-xl font-bold tracking-widest uppercase">{role}</p>
-          <p className="text-gray-500 text-lg leading-relaxed">
+          <p className={`text-lg leading-relaxed ${darkMode ? "text-gray-300" : "text-gray-500"}`}>
              Loyiha asoschisi sifatida, bizning maqsadimiz — har bir talabaga chegarasiz imkoniyatlar eshigini ochishdir.
           </p>
           <div className="flex gap-4 pt-4">
-             <button className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#1F2937] hover:text-white transition-colors"><FaTelegram /></button>
-             <button className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#1F2937] hover:text-white transition-colors"><FaInstagram /></button>
-             <button className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#1F2937] hover:text-white transition-colors"><FaLinkedinIn /></button>
+             <button className={`w-12 h-12 rounded-full border flex items-center justify-center transition-colors ${darkMode ? "border-gray-700 hover:bg-white hover:text-black text-white" : "border-gray-200 hover:bg-[#1F2937] hover:text-white"}`}><FaTelegram /></button>
+             <button className={`w-12 h-12 rounded-full border flex items-center justify-center transition-colors ${darkMode ? "border-gray-700 hover:bg-white hover:text-black text-white" : "border-gray-200 hover:bg-[#1F2937] hover:text-white"}`}><FaInstagram /></button>
+             <button className={`w-12 h-12 rounded-full border flex items-center justify-center transition-colors ${darkMode ? "border-gray-700 hover:bg-white hover:text-black text-white" : "border-gray-200 hover:bg-[#1F2937] hover:text-white"}`}><FaLinkedinIn /></button>
           </div>
        </motion.div>
     </div>
@@ -156,6 +160,7 @@ const Founder = ({ name, role, img, align = "left" }) => {
 
 // --- MAIN PAGE ---
 export default function AboutUsPage() {
+  const { darkMode } = useMain();
   const containerRef = useRef(null);
 
   const values = [
@@ -165,7 +170,7 @@ export default function AboutUsPage() {
   ];
 
   return (
-    <div ref={containerRef} className="bg-white min-h-screen font-sans overflow-x-hidden">
+    <div ref={containerRef} className={`min-h-screen font-sans overflow-x-hidden transition-colors duration-300 ${darkMode ? "bg-slate-900" : "bg-white"}`}>
       
       {/* 1. HERO */}
       <section className="h-screen flex items-center justify-center relative overflow-hidden">
@@ -185,12 +190,12 @@ export default function AboutUsPage() {
       </section>
 
       {/* 2. MANIFESTO */}
-      <section className="py-32 bg-white relative z-10">
+      <section className={`py-32 relative z-10 ${darkMode ? "bg-slate-900" : "bg-white"}`}>
          <Manifesto />
       </section>
 
       {/* 3. STACKING CARDS */}
-      <section className="bg-gray-50 mb-20">
+      <section className={`mb-20 ${darkMode ? "bg-slate-900" : "bg-gray-50"}`}>
          {values.map((v, i) => (
             <Card key={i} i={i} {...v} />
          ))}
@@ -199,7 +204,7 @@ export default function AboutUsPage() {
       {/* 4. FOUNDERS */}
       <section className="max-w-7xl mx-auto px-6 pb-32">
          <div className="mb-20 text-center">
-            <h2 className="text-4xl font-bold text-[#1F2937]">Jamoa Bilan Tanishing</h2>
+            <h2 className={`text-4xl font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>Jamoa Bilan Tanishing</h2>
          </div>
          
          <Founder 

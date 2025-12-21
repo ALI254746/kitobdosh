@@ -1,30 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import Sidebar from "./saidebar/page";
+import Sidebar from "./sidebar/page";
 import TopNavbar from "./TopNavbar/page";
 import BottomNav from "./components/BottomNav";
+import { MainProvider } from "../mainPage/MainContext";
 
-export default function AdminLayout({ children }) {
+export default function CourierLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0">
-      <Sidebar
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      />
-
-      <div className="lg:ml-64">
-        <TopNavbar
+    <MainProvider>
+      <div className="min-h-screen bg-[#FDFBF7] dark:bg-slate-900 transition-colors duration-300 font-sans selection:bg-[#96C7B9]/20">
+        <Sidebar
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
         />
 
-        <main className="p-4 sm:p-6">{children}</main>
+        <div className="lg:ml-64 pt-20 pb-32 lg:pb-12 min-h-screen relative">
+          <TopNavbar
+            mobileMenuOpen={mobileMenuOpen}
+            setMobileMenuOpen={setMobileMenuOpen}
+          />
+
+          <main className="px-4 sm:px-8 py-8 max-w-7xl mx-auto">
+              {children}
+          </main>
+        </div>
+        
+        {/* Mobile Bottom Navigation (Visible only on mobile) */}
+        <div className="lg:hidden">
+            <BottomNav />
+        </div>
       </div>
-      
-      <BottomNav />
-    </div>
+    </MainProvider>
   );
 }

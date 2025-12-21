@@ -3,49 +3,139 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, UserPlus, MoreHorizontal, X, ArrowUpRight, BookOpen, Quote, PenLine } from "lucide-react";
+import { Sparkles, UserPlus, MoreHorizontal, X, ArrowUpRight, BookOpen, Quote, PenLine, ChevronLeft, Grid, Bookmark, User as UserIcon, Instagram, Send, Heart, MessageSquare, Star, ExternalLink, Hash } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
+import toast from 'react-hot-toast';
+
+export const dynamic = 'force-dynamic';
 
 // --- Configuration ---
 const ACCENT_COLOR = "#52C6DA";
 
-// --- Mock Data ---
-const MOCK_USER = {
-  name: "Kitobxon",
-  title: "Bibliophile & Reviewer", 
-  bio: "Kitoblar — bu jim turib gapiradigan eng donishmand do'stlardir.",
-  stats: {
-    friends: 128,
-    reading: 3,
-    finished: 39,
-  },
-  interests: [
-    { id: 1, label: "Falsafa", icon: "🧠" },
-    { id: 2, label: "Jadidlar", icon: "📜" },
-    { id: 3, label: "She'riyat", icon: "✍️" },
-    { id: 4, label: "Psixologiya", icon: "🧩" },
-    { id: 5, label: "Tarix", icon: "🏛️" },
-  ]
-};
-
-const BOOKS = [
-  { id: 1, title: "O'tkan Kunlar", author: "Abdulla Qodiriy", cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=600", status: "finished", date: "2024", review: "Sharq adabiyotining durdonasi." },
-  { id: 2, title: "Siddhartha", author: "Hermann Hesse", cover: "https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=600", status: "reading", date: "Dec 2024", review: "Ruhoniy safar." },
-  { id: 3, title: "1984", author: "George Orwell", cover: "https://images.unsplash.com/photo-1531988042232-e9a184d80175?q=80&w=600", status: "finished", date: "2023", review: "Dystopian masterpiece." },
-  { id: 4, title: "Alximik", author: "Paulo Coelho", cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=600", status: "finished", date: "2023", review: "Orzular sari yo'l." },
-  { id: 5, title: "Martin Eden", author: "Jack London", cover: "https://images.unsplash.com/photo-1629196914375-f7e48f477b6d?q=80&w=600", status: "finished", date: "2022", review: "Muvaffaqiyat fojiasi." },
-  { id: 6, title: "Chol va Dengiz", author: "Ernest Hemingway", cover: "https://images.unsplash.com/photo-1519791883288-dc8bd696e667?q=80&w=600", status: "reading", date: "Hozir", review: "Matonat haqida." },
-];
-
-// --- Components ---
-
 export default function MyBooksPage() {
+  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const queryUserId = searchParams.get('userId');
+
+  const [userData, setUserData] = useState(null);
+  const [books, setBooks] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState({ friends: 0, reading: 0, finished: 0 });
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'library'); // 'library', 'favorites', 'reviews'
   const [selectedBook, setSelectedBook] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Review State
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // Pull to refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchData = async (showToast = true) => {
+    try {
+      if (showToast && !isRefreshing) setLoading(true);
+      const url = queryUserId ? `/api/user/profile?userId=${queryUserId}` : '/api/user/profile';
+      const res = await fetch(url);
+      const profileData = await res.json();
+
+        if (profileData.success) {
+        const { user, orders, rentals, isOwner, reviews: userReviews } = profileData.data;
+                setUserData({
+                    ...user,
+                    isOwner,
+                    orders,
+                    rentals,
+                    reviews: userReviews
+                });
+        
+        // Combine rentals and orders into a library
+        const libraryItems = [
+            ...(rentals || []).map(r => ({
+                id: r._id,
+                title: r.bookTitle,
+                author: r.author || "Noma'lum",
+                cover: r.bookImage || "https://placehold.co/400x600/png?text=Kitob",
+                status: r.status === 'returned' ? 'finished' : 'reading',
+                review: r.review || "",
+                bookId: r.book,
+                type: 'rental'
+            })),
+            ...(orders || []).filter(o => o.status === 'completed').flatMap(o => o.items.map(item => ({
+                id: item._id,
+                title: item.title,
+                author: item.author || "Noma'lum",
+                cover: item.image || "https://placehold.co/400x600/png?text=Kitob",
+                status: 'finished',
+                review: item.review || "",
+                bookId: item.book,
+                type: 'purchase'
+            })))
+        ];
+        
+        setBooks(libraryItems);
+        setFavorites(user.favorites || []);
+        setReviews(userReviews || []);
+        
+        setStats({
+            friends: user.friendsCount || 0,
+            reading: (rentals || []).filter(r => r.status !== 'returned').length,
+            finished: libraryItems.filter(b => b.status === 'finished').length
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      if (showToast) toast.error("Ma'lumotlarni yuklashda xatolik");
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchData(false);
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchData();
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [queryUserId, searchParams]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedBook?.bookId) return;
+    
+    setIsSubmittingReview(true);
+    try {
+        const res = await fetch('/api/reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                bookId: selectedBook.bookId,
+                rating: reviewForm.rating,
+                comment: reviewForm.comment
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            toast.success("Sharhingiz qabul qilindi!");
+            setReviewForm({ rating: 5, comment: "" });
+            // Optionally refresh to show updated review
+            fetchData();
+        } else {
+            toast.error(data.message);
+        }
+    } catch (error) {
+        toast.error("Xatolik yuz berdi");
+    } finally {
+        setIsSubmittingReview(false);
+    }
+  };
 
   const MyBooksSkeleton = () => (
     <div className="animate-pulse">
@@ -102,7 +192,7 @@ export default function MyBooksPage() {
     </div>
   );
 
-  if (loading) {
+  if (loading && !isRefreshing) {
       return (
         <div className="min-h-screen bg-[#FDFBF7] dark:bg-slate-900 pb-24 font-sans transition-colors duration-300">
             <MyBooksSkeleton />
@@ -110,235 +200,396 @@ export default function MyBooksPage() {
       );
   }
 
+  if (!userData) return null;
+
   return (
-    <div className="min-h-screen bg-[#FDFBF7] dark:bg-slate-900 text-slate-800 dark:text-slate-200 pb-24 font-sans selection:bg-[#52C6DA]/20 transition-colors duration-300">
+    <div className="min-h-screen bg-[#FDFBF7] dark:bg-slate-900 text-slate-800 dark:text-slate-200 pb-24 font-sans selection:bg-[#52C6DA]/20 transition-colors duration-300 relative overflow-hidden">
       
-      {/* 1. Editorial Header */}
+      {/* Pull to Refresh Indicator */}
+      <motion.div 
+        style={{ 
+            position: 'absolute',
+            top: -50,
+            left: 0,
+            right: 0,
+            height: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 40
+        }}
+        animate={{ y: isRefreshing ? 80 : 0 }}
+      >
+        <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
+            <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="text-[#52C6DA]"
+            >
+                <Sparkles size={16} />
+            </motion.div>
+            <span className="text-[10px] font-black uppercase tracking-widest">
+                {isRefreshing ? 'Yangilanmoqda' : 'Yangilash uchun torting'}
+            </span>
+        </div>
+      </motion.div>
+
+      <motion.div
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.7}
+        onDragEnd={(e, info) => {
+            if (info.offset.y > 100 && !isRefreshing) {
+                handleRefresh();
+            }
+        }}
+        animate={{ y: isRefreshing ? 60 : 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="min-h-screen"
+      >
+        {/* 1. Editorial Header */}
       <header className="pt-12 pb-6 px-6">
         
-        {/* Profile Row: Avatar + Name + Actions */}
-        <div className="flex justify-between items-center mb-6">
-            <motion.div 
-               initial={{ opacity: 0, x: -20 }}
-               animate={{ opacity: 1, x: 0 }}
-               transition={{ duration: 0.8, ease: "easeOut" }}
-               className="flex items-center gap-5"
-            >
-                {/* Avatar */}
-                <div className="w-20 h-20 relative rounded-full overflow-hidden shadow-xl grayscale hover:grayscale-0 transition-all duration-700 ease-in-out">
-                    <Image 
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400&auto=format&fit=crop"
-                        alt="Profile"
-                        fill
-                        className="object-cover"
-                        unoptimized
-                    />
+        {/* Kitobdosh Style Custom Header */}
+        <div className="flex flex-col gap-6 mb-8">
+            <div className="flex items-start justify-between">
+                <div className="flex items-center gap-5">
+                    <div className="relative">
+                        <div className="w-20 h-20 rounded-[32px] p-1 bg-white dark:bg-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700">
+                            <div className="w-full h-full rounded-[28px] overflow-hidden bg-slate-50 relative">
+                                {userData.avatar ? (
+                                    <Image src={userData.avatar} alt={userData.fullName} fill className="object-cover" />
+                                ) : (
+                                    <UserIcon className="absolute inset-0 m-auto text-slate-300" size={32} />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col pt-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-none">{userData.fullName || "Foydalanuvchi"}</h2>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#52C6DA]">Kitobxon</span>
+                            <div className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{userData.role || "User"}</span>
+                        </div>
+                    </div>
                 </div>
-                
-                {/* Name & Title */}
-                <div>
-                    <h1 className="text-2xl font-serif font-bold text-slate-900 dark:text-white leading-tight mb-1 tracking-tight">
-                        {MOCK_USER.name}
-                    </h1>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#52C6DA]">
-                        {MOCK_USER.title}
-                    </p>
-                </div>
-            </motion.div>
 
-            {/* Actions */}
-            <motion.div 
-                 initial={{ opacity: 0, x: 20 }}
-                 animate={{ opacity: 1, x: 0 }}
-                 transition={{ delay: 0.2 }}
-                 className="flex gap-2"
-            >
-                 <button className="w-10 h-10 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 border border-slate-900 dark:border-white flex items-center justify-center hover:bg-[#52C6DA] hover:border-[#52C6DA] dark:hover:bg-[#52C6DA] dark:hover:border-[#52C6DA] transition-all duration-300 shadow-md">
-                     <UserPlus size={18} strokeWidth={1.5}/>
-                 </button>
-                 <button className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-200 border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 shadow-sm">
-                     <PenLine size={18} strokeWidth={1.5}/>
-                 </button>
-            </motion.div>
+                <div className="flex flex-col gap-2">
+                    {userData.instagram && (
+                        <a href={`https://instagram.com/${userData.instagram.replace('@', '')}`} target="_blank" className="w-10 h-10 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm text-slate-600 dark:text-slate-300 active:scale-90 transition-transform">
+                            <Instagram size={20} />
+                        </a>
+                    )}
+                    {userData.telegram && (
+                        <a href={`https://t.me/${userData.telegram.replace('@', '')}`} target="_blank" className="w-10 h-10 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm text-slate-600 dark:text-slate-300 active:scale-90 transition-transform">
+                            <Send size={18} />
+                        </a>
+                    )}
+                </div>
+            </div>
+            
+            <div className="bg-white dark:bg-slate-800/50 backdrop-blur-xl border border-slate-100 dark:border-slate-700/50 p-5 rounded-[24px] shadow-sm flex justify-between text-center divide-x divide-slate-100 dark:divide-slate-700">
+                <div className="flex-1 flex flex-col pr-2">
+                    <span className="text-lg font-black text-slate-900 dark:text-white leading-none mb-1">{books.length}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">To'plam</span>
+                </div>
+                <div className="flex-1 flex flex-col px-2">
+                    <span className="text-lg font-black text-slate-900 dark:text-white leading-none mb-1">{stats.friends || 0}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Do'stlar</span>
+                </div>
+                <div className="flex-1 flex flex-col px-2">
+                    <span className="text-lg font-black text-slate-900 dark:text-white leading-none mb-1">{stats.reading}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">O'qishda</span>
+                </div>
+                <div className="flex-1 flex flex-col pl-2">
+                    <span className="text-lg font-black text-slate-900 dark:text-white leading-none mb-1">{stats.finished}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Yakunlandi</span>
+                </div>
+            </div>
         </div>
-        
+
         {/* Bio Section */}
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-8 pl-1"
-        >
-             <p className="text-slate-500 dark:text-slate-400 font-medium text-sm leading-relaxed max-w-sm font-serif italic border-l-2 border-slate-200 dark:border-slate-700 pl-4">
-                &quot;{MOCK_USER.bio}&quot;
-            </p>
-        </motion.div>
+        <div className="mb-8">
+            <h3 className="text-sm font-black dark:text-white mb-1">Men haqimda</h3>
+            <p className="text-[13px] text-slate-600 dark:text-slate-400 leading-normal whitespace-pre-wrap font-medium">{userData.bio || "Kitoblar - qalbimizning eng yaqin do'stlaridir. ✨"}</p>
+        </div>
 
-        {/* Glassmorphic Stats */}
-        <motion.div 
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ delay: 0.4 }}
-             className="grid grid-cols-3 gap-3 mb-8"
-        >
-            {[
-                { label: "Do'stlar", value: MOCK_USER.stats.friends },
-                { label: "O'qilmoqda", value: MOCK_USER.stats.reading },
-                { label: "Tugallangan", value: MOCK_USER.stats.finished }
-            ].map((stat, idx) => (
-                <div key={idx} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-slate-200/60 dark:border-slate-700/60 p-4 rounded-xl hover:shadow-lg dark:hover:shadow-slate-800 transition-shadow duration-300 cursor-default">
-                    <span className="block text-2xl font-serif text-slate-900 dark:text-white mb-1">{stat.value}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{stat.label}</span>
-                </div>
-            ))}
-        </motion.div>
-
-        {/* Interests Section - Restored & Refined */}
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="overflow-x-auto no-scrollbar -mx-6 px-6 pb-2"
-        >
-            <div className="flex gap-3">
-                {MOCK_USER.interests.map((interest) => (
-                    <div key={interest.id} className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-full shadow-sm min-w-max">
-                        <span className="text-lg">{interest.icon}</span>
-                        <span className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">{interest.label}</span>
+        {/* Interests Section - Story Style */}
+        <div className="mb-2">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 px-1">Qiziqqan janrlar</h3>
+            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
+                {(userData.interests?.length > 0 ? userData.interests : ["Badiiy", "Psixologiya", "Biznes", "Siyosat"]).map((int, i) => (
+                    <div key={i} className="flex flex-col items-center gap-2 group cursor-pointer shrink-0">
+                        <div className="w-16 h-16 rounded-full p-[3px] bg-gradient-to-tr from-[#52C6DA] to-blue-600">
+                            <div className="w-full h-full rounded-full border-2 border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                                <Hash size={18} className="text-[#52C6DA]" />
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 group-hover:text-[#52C6DA] transition-colors">{int}</span>
                     </div>
                 ))}
             </div>
-        </motion.div>
+        </div>
 
       </header>
 
-      {/* 2. Cinematic Library Grid */}
-      <section className="px-6">
-        <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-slate-800 pb-4">
-            <h2 className="font-serif text-xl italic text-slate-800 dark:text-slate-100">Shaxsiy Kutubxona</h2>
-            <div className="flex gap-2">
-                <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700"></span>
-                <span className="w-2 h-2 rounded-full bg-slate-800 dark:bg-slate-400"></span>
-            </div>
-        </div>
+      {/* Custom Tabs */}
+      <div className="flex px-6 mb-4 sticky top-0 bg-[#FDFBF7]/80 dark:bg-slate-900/80 backdrop-blur-xl z-30 py-2 border-b border-slate-100 dark:border-slate-800">
+          <button 
+             onClick={() => setActiveTab('library')}
+             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${activeTab === 'library' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400'}`}
+          >
+              <Grid size={16} />
+              <span className="text-[11px] font-black uppercase tracking-widest">To'plam</span>
+          </button>
+          <button 
+             onClick={() => setActiveTab('favorites')}
+             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${activeTab === 'favorites' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400'}`}
+          >
+              <Heart size={16} />
+              <span className="text-[11px] font-black uppercase tracking-widest">Sevimlilar</span>
+          </button>
+          <button 
+             onClick={() => setActiveTab('reviews')}
+             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${activeTab === 'reviews' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400'}`}
+          >
+              <MessageSquare size={16} />
+              <span className="text-[11px] font-black uppercase tracking-widest">Sharhlar</span>
+          </button>
+      </div>
 
-        <motion.div 
-             initial="hidden"
-             animate="visible"
-             variants={{
-                 visible: { transition: { staggerChildren: 0.1 } }
-             }}
-             className="grid grid-cols-2 gap-x-6 gap-y-10"
-        >
-            {BOOKS.map((book) => (
+      {/* 2. Personalized Library (Custom Grid) */}
+      <section className="px-6 pb-32">
+        <AnimatePresence mode="wait">
+            {activeTab === 'library' && (
                 <motion.div 
-                    key={book.id}
-                    variants={{
-                        hidden: { opacity: 0, y: 30 },
-                        visible: { opacity: 1, y: 0 }
-                    }}
-                    onClick={() => setSelectedBook(book)}
-                    className="group cursor-pointer"
+                    key="library"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="grid grid-cols-3 gap-3"
                 >
-                    {/* Realistic Book Cover */}
-                    <motion.div 
-                        layoutId={`book-card-${book.id}`}
-                        className="relative aspect-[2/3] mb-4 bg-slate-200 rounded-sm shadow-xl shadow-slate-200 group-hover:shadow-2xl group-hover:shadow-slate-300 group-hover:-translate-y-2 transition-all duration-500 ease-out"
-                    >
-                        <Image 
-                            src={book.cover} 
-                            alt={book.title} 
-                            fill 
-                            className="object-cover rounded-sm"
-                            unoptimized
-                        />
-                        {/* Lighting effect */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/10 pointer-events-none mix-blend-overlay"></div>
-                    </motion.div>
-
-                    <div className="space-y-1 text-center">
-                        <h3 className="font-serif text-lg leading-tight text-slate-900 dark:text-slate-100 group-hover:text-[#52C6DA] transition-colors duration-300">
-                            {book.title}
-                        </h3>
-                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                            {book.author}
-                        </p>
-                    </div>
+                    {books.length === 0 ? (
+                        <EmptyState message="Kutubxonangiz bo'sh" />
+                    ) : (
+                        books.map((book) => (
+                            <BookGridItem key={book.id} book={book} onSelect={setSelectedBook} />
+                        ))
+                    )}
                 </motion.div>
-            ))}
-        </motion.div>
+            )}
+
+            {activeTab === 'favorites' && (
+                <motion.div 
+                    key="favorites"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="grid grid-cols-3 gap-3"
+                >
+                    {favorites.length === 0 ? (
+                        <EmptyState message="Sevimlilar ro'yxati bo'sh" icon={<Heart size={24} />} />
+                    ) : (
+                        favorites.map((book) => (
+                            <BookGridItem 
+                                key={book._id} 
+                                book={{
+                                    id: book._id,
+                                    title: book.title,
+                                    cover: book.images?.[0] || book.image || "https://placehold.co/400x600/png?text=Kitob",
+                                    author: book.author
+                                }} 
+                                onSelect={() => setSelectedBook({ ...book, cover: book.images?.[0] || book.image })} 
+                            />
+                        ))
+                    )}
+                </motion.div>
+            )}
+
+            {activeTab === 'reviews' && (
+                <motion.div 
+                    key="reviews"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-4"
+                >
+                    {reviews.length === 0 ? (
+                        <EmptyState message="Hali sharhlar yozilmagan" icon={<MessageSquare size={24} />} />
+                    ) : (
+                        reviews.map((review) => (
+                            <div key={review._id} className="bg-white dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex gap-4">
+                                <div className="w-16 aspect-[2/3] relative rounded-lg overflow-hidden flex-shrink-0">
+                                    <Image src={review.book?.images?.[0] || review.book?.image || "https://placehold.co/400x600/png?text=Kitob"} alt={review.book?.title} fill className="object-cover" unoptimized />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">{review.book?.title}</h4>
+                                    <div className="flex text-amber-500 gap-0.5 mb-2">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} size={10} fill={i < review.rating ? "currentColor" : "none"} strokeWidth={i < review.rating ? 0 : 2} />
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">{review.comment}</p>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </motion.div>
+            )}
+        </AnimatePresence>
       </section>
 
       {/* 3. Detail Modal (Editorial Style) */}
       <AnimatePresence>
         {selectedBook && (
+          <div className="fixed inset-0 z-[100] flex flex-col justify-end">
+            {/* Backdrop */}
             <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-[#FDFBF7]/95 dark:bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6"
-                onClick={() => setSelectedBook(null)}
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               exit={{ opacity: 0 }}
+               onClick={() => setSelectedBook(null)}
+               className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
+            />
+            
+            {/* Modal Content */}
+            <motion.div 
+               layoutId={`book-${selectedBook.id}`}
+               initial={{ y: "100%" }}
+               animate={{ y: 0 }}
+               exit={{ y: "100%" }}
+               transition={{ type: "spring", damping: 25, stiffness: 200 }}
+               className="relative bg-white dark:bg-slate-900 w-full max-h-[92vh] rounded-t-[40px] shadow-2xl overflow-hidden flex flex-col"
             >
-                <motion.div 
-                    layoutId={`book-card-${selectedBook.id}`}
-                    className="w-full max-w-lg relative bg-white dark:bg-slate-800 shadow-2xl rounded-2xl overflow-hidden"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <button 
-                         onClick={() => setSelectedBook(null)}
-                         className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/20 dark:bg-black/20 backdrop-blur-md flex items-center justify-center text-slate-900 dark:text-white hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-slate-900 transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
+                {/* Pull Handle */}
+                <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mt-4 mb-4" />
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2">
-                        {/* Image Side */}
-                        <div className="relative aspect-[3/4] sm:aspect-auto">
+                <div className="flex-1 overflow-y-auto px-8 pb-32 custom-scrollbar">
+                    {/* Header Info */}
+                    <div className="flex gap-6 mb-10 mt-4">
+                        <div className="w-32 aspect-[2/3] relative rounded-xl shadow-2xl overflow-hidden shrink-0">
                             <Image 
                                 src={selectedBook.cover} 
-                                alt={selectedBook.title} 
-                                fill 
+                                alt={selectedBook.title}
+                                fill
                                 className="object-cover"
                                 unoptimized
                             />
-                            <div className="absolute inset-0 bg-black/10"></div>
                         </div>
-
-                        {/* Content Side */}
-                        <div className="p-8 flex flex-col justify-center">
-                            <span className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-bold uppercase tracking-widest rounded-full w-fit mb-6">
-                                {selectedBook.status}
-                            </span>
-
-                            <h2 className="text-3xl font-serif text-slate-900 dark:text-white mb-2 leading-tight">
-                                {selectedBook.title}
-                            </h2>
-                            <p className="text-sm font-bold uppercase tracking-wide text-[#52C6DA] mb-8">
-                                {selectedBook.author}
-                            </p>
-
-                            <div className="relative pl-6 border-l-2 border-[#52C6DA]/30">
-                                <Quote size={24} className="absolute -top-3 -left-[13px] text-[#52C6DA] bg-white dark:bg-slate-800" fill="currentColor" />
-                                <p className="text-slate-600 dark:text-slate-300 font-serif italic text-lg leading-relaxed">
-                                    {selectedBook.review}
-                                </p>
-                            </div>
-
-                            <div className="mt-10 flex gap-4">
-                                <button className="flex-1 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:bg-[#52C6DA] dark:hover:bg-[#52C6DA] transition-colors rounded-sm">
-                                    O&apos;qish
-                                </button>
-                                <button className="w-12 flex items-center justify-center border border-slate-200 dark:border-slate-700 hover:border-slate-900 dark:hover:border-white transition-colors rounded-sm text-slate-600 dark:text-slate-300">
-                                    <MoreHorizontal size={20} />
-                                </button>
-                            </div>
+                        <div className="pt-2">
+                             <h2 className="text-2xl font-serif font-black text-slate-900 dark:text-white leading-tight mb-2">{selectedBook.title}</h2>
+                             <p className="text-xs font-bold uppercase tracking-widest text-[#52C6DA] mb-4">{selectedBook.author}</p>
+                             <div className="flex gap-2">
+                                 <span className="px-2 py-1 bg-slate-50 dark:bg-slate-800 rounded text-[9px] font-black uppercase tracking-widest text-slate-400">Personal Copy</span>
+                             </div>
                         </div>
                     </div>
-                </motion.div>
+
+                    {/* Personal Reflection / Review Section */}
+                    {userData.isOwner && (
+                        <div className="mb-10 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800">
+                             <div className="flex items-center gap-2 mb-4">
+                                 <PenLine size={16} className="text-[#52C6DA]" />
+                                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-900 dark:text-white">Sharh va Baxo</h4>
+                             </div>
+                             
+                             <form onSubmit={handleReviewSubmit} className="space-y-4">
+                                 {/* Star Rating */}
+                                 <div className="flex gap-1">
+                                     {[1, 2, 3, 4, 5].map((star) => (
+                                         <button
+                                             key={star}
+                                             type="button"
+                                             onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                             className={`p-1 transition-transform active:scale-90 ${reviewForm.rating >= star ? 'text-amber-400' : 'text-slate-300'}`}
+                                         >
+                                             <Sparkles size={20} fill={reviewForm.rating >= star ? 'currentColor' : 'none'} />
+                                         </button>
+                                     ))}
+                                 </div>
+                                 
+                                 <textarea 
+                                    value={reviewForm.comment}
+                                    onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                                    placeholder="Ushbu kitob haqida fikringiz..."
+                                    className="w-full bg-white dark:bg-slate-900 border-none rounded-2xl p-4 text-sm font-medium focus:ring-2 focus:ring-[#52C6DA] transition-all resize-none min-h-[100px]"
+                                 />
+                                 
+                                 <button 
+                                    disabled={isSubmittingReview}
+                                    className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-[#52C6DA] dark:hover:bg-[#52C6DA] transition-colors disabled:opacity-50"
+                                 >
+                                    {isSubmittingReview ? "Yuborilmoqda..." : "Saqlash"}
+                                 </button>
+                             </form>
+                        </div>
+                    )}
+
+                    {/* Shared Thoughts (If visiting or if review already exists) */}
+                    {selectedBook.review && (
+                        <div className="relative mb-10">
+                            <Quote className="absolute -top-4 -left-2 text-[#52C6DA]/20" size={48} />
+                            <p className="relative z-10 font-serif italic text-lg text-slate-700 dark:text-slate-300 leading-relaxed pl-6">
+                                {selectedBook.review}
+                            </p>
+                        </div>
+                    )}
+                    
+                     <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex gap-3">
+                         <button 
+                            onClick={() => router.push(`/mobile/book/${selectedBook.id || selectedBook._id}`)}
+                            className="flex-1 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#52C6DA] transition-colors"
+                         >
+                            Kitobni ko'rish
+                         </button>
+                         <button 
+                            onClick={() => setSelectedBook(null)}
+                            className="px-6 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white"
+                         >
+                            Yopish
+                         </button>
+                     </div>
+                </div>
             </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
+      </motion.div>
     </div>
   );
 }
+
+const BookGridItem = ({ book, onSelect }) => (
+    <motion.div 
+        layoutId={`book-${book.id}`}
+        onClick={() => onSelect(book)}
+        className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-200 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm active:scale-95 transition-transform"
+    >
+        <Image 
+            src={book.cover} 
+            alt={book.title}
+            fill
+            className="object-cover"
+            unoptimized
+        />
+        {book.type === 'rental' && (
+            <div className="absolute top-2 right-2 text-white drop-shadow-md">
+                <Sparkles size={12} fill="currentColor" />
+            </div>
+        )}
+    </motion.div>
+);
+
+const EmptyState = ({ message, icon = <BookOpen size={24} /> }) => (
+    <div className="col-span-3 text-center py-20 bg-white/50 dark:bg-slate-800/30 rounded-[32px] border border-dashed border-slate-200 dark:border-slate-700">
+        <div className="w-14 h-14 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300 dark:text-slate-600">
+            {icon}
+        </div>
+        <p className="text-xs text-slate-400 font-black uppercase tracking-widest">{message}</p>
+    </div>
+);

@@ -4,36 +4,27 @@ import AuthorSkeleton from "../AuthorSkeleton";
 import AuthorCard from "../AuthorCard/AuthorCard";
 import useAutoScroll from "../hooks/useAutoScoll";
 
-export default function PopularAuthors() {
-  const [loading, setLoading] = useState(true);
+export default function PopularAuthors({ data }) {
+  const [authors, setAuthors] = useState(data || []);
+  const [loading, setLoading] = useState(!data);
   const scrollRef = useAutoScroll(0.5);
 
-  const authors = [
-    {
-      name: "Abdulla Qodiriy",
-      books: 12,
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
-    },
-    {
-      name: "Alisher Navoiy",
-      books: 8,
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
-    },
-    {
-      name: "O‘tkir Hoshimov",
-      books: 15,
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-    },
-    {
-      name: "Pirimqul Qodirov",
-      books: 10,
-      image: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef",
-    },
-  ];
-
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(t);
+    if (data) return;
+    async function fetchAuthors() {
+        try {
+            const res = await fetch("/api/authors/popular");
+            const data = await res.json();
+            if (data.success && data.data.length > 0) {
+                setAuthors(data.data);
+            }
+        } catch (e) {
+            console.error("Authors fetch error:", e);
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchAuthors();
   }, []);
 
   return (
@@ -49,7 +40,7 @@ export default function PopularAuthors() {
       >
         {loading
           ? Array.from({ length: 6 }).map((_, i) => <AuthorSkeleton key={i} />)
-          : authors
+          : Array.isArray(authors) && authors
               .concat(authors)
               .map((author, i) => <AuthorCard key={i} author={author} />)}
       </div>

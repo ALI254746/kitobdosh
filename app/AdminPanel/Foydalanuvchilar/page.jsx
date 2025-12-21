@@ -70,28 +70,81 @@ export default function UsersPage() {
   const { darkMode } = useAdmin();
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-
-  // Initial Data
-  const users = [
-    { id: 1, initials: "AK", name: "Alisher Karimov", email: "alisher.k@example.com", bought: 12, rented: 5, joined: "15 Yan" },
-    { id: 2, initials: "DN", name: "Dilnoza Normatova", email: "dilnoza.n@example.com", bought: 8, rented: 3, joined: "12 Yan" },
-    { id: 3, initials: "SO", name: "Sardor Olimov", email: "sardor.o@example.com", bought: 15, rented: 7, joined: "10 Yan" },
-    { id: 4, initials: "MU", name: "Murod Usmonov", email: "murod.u@example.com", bought: 5, rented: 2, joined: "18 Yan" },
-    { id: 5, initials: "NZ", name: "Nazira Zokirova", email: "nazira.z@example.com", bought: 9, rented: 4, joined: "20 Yan" },
-    { id: 6, initials: "JB", name: "Jahongir Bozorov", email: "jahongir.b@example.com", bought: 11, rented: 6, joined: "22 Yan" },
-    { id: 7, initials: "LT", name: "Lola Toirova", email: "lola.t@example.com", bought: 7, rented: 3, joined: "25 Yan" },
-    { id: 8, initials: "FR", name: "Feruza Rasulova", email: "feruza.r@example.com", bought: 13, rented: 8, joined: "28 Yan" },
-  ];
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+    const fetchUsers = async () => {
+        try {
+            const res = await fetch('/api/admin/users');
+            const data = await res.json();
+            if(data.success) {
+                setUsers(data.data);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchUsers();
   }, []);
 
   const filteredUsers = users.filter(user => 
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      (user.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) || 
+      (user.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   );
+
+  // Statistics Calculation
+  const totalUsers = users.length;
+  // Let's assume 'createdAt' determines 'New (Today)' - simplified
+  const today = new Date().toDateString();
+  const newUsers = users.filter(u => new Date(u.createdAt).toDateString() === today).length;
+  const buyers = users.filter(u => u.bought > 0).length;
+  const renters = users.filter(u => u.rented > 0).length;
+
+  /* Messenging Logic */
+  const [msgModal, setMsgModal] = useState({ open: false, targetId: null, targetName: '' });
+  const [msgText, setMsgText] = useState("");
+  const [sendingMsg, setSendingMsg] = useState(false);
+
+  const openMsgModal = (user) => {
+      setMsgModal({ open: true, targetId: user.id, targetName: user.name });
+      setMsgText("");
+  };
+
+  const handleSendMessage = async () => {
+      if(!msgText.trim()) return;
+      setSendingMsg(true);
+      try {
+          const res = await fetch('/api/notifications', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  userId: msgModal.targetId,
+                  title: "Admin Xabari",
+                  message: msgText,
+                  type: 'info'
+              })
+          });
+          const data = await res.json();
+          if(data.success) {
+               // Show success toast (need to make sure hot-toast is imported or available)
+               alert("Xabar yuborildi"); 
+               setMsgModal({ open: false, targetId: null, targetName: '' });
+          } else {
+               alert("Xatolik");
+          }
+      } catch (e) {
+          console.error(e);
+      } finally {
+          setSendingMsg(false);
+      }
+  };
+
+  const handleViewProfile = (userId) => {
+       // Redirect to profile page with ID query
+       window.location.href = `/mainPage/profile?userId=${userId}`;
+  };
 
   return (
     <div className={`min-h-screen p-6 sm:p-8 transition-colors duration-300 ${darkMode ? "bg-[#0b1a00] text-white" : "bg-[#f8fafc] text-[#163201]"}`}>
@@ -104,7 +157,7 @@ export default function UsersPage() {
                 Foydalanuvchilar
             </h1>
             <p className={`text-sm font-medium ${darkMode ? "text-[#A3ED96]/60" : "text-gray-500"}`}>
-                Jami 1,247 ta faol kitobxon
+                Jami {totalUsers} ta faol kitobxon
             </p>
          </div>
       </div>
@@ -124,10 +177,10 @@ export default function UsersPage() {
         <>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <StatCard title="Jami Foydalanuvchilar" value="1,247" icon={FaUsers} color="blue" darkMode={darkMode} />
-                <StatCard title="Yangi (Bugun)" value="23" icon={FaUserPlus} color="green" darkMode={darkMode} />
-                <StatCard title="Xaridorlar" value="842" icon={FaShoppingCart} color="yellow" darkMode={darkMode} />
-                <StatCard title="Ijarachilar" value="405" icon={FaBookReader} color="pink" darkMode={darkMode} />
+                <StatCard title="Jami Foydalanuvchilar" value={totalUsers} icon={FaUsers} color="blue" darkMode={darkMode} />
+                <StatCard title="Yangi (Bugun)" value={newUsers} icon={FaUserPlus} color="green" darkMode={darkMode} />
+                <StatCard title="Xaridorlar" value={buyers} icon={FaShoppingCart} color="yellow" darkMode={darkMode} />
+                <StatCard title="Ijarachilar" value={renters} icon={FaBookReader} color="pink" darkMode={darkMode} />
             </div>
 
             {/* Filter Toolbar */}
@@ -180,11 +233,18 @@ export default function UsersPage() {
                             `}
                         >
                             {/* Avatar */}
-                            <div className={`w-20 h-20 rounded-full mb-4 flex items-center justify-center text-2xl font-black shadow-lg
-                                ${darkMode ? "bg-[#A3ED96] text-[#163201]" : "bg-[#163201] text-white"}
-                            `}>
-                                {user.initials}
-                            </div>
+                            {user.avatar ? (
+                                <div className="w-20 h-20 rounded-full mb-4 overflow-hidden border-2 border-white shadow-lg relative">
+                                    <img src={user.avatar} alt={user.name} className="object-cover w-full h-full" />
+                                </div>
+                            ) : (
+                                <div className={`w-20 h-20 rounded-full mb-4 flex items-center justify-center text-2xl font-black shadow-lg
+                                    ${darkMode ? "bg-[#A3ED96] text-[#163201]" : "bg-[#163201] text-white"}
+                                `}>
+                                    {user.initials}
+                                </div>
+                            )}
+
 
                             <h3 className={`text-lg font-black mb-1 ${darkMode ? "text-white" : "text-gray-900"}`}>
                                 {user.name}
@@ -209,7 +269,9 @@ export default function UsersPage() {
 
                             {/* Actions */}
                             <div className="grid grid-cols-2 gap-3 w-full mt-auto">
-                                <button className={`py-2 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2
+                                <button 
+                                    onClick={() => handleViewProfile(user.id)}
+                                    className={`py-2 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2
                                     ${darkMode 
                                         ? "bg-white/10 text-white hover:bg-white/20" 
                                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -217,7 +279,9 @@ export default function UsersPage() {
                                 `}>
                                     <FaEye /> Profil
                                 </button>
-                                <button className={`py-2 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2
+                                <button 
+                                    onClick={() => openMsgModal(user)}
+                                    className={`py-2 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2
                                     ${darkMode 
                                         ? "bg-[#A3ED96]/20 text-[#A3ED96] hover:bg-[#A3ED96]/30" 
                                         : "bg-blue-100 text-blue-600 hover:bg-blue-200"
@@ -230,6 +294,43 @@ export default function UsersPage() {
                     ))}
                 </AnimatePresence>
             </div>
+
+            {/* Message Modal */}
+            {msgModal.open && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                      <div className={`w-full max-w-md p-6 rounded-2xl shadow-xl transform transition-all ${darkMode ? "bg-[#1e293b]" : "bg-white"}`}>
+                          <h3 className={`text-lg font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
+                              Xabar yozish: {msgModal.targetName}
+                          </h3>
+                          <textarea 
+                              className={`w-full p-3 rounded-xl min-h-[100px] outline-none border transition-all mb-4
+                                  ${darkMode ? "bg-black/20 border-white/10 text-white focus:border-[#A3ED96]" : "bg-gray-50 border-gray-200 text-gray-900 focus:border-blue-500"}
+                              `}
+                              placeholder="Xabarni kiriting..."
+                              value={msgText}
+                              onChange={(e) => setMsgText(e.target.value)}
+                          />
+                          <div className="flex justify-end gap-3">
+                              <button 
+                                  onClick={() => setMsgModal({ ...msgModal, open: false })}
+                                  className={`px-4 py-2 rounded-xl text-sm font-bold ${darkMode ? "text-gray-400 hover:bg-white/5" : "text-gray-500 hover:bg-gray-100"}`}
+                              >
+                                  Bekor qilish
+                              </button>
+                              <button 
+                                  onClick={handleSendMessage}
+                                  disabled={sendingMsg || !msgText.trim()}
+                                  className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2
+                                      ${darkMode ? "bg-[#A3ED96] text-[#163201]" : "bg-[#163201] text-white"}
+                                      ${(sendingMsg || !msgText.trim()) ? "opacity-50 cursor-not-allowed" : "hover:shadow-lg"}
+                                  `}
+                              >
+                                  {sendingMsg ? "Yuborilmoqda..." : "Yuborish"}
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+            )}
         </>
       )}
 
