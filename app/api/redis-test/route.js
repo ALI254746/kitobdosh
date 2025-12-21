@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import redis from '@/lib/redis';
 
+// Vercel build timeout xatoligini oldini olish uchun
+// Bu route faqat runtime'da ishlaydi, build vaqtida emas
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     // 1. Check connection with ping
