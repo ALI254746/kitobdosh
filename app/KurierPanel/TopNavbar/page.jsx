@@ -1,231 +1,209 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaBell, FaSun, FaMoon, FaSignOutAlt, FaEllipsisV, FaBookOpen } from "react-icons/fa";
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useMain } from "../../mainPage/MainContext";
-import useSWR, { mutate } from 'swr';
+import { AnimatePresence, motion } from "framer-motion";
+import { Bell, ChevronDown, LogOut, Settings, Undo2, User, Wallet } from "lucide-react";
+import useSWR, { mutate } from "swr";
 import Pusher from "pusher-js";
 import { signOut } from "next-auth/react";
 
 const fetcher = (url) => fetch(url).then((res) => res.json());
 
-export default function TopNavbar({ mobileMenuOpen, setMobileMenuOpen }) {
+export default function TopNavbar() {
   const pathname = usePathname();
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { darkMode, setDarkMode } = useMain();
-  
   const notifRef = useRef(null);
   const menuRef = useRef(null);
+  const isHome = pathname === "/KurierPanel";
 
-  // Close popovers on outside click
+  const { data: notifRes } = useSWR("/api/notifications", fetcher);
+  const { data: profileRes } = useSWR("/api/user/profile", fetcher);
+  const user = profileRes?.data?.user;
+  const notifications = Array.isArray(notifRes?.data) ? notifRes.data : [];
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const name = user?.fullName || "Kuryer";
+
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notifRef.current && !notifRef.current.contains(event.target)) {
-        setNotifOpen(false);
-      }
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-      }
+    const close = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) setNotifOpen(false);
+      if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
   }, []);
 
-  const { data: notifRes } = useSWR('/api/notifications', fetcher);
-  const userData = useSWR('/api/user/profile', fetcher).data?.data?.user;
-
-  // Real-time Pusher Integration
   useEffect(() => {
-    if (!userData?._id) return;
+    if (!user?._id || !process.env.NEXT_PUBLIC_PUSHER_KEY) return;
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+    });
+    const channel = pusher.subscribe(`user-${user._id}`);
+    channel.bind("notification-new", () => {
+      const audio = new Audio("/sounds/notification.mp3");
+      audio.play().catch(() => {});
+      mutate("/api/notifications");
+    });
+    return () => {
+      pusher.unsubscribe(`user-${user._id}`);
+      pusher.disconnect();
+    };
+  }, [user?._id]);
 
-    const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
-    const pusherCluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
-
-    if (pusherKey) {
-        const pusher = new Pusher(pusherKey, { cluster: pusherCluster });
-        const channel = pusher.subscribe(`user-${userData._id}`);
-        
-        channel.bind("notification-new", (data) => {
-             const audio = new Audio('/sounds/notification.mp3'); 
-             audio.play().catch(e => console.log(e));
-             // Revalidate SWR notifications
-             mutate('/api/notifications');
-        });
-
-        return () => pusher.unsubscribe(`user-${userData._id}`);
-    }
-  }, [userData?._id]);
-
-  const notifications = notifRes?.data?.filter(n => ['courier_message', 'info'].includes(n.type)) || [];
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  const titles = {
-    "/KurierPanel/buyurtmalar": "Buyurtmalar",
-    "/KurierPanel/faolTopshiriqlar": "Faol topshiriqlar",
-    "/admin/completed": "Yakunlanganlar",
-    "/KurierPanel/kitobniQaytarish": "Kitobni qaytarish",
-    "/KurierPanel/profile": "Profil",
+  const markAll = async () => {
+    await fetch("/api/notifications", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    mutate("/api/notifications");
   };
 
-  const title = titles[pathname] || "Kurier Panel";
-
   return (
-    <header className="fixed top-0 left-0 lg:left-64 right-0 h-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-4 sm:px-8 z-40 transition-all duration-300">
-      
-      {/* LEFT: Logo & Title */}
-      <div className="flex items-center gap-4">
-        {/* Mobile Logo */}
-        <div className="flex items-center gap-2 lg:hidden">
-             <div className="p-2.5 bg-[#1F2937] dark:bg-white rounded-xl text-white dark:text-slate-900 shadow-lg shadow-slate-200 dark:shadow-none transition-transform active:scale-95">
-                <FaBookOpen />
-             </div>
-             <span className="font-black text-[#1F2937] dark:text-white tracking-tight">Kitobdosh</span>
-        </div>
-        
-        {/* Desktop Title */}
-        <div className="hidden sm:flex flex-col">
-            <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                {title}
-            </h1>
-            <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#96C7B9] animate-pulse" />
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black tracking-widest uppercase">System Active</p>
-            </div>
-        </div>
-      </div>
-
-      {/* RIGHT: Actions */}
-      <div className="flex items-center gap-3">
-        
-        {/* Dark Mode Toggle */}
-        <button 
-          onClick={() => setDarkMode(!darkMode)}
-          className="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-[#96C7B9] flex items-center justify-center transition-all text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white shadow-sm"
-        >
-            <AnimatePresence mode="wait" initial={false}>
-                {darkMode ? (
-                    <motion.div
-                        key="moon"
-                        initial={{ scale: 0.5, rotate: -45, opacity: 0 }}
-                        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                        exit={{ scale: 0.5, rotate: 45, opacity: 0 }}
-                    >
-                        <FaMoon />
-                    </motion.div>
-                ) : (
-                     <motion.div
-                        key="sun"
-                        initial={{ scale: 0.5, rotate: 45, opacity: 0 }}
-                        animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                        exit={{ scale: 0.5, rotate: -45, opacity: 0 }}
-                    >
-                        <FaSun />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </button>
-
-        {/* Notifications */}
-        <div className="relative" ref={notifRef}>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setNotifOpen(!notifOpen)}
-            className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all relative border shadow-sm
-                ${notifOpen 
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-lg" 
-                    : "bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-700 hover:border-[#96C7B9]"
-                }
-            `}
-          >
-            <FaBell />
-            {notifications.length > 0 && (
-                <span className="absolute top-3 right-3.5 w-2 h-2 bg-red-500 border-2 border-white dark:border-slate-800 rounded-full animate-bounce"></span>
-            )}
-          </motion.button>
-
-          <AnimatePresence>
-            {notifOpen && (
-              <motion.div 
-                initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                className="absolute right-0 mt-4 w-85 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] shadow-2xl z-50 overflow-hidden"
-              >
-                <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
-                  <h4 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">Xabarnomalar</h4>
-                  <span className="text-[10px] font-black text-white bg-[#96C7B9] px-2.5 py-1 rounded-full uppercase tracking-widest">
-                      {notifications.length}
-                  </span>
-                </div>
-                <div className="max-h-72 overflow-y-auto p-4 space-y-2 no-scrollbar">
-                  {notifications.length === 0 ? (
-                      <div className="py-12 text-center text-slate-300 dark:text-slate-600">
-                          <FaBell size={32} className="mx-auto mb-2 opacity-20" />
-                          <p className="text-[10px] font-black uppercase tracking-widest">Xabarlar yo'q</p>
-                      </div>
-                  ) : (
-                      notifications.map((note) => (
-                        <div key={note._id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-3xl cursor-pointer transition-all group border border-transparent hover:border-slate-100 dark:hover:border-slate-700">
-                          <p className="text-slate-900 dark:text-white text-sm font-black group-hover:text-[#96C7B9] transition-colors leading-tight">{note.title}</p>
-                          <p className="text-slate-500 dark:text-slate-400 text-xs mt-1.5 line-clamp-2 font-medium leading-relaxed">{note.message}</p>
-                          <div className="flex items-center gap-2 mt-3">
-                              <span className="w-1 h-1 rounded-full bg-[#96C7B9]" />
-                              <span className="text-slate-400 dark:text-slate-600 text-[10px] font-black uppercase tracking-widest">
-                                  {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                          </div>
-                        </div>
-                      ))
-                  )}
-                </div>
-                <button
-                    onClick={() => setNotifOpen(false)}
-                    className="w-full py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white border-t border-slate-50 dark:border-slate-800 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                >
-                    Mark All as Read
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-[#070E1C]/90 px-4 py-3 backdrop-blur-xl sm:px-6">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            {isHome ? "Kuryer paneli" : pageTitle(pathname)}
+          </h1>
+          <p className="text-xs leading-snug text-[#8EA0B8] sm:text-sm">
+            {isHome ? "Bugun ham birga, bilim yaqinroq!" : "Kuryer paneli"}
+          </p>
         </div>
 
-        {/* Menu (Popover) */}
-        <div className="relative" ref={menuRef}>
-            <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="w-11 h-11 flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl transition-all shadow-sm"
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="relative" ref={notifRef}>
+            <button
+              type="button"
+              aria-label="Bildirishnomalar"
+              onClick={() => {
+                setNotifOpen((v) => !v);
+                setMenuOpen(false);
+              }}
+              className="relative flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-[#121A2F] text-white"
             >
-                <FaEllipsisV />
-            </motion.button>
-
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
             <AnimatePresence>
-                {menuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                        className="absolute right-0 mt-4 w-56 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl shadow-2xl z-50 p-2 overflow-hidden"
-                    >
-                        <div className="p-3 border-b border-slate-50 dark:border-slate-800 mb-1 px-4">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Akkaunt</p>
-                        </div>
-                        <button 
-                            onClick={() => signOut({ callbackUrl: '/' })}
-                            className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest"
-                        >
-                            <FaSignOutAlt />
-                            Chiqish
-                        </button>
-                    </motion.div>
-                )}
+              {notifOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-white/10 bg-[#10192C] shadow-2xl"
+                >
+                  <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                    <p className="text-sm font-semibold">Bildirishnomalar</p>
+                    <span className="rounded-full bg-[#2F6BFF] px-2 py-0.5 text-[10px] font-semibold">{notifications.length}</span>
+                  </div>
+                  <div className="max-h-72 space-y-1 overflow-y-auto p-2">
+                    {notifications.length === 0 && (
+                      <p className="px-2 py-8 text-center text-sm text-[#8EA0B8]">Xabarlar yo&apos;q</p>
+                    )}
+                    {notifications.slice(0, 8).map((note) => (
+                      <div key={note._id} className="rounded-xl px-3 py-2 hover:bg-white/5">
+                        <p className="text-sm font-medium text-white">{note.title || "-"}</p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-[#8EA0B8]">{note.message || "-"}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex border-t border-white/10">
+                    <button type="button" onClick={markAll} className="flex-1 px-3 py-3 text-xs text-[#8EA0B8] hover:text-white">
+                      Barchasini o&apos;qilgan
+                    </button>
+                    <Link href="/KurierPanel/bildirishnomalar" onClick={() => setNotifOpen(false)} className="flex-1 px-3 py-3 text-center text-xs text-[#7EB6FF]">
+                      Hammasini ko&apos;rish
+                    </Link>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
-        </div>
+          </div>
 
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen((v) => !v);
+                setNotifOpen(false);
+              }}
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-[#121A2F] py-1 pl-1 pr-2"
+            >
+              {user?.avatar ? (
+                <img src={user.avatar} alt="" className="h-9 w-9 rounded-full object-cover" />
+              ) : (
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1D4ED8] text-sm font-semibold">
+                  {name.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+              <span className="hidden min-[380px]:block text-left">
+                <span className="block max-w-[8rem] truncate text-xs font-semibold leading-tight">{name}</span>
+                <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Onlayn
+                </span>
+              </span>
+              <ChevronDown size={14} className="text-[#8EA0B8]" />
+            </button>
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-white/10 bg-[#10192C] p-1 shadow-2xl"
+                >
+                  <MenuLink href="/KurierPanel/profile" icon={<User size={16} />} onClick={() => setMenuOpen(false)}>Profil</MenuLink>
+                  <MenuLink href="/KurierPanel/hamyon" icon={<Wallet size={16} />} onClick={() => setMenuOpen(false)}>Hamyon</MenuLink>
+                  <MenuLink href="/KurierPanel/bildirishnomalar" icon={<Bell size={16} />} onClick={() => setMenuOpen(false)}>Bildirishnomalar</MenuLink>
+                  <MenuLink href="/KurierPanel/kitobniQaytarish" icon={<Undo2 size={16} />} onClick={() => setMenuOpen(false)}>Kitobni qaytarish</MenuLink>
+                  <MenuLink href="/KurierPanel/sozlamalar" icon={<Settings size={16} />} onClick={() => setMenuOpen(false)}>Sozlamalar</MenuLink>
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-rose-300 hover:bg-rose-500/10"
+                  >
+                    <LogOut size={16} />
+                    Chiqish
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </header>
   );
+}
+
+function MenuLink({ href, icon, children, onClick }) {
+  return (
+    <Link href={href} onClick={onClick} className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-slate-100 hover:bg-white/5">
+      {icon}
+      {children}
+    </Link>
+  );
+}
+
+function pageTitle(pathname) {
+  const titles = {
+    "/KurierPanel/buyurtmalar": "Topshiriqlar",
+    "/KurierPanel/faolTopshiriqlar": "Faol topshiriqlar",
+    "/KurierPanel/yakunlanganlar": "Yakunlanganlar",
+    "/KurierPanel/xarita": "Xarita",
+    "/KurierPanel/statistika": "Statistika",
+    "/KurierPanel/sozlamalar": "Sozlamalar",
+    "/KurierPanel/hamyon": "Hamyon",
+    "/KurierPanel/bildirishnomalar": "Bildirishnomalar",
+    "/KurierPanel/profile": "Profil",
+    "/KurierPanel/kitobniQaytarish": "Kitobni qaytarish",
+  };
+  return titles[pathname] || "Kuryer paneli";
 }

@@ -14,6 +14,53 @@ import { getOrSetCache, clearCache } from "@/lib/utils/cache";
 export const dynamic = 'force-dynamic';
 
 const COURIER_CACHE_KEY = 'courier_orders_all';
+const COURIER_CACHE_KEY_DELIVERED = 'courier_orders_all_delivered';
+
+function mapRent(r) {
+    return {
+        id: r._id?.toString(),
+        userId: r.user?.toString?.() || (r.user ? String(r.user) : null),
+        courierId: r.courierId?.toString?.() || (r.courierId ? String(r.courierId) : null),
+        type: 'rent',
+        customer: r.fullName || null,
+        address: r.address || null,
+        phone: r.phone || null,
+        book: r.bookTitle || null,
+        author: r.author || "Noma'lum",
+        image: r.bookImage || "https://placehold.co/100x150.png",
+        status: r.courierStatus || 'new',
+        paymentStatus: r.paymentStatus || null,
+        paymentMethod: r.paymentMethod || null,
+        landmark: r.orientir || r.landmark || null,
+        lat: typeof r.lat === 'number' ? r.lat : null,
+        lng: typeof r.lng === 'number' ? r.lng : null,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt
+    };
+}
+
+function mapOrder(o) {
+    return {
+        id: o._id?.toString(),
+        userId: o.user?.toString?.() || (o.user ? String(o.user) : null),
+        courierId: o.courierId?.toString?.() || (o.courierId ? String(o.courierId) : null),
+        type: 'buy',
+        customer: o.customer?.name || null,
+        address: o.customer?.address || null,
+        phone: o.customer?.phone || null,
+        book: (o.items || []).map(i => i.title).filter(Boolean).join(", ") || null,
+        author: "To'plam",
+        image: "https://placehold.co/100x150.png?text=Order",
+        status: o.courierStatus || 'new',
+        paymentStatus: o.paymentStatus || null,
+        paymentMethod: o.paymentMethod || null,
+        landmark: o.customer?.orientir || o.customer?.landmark || o.orientir || o.landmark || null,
+        lat: typeof o.customer?.lat === 'number' ? o.customer.lat : null,
+        lng: typeof o.customer?.lng === 'number' ? o.customer.lng : null,
+        createdAt: o.createdAt,
+        updatedAt: o.updatedAt
+    };
+}
 
 async function getUserId() {
     // 1. Check NextAuth Session (Primary)
@@ -32,58 +79,41 @@ async function getUserId() {
     }
 }
 
-export async function GET() {
+export async function GET(req) {
     try {
         await dbConnect();
-        
-        const combined = await getOrSetCache(COURIER_CACHE_KEY, async () => {
-            // Fetch Approved Rents
-            const rents = await Rent.find({ 
-                status: 'approved',
-                courierStatus: { $ne: 'delivered' } 
-            }).sort({ createdAt: -1 });
 
-            // Fetch Processing Orders
-            const orders = await Order.find({ 
-                status: 'processing',
-                courierStatus: { $ne: 'delivered' }
-            }).sort({ createdAt: -1 });
+        // Default payload stays the open queue so the admin pickup tab is unchanged.
+        // The courier panel asks for includeDelivered=1 to fill Yakunlangan / hamyon / statistika.
+        const includeDelivered = new URL(req.url).searchParams.get('includeDelivered') === '1';
+        const cacheKey = includeDelivered ? COURIER_CACHE_KEY_DELIVERED : COURIER_CACHE_KEY;
 
-            // Map to common structure
+        const combined = await getOrSetCache(cacheKey, async () => {
+            const rentQuery = includeDelivered
+                ? {
+                    $or: [
+                        { status: 'approved', courierStatus: { $ne: 'delivered' } },
+                        { courierStatus: 'delivered' }
+                    ]
+                }
+                : { status: 'approved', courierStatus: { $ne: 'delivered' } };
+
+            const orderQuery = includeDelivered
+                ? {
+                    $or: [
+                        { status: 'processing', courierStatus: { $ne: 'delivered' } },
+                        { courierStatus: 'delivered' }
+                    ]
+                }
+                : { status: 'processing', courierStatus: { $ne: 'delivered' } };
+
+            const rents = await Rent.find(rentQuery).sort({ createdAt: -1 }).lean();
+            const orders = await Order.find(orderQuery).sort({ createdAt: -1 }).lean();
+
             return [
-                ...rents.map(r => ({
-                    id: r._id,
-                    userId: r.user?.toString(),
-                    courierId: r.courierId?.toString(),
-                    type: 'rent',
-                    customer: r.fullName,
-                    address: r.address,
-                    phone: r.phone,
-                    book: r.bookTitle,
-                    author: "Noma'lum",
-                    image: r.bookImage || "https://placehold.co/100x150.png",
-                    status: r.courierStatus || 'new',
-                    lat: r.lat,
-                    lng: r.lng,
-                    createdAt: r.createdAt
-                })),
-                ...orders.map(o => ({
-                    id: o._id?.toString(),
-                    userId: o.user?.toString(),
-                    courierId: o.courierId?.toString(),
-                    type: 'buy',
-                    customer: o.customer.name,
-                    address: o.customer.address,
-                    phone: o.customer.phone,
-                    book: o.items.map(i => i.title).join(", "),
-                    author: "To'plam", 
-                    image: "https://placehold.co/100x150.png?text=Order",
-                    status: o.courierStatus || 'new',
-                    lat: o.customer.lat,
-                    lng: o.customer.lng,
-                    createdAt: o.createdAt
-                }))
-            ].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                ...rents.map(mapRent),
+                ...orders.map(mapOrder)
+            ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }, 300); // 5 mins cache
 
         return NextResponse.json({ success: true, data: combined });
@@ -207,6 +237,7 @@ export async function PUT(req) {
 
         if (updated) {
             await clearCache(COURIER_CACHE_KEY);
+            await clearCache(COURIER_CACHE_KEY_DELIVERED);
         }
 
         return NextResponse.json({ success: true, data: updated });
