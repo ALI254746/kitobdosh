@@ -1,36 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Sidebar from "./sidebar/page";
 import TopNavbar from "./TopNavbar/page";
 import BottomNav from "./components/BottomNav";
+import CourierLive from "./components/CourierLive";
 import { MainProvider } from "../mainPage/MainContext";
 
 export default function CourierLayout({ children }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const isMap = pathname === "/KurierPanel/xarita";
 
   return (
     <MainProvider>
-      <div className="min-h-screen bg-[#FDFBF7] dark:bg-slate-900 transition-colors duration-300 font-sans selection:bg-[#96C7B9]/20">
-        <Sidebar
-          mobileMenuOpen={mobileMenuOpen}
-          setMobileMenuOpen={setMobileMenuOpen}
-        />
-
-        <div className="lg:ml-64 pt-20 pb-32 lg:pb-12 min-h-screen relative">
-          <TopNavbar
-            mobileMenuOpen={mobileMenuOpen}
-            setMobileMenuOpen={setMobileMenuOpen}
-          />
-
-          <main className="px-4 sm:px-8 py-8 max-w-7xl mx-auto">
-              {children}
+      <div className="dark min-h-screen bg-[#070E1C] text-white">
+        <CourierLive />
+        <Sidebar />
+        <div className="flex min-h-screen flex-col lg:pl-[260px]">
+          <TopNavbar />
+          <main
+            className={
+              isMap
+                ? "relative min-h-[calc(100dvh-4.25rem)] flex-1"
+                : "mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-4 sm:px-6 lg:pb-10"
+            }
+          >
+            {children}
           </main>
         </div>
-        
-        {/* Mobile Bottom Navigation (Visible only on mobile) */}
         <div className="lg:hidden">
-            <BottomNav />
+          <BottomNav />
         </div>
       </div>
     </MainProvider>
