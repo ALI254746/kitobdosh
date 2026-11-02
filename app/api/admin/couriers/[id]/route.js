@@ -10,9 +10,11 @@ export async function PUT(req, { params }) {
         const body = await req.json();
         const { fullName, email, phone, password } = body;
 
-        const updateData = { fullName, email, phone };
-        
-        // Agar parol berilgan bo'lsa, uni ham yangilaymiz
+        const updateData = {};
+        if (fullName) updateData.fullName = fullName;
+        if (phone) updateData.phone = phone;
+        if (email && String(email).trim()) updateData.email = String(email).trim();
+
         if (password && password.trim() !== "") {
             updateData.password = await bcrypt.hash(password, 10);
         }
