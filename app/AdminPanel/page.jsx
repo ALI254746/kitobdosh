@@ -1,398 +1,312 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { FaBook, FaUsers, FaHandshake, FaDollarSign } from "react-icons/fa";
-import Image from "next/image";
-import { Line } from "react-chartjs-2";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Bar, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
-  LineElement,
   CategoryScale,
   LinearScale,
   PointElement,
+  LineElement,
+  BarElement,
+  Filler,
   Tooltip,
-  Legend,
 } from "chart.js";
-import {
-  FaBookOpen,
-  FaCheckCircle,
-  FaExclamationTriangle,
-  FaArrowUp,
-} from "react-icons/fa";
+import { BookOpen, Coins, Eye, MoreHorizontal, Pencil, ShoppingCart, Truck, TrendingDown, TrendingUp } from "lucide-react";
+import { formatMoney, formatSpace, IconButton, Page, Panel, Pill } from "./components/ui";
 
-ChartJS.register(
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip);
 
-// --- SKELETON LOADER ---
-function DashboardSkeleton({ darkMode }) {
-  const shimmerBase = darkMode ? "bg-[#A3ED96]/[0.05]" : "bg-gray-200";
-  const shimmerHighlight = darkMode ? "bg-[#A3ED96]/[0.1]" : "bg-gray-300";
+const MONTHS = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
+const WEEKDAYS = ["Yakshanba", "Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba"];
+const MONTHS_UZ = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"];
 
+function fallbackSeries() {
+  const start = new Date();
+  start.setDate(1);
+  start.setMonth(start.getMonth() - 11);
+  return Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(start);
+    date.setMonth(start.getMonth() + index);
+    return { label: MONTHS[date.getMonth()], orders: 0, sales: 0, rents: 0, revenue: 0 };
+  });
+}
+
+const EMPTY = {
+  kpis: {
+    totalOrders: { value: 0, trend: 0 },
+    activeRents: { value: 0, trend: 0 },
+    delivering: { value: 0, trend: 0 },
+    monthlyRevenue: { value: 0, trend: 0 },
+  },
+  series: fallbackSeries(),
+  recent: [],
+};
+
+function formatToday(date) {
+  return `Bugun: ${date.getFullYear()}-yil ${date.getDate()}-${MONTHS_UZ[date.getMonth()]}, ${WEEKDAYS[date.getDay()]}`;
+}
+
+function Trend({ value }) {
+  if (value === null || value === undefined) {
+    return <p className="mt-4 text-sm text-slate-500">O&apos;tgan oyga nisbatan ma&apos;lumot yo&apos;q</p>;
+  }
+  const up = value >= 0;
+  const Icon = up ? TrendingUp : TrendingDown;
   return (
-    <div className={`min-h-screen p-8 transition-colors duration-300`}>
-      {/* Header Skeleton */}
-      <div className="mb-8 w-64 h-10 rounded-xl animate-pulse bg-gray-300 dark:bg-gray-700 opacity-20" />
-
-      {/* Stats Cards Skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className={`h-40 rounded-2xl animate-pulse ${shimmerBase}`} />
-        ))}
-      </div>
-
-      {/* Status Cards Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className={`h-32 rounded-2xl animate-pulse ${shimmerBase}`} />
-        ))}
-      </div>
-
-      {/* Chart & List Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className={`lg:col-span-2 h-[400px] rounded-3xl animate-pulse ${shimmerBase}`} />
-        <div className={`h-[400px] rounded-3xl animate-pulse ${shimmerBase}`} />
-      </div>
-    </div>
+    <p className="mt-4 flex items-center gap-1.5 text-sm">
+      <span className={`inline-flex items-center gap-1 font-semibold ${up ? "text-emerald-400" : "text-red-400"}`}>
+        <Icon size={14} />
+        {up ? "+" : ""}
+        {value}%
+      </span>
+      <span className="text-slate-500">O&apos;tgan oyga nisbatan</span>
+    </p>
   );
 }
 
-// Stats kartochkalar
-function StatsCard({ icon, value, label, percent, darkMode }) {
+function KpiCard({ label, value, suffix, icon, iconClass, trend }) {
+  const Icon = icon;
   return (
-    <motion.div
-      whileHover={{ y: -5, scale: 1.02 }}
-      className={`relative overflow-hidden rounded-2xl p-6 shadow-xl border backdrop-blur-md transition-all duration-300
-        ${
-          darkMode
-            ? "bg-[#A3ED96]/10 border-[#A3ED96]/20 text-white"
-            : "bg-white border-gray-100 text-[#163201] shadow-lg"
-        }`}
-    >
-      <div className={`absolute top-0 right-0 w-24 h-24 rounded-bl-full bg-gradient-to-br from-[#A3ED96]/20 to-transparent -mr-4 -mt-4 opacity-50`} />
-      
-      <div className="flex items-center justify-between mb-4 relative z-10">
-        <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg
-            ${darkMode ? "bg-[#163201] text-[#A3ED96] border border-[#A3ED96]/30" : "bg-[#163201] text-white"}
-        `}>
-          {icon}
-        </div>
-        <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full
-            ${darkMode ? "bg-[#A3ED96] text-[#163201]" : "bg-[#A3ED96]/20 text-[#163201] border border-[#A3ED96]"}
-        `}>
-          <FaArrowUp size={10} />
-          {percent}
-        </div>
-      </div>
-      <h3 className="text-4xl font-extrabold mb-1 tracking-tight relative z-10">{value}</h3>
-      <p className={`text-sm font-medium relative z-10 ${darkMode ? "text-[#A3ED96]/80" : "text-gray-500"}`}>{label}</p>
-    </motion.div>
-  );
-}
-
-// Holat kartochkalari
-function StatusCard({ title, count, icon, colorClass, darkMode }) {
-    return (
-        <motion.div 
-            whileHover={{ scale: 1.02 }}
-            className={`flex items-center justify-between p-6 rounded-2xl border shadow-lg backdrop-blur-sm
-                ${darkMode 
-                    ? `bg-[${colorClass}]/10 border-[${colorClass}]/20 text-white` 
-                    : `bg-white border-gray-100 text-gray-800`
-                }
-            `}
-        >
-            <div>
-                <p className={`text-sm font-medium mb-1 ${darkMode ? "text-gray-300" : "text-gray-500"}`}>{title}</p>
-                <h3 className={`text-3xl font-bold ${darkMode ? "text-white" : "text-[#163201]"}`}>{count}</h3>
-            </div>
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl
-                 ${darkMode ? `bg-white/10 text-[${colorClass}]` : `bg-[#163201]/5 text-[${colorClass}]`}
-            `}>
-                {icon}
-            </div>
-        </motion.div>
-    )
-}
-
-// Faol foydalanuvchilar
-function ActiveUser({ img, name, desc, rating, darkMode }) {
-  return (
-    <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-200
-            ${darkMode 
-                ? "bg-[#163201]/50 border-[#A3ED96]/10 hover:bg-[#A3ED96]/5" 
-                : "bg-gray-50 border-gray-100 hover:bg-white hover:shadow-md"
-            }`}
-    >
-      <div className="flex items-center space-x-4">
-        <div className="relative w-12 h-12 border-2 border-[#A3ED96] rounded-full p-0.5">
-          <Image
-            src={img}
-            alt={name}
-            fill
-            className="rounded-full object-cover"
-          />
-        </div>
+    <Panel className="p-5">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className={`font-bold ${darkMode ? "text-white" : "text-[#163201]"}`}>{name}</p>
-          <p className={`text-xs ${darkMode ? "text-[#A3ED96]/70" : "text-gray-500"}`}>{desc}</p>
+          <p className="text-sm text-slate-400">{label}</p>
+          <p className="mt-2 text-[28px] font-bold leading-none tracking-tight text-white">
+            {value}
+            {suffix && <span className="ml-1 text-base font-semibold text-slate-300">{suffix}</span>}
+          </p>
         </div>
+        <span className={`flex h-12 w-12 items-center justify-center rounded-xl text-white ${iconClass}`}>
+          <Icon size={22} />
+        </span>
       </div>
-      <div className="flex items-center gap-1 text-[#F59E0B] font-bold text-sm">
-        <span>★</span>
-        <span>{rating}</span>
-      </div>
-    </motion.div>
+      <Trend value={trend} />
+    </Panel>
   );
 }
 
-// Dashboard
-import { useAdmin } from "./AdminContext";
+function chartScale(values) {
+  const peak = Math.max(0, ...values);
+  return {
+    x: { grid: { display: false }, ticks: { color: "#94a3b8" }, border: { display: false } },
+    y: {
+      beginAtZero: true,
+      suggestedMax: peak === 0 ? 4 : undefined,
+      ticks: { color: "#94a3b8", precision: 0 },
+      grid: { color: "rgba(148,163,184,0.08)" },
+      border: { display: false },
+    },
+  };
+}
 
 export default function DashboardPage() {
-  const { darkMode } = useAdmin();
-  const [stats, setStats] = useState(null);
-  const [error, setError] = useState(null);
+  const router = useRouter();
+  const [dashboard, setDashboard] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [today, setToday] = useState("");
+  const [orderRange, setOrderRange] = useState("12");
+  const [compareRange, setCompareRange] = useState("6");
+  const [menuId, setMenuId] = useState(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    setToday(formatToday(new Date()));
+    const load = async () => {
       try {
-        const res = await fetch('/api/admin/stats');
+        const res = await fetch("/api/admin/stats");
         const data = await res.json();
-        if (data.success) {
-          setStats(data.stats);
+        if (data.success && data.dashboard) {
+          setDashboard({
+            ...data.dashboard,
+            series: data.dashboard.series?.length ? data.dashboard.series : fallbackSeries(),
+          });
+          setError("");
         } else {
-          setError(data.message);
+          setError("Ma'lumotlar bazasiga ulanib bo'lmadi");
         }
       } catch (err) {
-        setError("Ma'lumotlarni yuklashda xatolik yuz berdi");
+        setError("Ma'lumotlarni yuklab bo'lmadi");
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchStats();
+    load();
   }, []);
 
-  const chartData = {
-    labels: stats?.monthlySales?.map(s => {
-        const months = ["Yan", "Fev", "Mar", "Apr", "May", "Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy", "Dek"];
-        return months[s._id.month - 1];
-    }) || ["-", "-", "-", "-", "-", "-"],
+  const orderSeries = useMemo(() => dashboard.series.slice(-Number(orderRange)), [dashboard.series, orderRange]);
+  const compareSeries = useMemo(() => dashboard.series.slice(-Number(compareRange)), [dashboard.series, compareRange]);
+
+  const lineData = {
+    labels: orderSeries.map((row) => row.label),
     datasets: [
       {
-        label: "Savdo (so'm)",
-        data: stats?.monthlySales?.map(s => s.total) || [0, 0, 0, 0, 0, 0],
-        borderColor: "#A3ED96", // Neon Green
+        label: "Buyurtmalar",
+        data: orderSeries.map((row) => row.orders || 0),
+        borderColor: "#3b82f6",
         backgroundColor: (context) => {
-            const ctx = context.chart.ctx;
-            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, "rgba(163, 237, 150, 0.5)");
-            gradient.addColorStop(1, "rgba(163, 237, 150, 0)");
-            return gradient;
+          const { chart } = context;
+          const { ctx, chartArea } = chart;
+          if (!chartArea) return "rgba(37,99,235,0.25)";
+          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+          gradient.addColorStop(0, "rgba(37,99,235,0.45)");
+          gradient.addColorStop(1, "rgba(37,99,235,0.02)");
+          return gradient;
         },
-        pointBackgroundColor: "#163201",
-        pointBorderColor: "#A3ED96",
-        pointBorderWidth: 2,
         fill: true,
         tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: "#60a5fa",
+        pointBorderColor: "#0b1220",
+        pointBorderWidth: 2,
       },
     ],
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          color: darkMode ? "#A3ED96" : "#163201",
-          callback: (val) => `${val.toLocaleString()} so'm`,
-          font: { family: 'inherit' }
-        },
-        grid: {
-          color: darkMode ? "rgba(163, 237, 150, 0.1)" : "rgba(22, 50, 1, 0.05)",
-        },
-        border: { display: false }
+  const barData = {
+    labels: compareSeries.map((row) => row.label),
+    datasets: [
+      {
+        label: "Sotuvlar",
+        data: compareSeries.map((row) => row.sales || 0),
+        backgroundColor: "#3b82f6",
+        borderRadius: 6,
+        maxBarThickness: 22,
       },
-      x: {
-        ticks: { color: darkMode ? "#A3ED96" : "#163201", font: { family: 'inherit' } },
-        grid: { display: false },
-        border: { display: false }
+      {
+        label: "Ijaralar",
+        data: compareSeries.map((row) => row.rents || 0),
+        backgroundColor: "#22c55e",
+        borderRadius: 6,
+        maxBarThickness: 22,
       },
-    },
+    ],
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-        opacity: 1,
-        transition: { staggerChildren: 0.1 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
-  };
-
-  if (loading) {
-    return <DashboardSkeleton darkMode={darkMode} />;
-  }
+  const kpis = dashboard.kpis;
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className={`min-h-screen p-8 transition-colors duration-300 ${
-        darkMode ? "bg-[#0b1a00] text-white" : "bg-[#f8fafc] text-[#163201]"
-      }`}
-    >
-      <div className="mb-8">
-          <h1 className="text-3xl font-black mb-2 tracking-tight">Xush kelibsiz, Admin! 👋</h1>
-          <p className={`text-sm ${darkMode ? "text-[#A3ED96]/70" : "text-gray-500"}`}>Bugungi statistikani ko&apos;rib chiqing.</p>
+    <Page>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Boshqaruv paneli</h1>
+          <p className="mt-1 text-sm text-slate-400">Kitobdosh platformasining umumiy holati va asosiy ko&apos;rsatkichlari</p>
+        </div>
+        <p className="text-sm text-slate-300">{today}</p>
       </div>
 
-      <motion.div variants={containerVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <motion.div variants={itemVariants}>
-            <StatsCard
-            icon={<FaBook className="text-2xl" />}
-            value={stats?.totalBooks || 0}
-            label="Jami Kitoblar"
-            percent="Yangi"
-            darkMode={darkMode}
-            />
-        </motion.div>
-        <motion.div variants={itemVariants}>
-            <StatsCard
-            icon={<FaUsers className="text-2xl" />}
-            value={stats?.totalUsers || 0}
-            label="Jami Foydalanuvchilar"
-            percent="A'zo"
-            darkMode={darkMode}
-            />
-        </motion.div>
-        <motion.div variants={itemVariants}>
-            <StatsCard
-            icon={<FaHandshake className="text-2xl" />}
-            value={stats?.pendingRentRequests || 0}
-            label="Kutilayotgan Ijaralar"
-            percent="So'rov"
-            darkMode={darkMode}
-            />
-        </motion.div>
-        <motion.div variants={itemVariants}>
-            <StatsCard
-            icon={<FaDollarSign className="text-2xl" />}
-            value={`${(stats?.totalIncome || 0).toLocaleString()} so'm`}
-            label="Umumiy Daromad"
-            percent="Jami"
-            darkMode={darkMode}
-            />
-        </motion.div>
-      </motion.div>
+      {error && (
+        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          {error}. Ko&apos;rsatkichlar 0 sifatida ko&apos;rsatilmoqda.
+        </div>
+      )}
 
-      {/* Status Cards */}
-      <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <motion.div variants={itemVariants}>
-            <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-blue-900/20 border-blue-500/30 text-blue-200" : "bg-blue-50 border-blue-100 text-blue-900"}`}>
-                <div>
-                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Faol Ijaralar</span>
-                    <h3 className="text-3xl font-black mt-1">{stats?.activeRentals || 0} ta</h3>
-                </div>
-                <FaBookOpen className="text-4xl opacity-50" />
-            </div>
-        </motion.div>
-         <motion.div variants={itemVariants}>
-            <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-red-900/20 border-red-500/30 text-red-200" : "bg-red-50 border-red-100 text-red-900"}`}>
-                <div>
-                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Ijara muddati o'tgan</span>
-                    <h3 className="text-3xl font-black mt-1">{stats?.overdueRentals || 0} ta</h3>
-                </div>
-                <FaExclamationTriangle className="text-4xl opacity-50" />
-            </div>
-        </motion.div>
-         <motion.div variants={itemVariants}>
-            <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-green-900/20 border-green-500/30 text-green-200" : "bg-green-50 border-green-100 text-green-900"}`}>
-                <div>
-                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Eng faol kategoriya</span>
-                    <h3 className="text-xl font-black mt-1 line-clamp-1">{stats?.topCategory || "Barcha"}</h3>
-                </div>
-                <FaCheckCircle className="text-4xl opacity-50" />
-            </div>
-        </motion.div>
-      </motion.div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard label="Jami buyurtmalar" value={loading ? "—" : formatSpace(kpis.totalOrders.value)} icon={ShoppingCart} iconClass="bg-[#2563eb]" trend={kpis.totalOrders.trend} />
+        <KpiCard label="Faol ijaralar" value={loading ? "—" : formatSpace(kpis.activeRents.value)} icon={BookOpen} iconClass="bg-emerald-500" trend={kpis.activeRents.trend} />
+        <KpiCard label="Yetkazilmoqda" value={loading ? "—" : formatSpace(kpis.delivering.value)} icon={Truck} iconClass="bg-orange-500" trend={kpis.delivering.trend} />
+        <KpiCard label="Oylik tushum" value={loading ? "—" : formatSpace(kpis.monthlyRevenue.value)} suffix="so'm" icon={Coins} iconClass="bg-violet-500" trend={kpis.monthlyRevenue.trend} />
+      </div>
 
-      {/* Chart + Active users */}
-      <motion.div variants={containerVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <motion.div
-           variants={itemVariants}
-          className={`lg:col-span-2 rounded-3xl p-8 shadow-xl border transition-colors duration-300 ${
-            darkMode 
-                ? "bg-[#163201]/40 border-[#A3ED96]/20 backdrop-blur-sm" 
-                : "bg-white border-gray-100"
-          }`}
-        >
-          <div className="flex items-center justify-between mb-8">
-              <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-[#163201]"}`}>Savdo Statistikasi</h3>
-              <select className={`text-xs p-2 rounded-lg border outline-none cursor-pointer ${darkMode ? "bg-[#163201] text-[#A3ED96] border-[#A3ED96]/30" : "bg-gray-50 border-gray-200"}`}>
-                  <option>Bu hafta</option>
-                  <option>Bu oy</option>
-                  <option>Bu yil</option>
+      <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+        <Panel className="p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-white">Buyurtmalar dinamikasi</h2>
+            <select
+              value={orderRange}
+              onChange={(event) => setOrderRange(event.target.value)}
+              className="h-9 rounded-lg border border-white/10 bg-[#0e1728] px-3 text-xs text-slate-200 outline-none"
+            >
+              <option value="12">So&apos;nggi 12 oy</option>
+              <option value="6">So&apos;nggi 6 oy</option>
+            </select>
+          </div>
+          <div className="h-[280px]">
+            <Line data={lineData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: chartScale(orderSeries.map((row) => row.orders || 0)) }} />
+          </div>
+        </Panel>
+
+        <Panel className="p-5">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <h2 className="text-base font-semibold text-white">Sotuv va ijara</h2>
+            <div className="flex flex-col items-end gap-2">
+              <select
+                value={compareRange}
+                onChange={(event) => setCompareRange(event.target.value)}
+                className="h-9 rounded-lg border border-white/10 bg-[#0e1728] px-3 text-xs text-slate-200 outline-none"
+              >
+                <option value="6">So&apos;nggi 6 oy</option>
+                <option value="12">So&apos;nggi 12 oy</option>
               </select>
+              <div className="flex gap-3 text-xs text-slate-300">
+                <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#3b82f6]" /> Sotuvlar</span>
+                <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#22c55e]" /> Ijaralar</span>
+              </div>
+            </div>
           </div>
-          <div className="h-[300px] w-full">
-            <Line data={chartData} options={chartOptions} />
+          <div className="h-[260px]">
+            <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: chartScale(compareSeries.flatMap((row) => [row.sales || 0, row.rents || 0])) }} />
           </div>
-        </motion.div>
+        </Panel>
+      </div>
 
-        <motion.div
-           variants={itemVariants}
-          className={`rounded-3xl p-8 shadow-xl border transition-colors duration-300 ${
-            darkMode 
-                ? "bg-[#163201]/40 border-[#A3ED96]/20 backdrop-blur-sm" 
-                : "bg-white border-gray-100"
-          }`}
-        >
-          <h3 className={`text-xl font-bold mb-6 ${darkMode ? "text-white" : "text-[#163201]"}`}>Faol Kitobxonlar</h3>
-          <div className="space-y-4">
-            {stats?.topReaders?.map((reader, index) => (
-                <ActiveUser
-                key={index}
-                img={reader.avatar}
-                name={reader.name}
-                desc={`${reader.count} ta buyurtma`}
-                rating="5.0"
-                darkMode={darkMode}
-                />
-            ))}
-            {(!stats?.topReaders || stats.topReaders.length === 0) && (
-                <p className="text-center text-gray-500 py-10">Ma'lumot yo'q</p>
-            )}
-          </div>
-          <button className={`w-full mt-6 py-3 rounded-xl text-sm font-bold border transition-all
-              ${darkMode 
-                  ? "border-[#A3ED96] text-[#A3ED96] hover:bg-[#A3ED96] hover:text-[#163201]" 
-                  : "border-[#163201] text-[#163201] hover:bg-[#163201] hover:text-white"
-              }
-          `}>
-              Barchasini ko&apos;rish
-          </button>
-        </motion.div>
-      </motion.div>
-    </motion.div>
+      <Panel className="mt-4 overflow-hidden">
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+          <h2 className="text-base font-semibold text-white">So&apos;nggi buyurtmalar</h2>
+          <Link href="/AdminPanel/sotuvdagiKitoblar" className="text-sm font-semibold text-[#60a5fa] hover:underline">
+            Barchasini ko&apos;rish →
+          </Link>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[860px]">
+            <thead>
+              <tr className="border-y border-white/5 text-left text-xs uppercase tracking-wide text-slate-400">
+                {["ID", "Mijoz", "Turi", "Summa", "Holat", "Kuryer", "Amal"].map((head) => (
+                  <th key={head} className="px-4 py-3 font-semibold">{head}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dashboard.recent.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-400">
+                    Hozircha buyurtmalar yo&apos;q
+                  </td>
+                </tr>
+              )}
+              {dashboard.recent.map((row) => (
+                <tr key={row.id} className="border-b border-white/5 last:border-0">
+                  <td className="px-4 py-3 font-mono text-xs text-slate-400">{row.code}</td>
+                  <td className="px-4 py-3 text-sm text-white">{row.customer}</td>
+                  <td className="px-4 py-3">
+                    <Pill tone={row.kind === "rent" ? "green" : "blue"}>{row.kind === "rent" ? "Ijara" : "Sotuv"}</Pill>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-200">{formatMoney(row.amount)}</td>
+                  <td className="px-4 py-3"><Pill tone={row.status?.tone}>{row.status?.label}</Pill></td>
+                  <td className="px-4 py-3 text-sm text-slate-300">{row.courier || "—"}</td>
+                  <td className="px-4 py-3">
+                    <div className="relative flex items-center gap-1.5">
+                      <IconButton label="Ko'rish" onClick={() => router.push(row.href)}><Eye size={14} /></IconButton>
+                      <IconButton label="Tahrirlash" onClick={() => router.push(row.href)}><Pencil size={14} /></IconButton>
+                      <IconButton label="Yana" onClick={() => setMenuId(menuId === row.id ? null : row.id)}><MoreHorizontal size={14} /></IconButton>
+                      {menuId === row.id && (
+                        <div className="absolute right-0 top-9 z-10 w-40 rounded-xl border border-white/10 bg-[#0e1728] py-1 shadow-xl">
+                          <button type="button" className="block w-full px-3 py-2 text-left text-sm text-slate-200 hover:bg-white/5" onClick={() => router.push(row.href)}>
+                            Sahifasiga o&apos;tish
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
+    </Page>
   );
 }
