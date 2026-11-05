@@ -110,33 +110,53 @@ export async function PUT(req) {
         let updated;
         const updateData = { courierStatus: status };
         if (status === 'accepted') updateData.courierId = userId;
-        if (type === 'rent') {
-             if (status === 'delivered') {
-                 // Fetch current rent to get 'days'
-                 const currentRent = await Rent.findById(id);
-                 if (currentRent && currentRent.days > 0) {
-                     const now = new Date();
-                     const returnDate = new Date(now);
-                     returnDate.setDate(returnDate.getDate() + currentRent.days);
+        if (type === 'rent' && status === 'delivered') {
+            updateData.status = 'active';
+            if (current.days > 0) {
+                const returnDate = new Date();
+                returnDate.setDate(returnDate.getDate() + current.days);
+                updateData.returnDate = returnDate;
+            }
+        }
 
-                     updateData.status = 'active';
-                     updateData.returnDate = returnDate;
-
-                     console.log(`Rent ${id} delivered. Setting returnDate to ${returnDate}`);
-                 } else {
-                     updateData.status = 'active'; // Fallback
-                 }
-             }
-             updated = await Rent.findOneAndUpdate(filter, updateData, { new: true, runValidators: true });
-             console.log(`Courier API: Updated Rent ${id}. New CourierStatus: ${updated?.courierStatus}`);
+        if (status !== 'delivered') {
+            updated = await Model.findOneAndUpdate(filter, updateData, { new: true, runValidators: true });
         } else {
-             // If delivered, mark main order as completed
-             if (status === 'delivered') {
-                 updateData.status = 'completed';
-                 console.log(`Courier API: Marking Order ${id} as completed (delivered)`);
-             }
-             updated = await Order.findOneAndUpdate(filter, updateData, { new: true, runValidators: true });
-             console.log(`Courier API: Updated Order ${id}. New CourierStatus: ${updated?.courierStatus}`);
+            // Serialize sibling deliveries on the parent document and commit the
+            // delivery and aggregate status together. createOrder already requires
+            // a MongoDB replica set for its own transactions.
+            const session = await mongoose.startSession();
+            try {
+                await session.withTransaction(async () => {
+                    updated = null;
+                    const parentId = type === 'buy' ? current._id : current.orderId;
+                    let parent = null;
+                    if (parentId) {
+                        parent = await Order.findOneAndUpdate(
+                            { _id: parentId, status: { $ne: 'cancelled' } }, { $inc: { deliverySyncVersion: 1 } },
+                            { new: true, session }
+                        );
+                        // Missing legacy parents are allowed, but a cancelled parent
+                        // must not be resurrected by a late courier update.
+                        if (!parent && await Order.exists({ _id: parentId }).session(session)) return;
+                    }
+                    if (type === 'buy' && (!parent || parent.status !== 'processing')) return;
+                    updated = await Model.findOneAndUpdate(filter, updateData, { new: true, runValidators: true, session });
+                    if (!updated || !parent) return;
+
+                    const rentalsExpected = parent.items.filter(item => item.type === 'rent').length;
+                    const rentalsDelivered = rentalsExpected === 0 ||
+                        (await Rent.countDocuments({ orderId: parent._id, courierStatus: 'delivered' }).session(session)) === rentalsExpected;
+                    const hasPurchase = parent.items.some(item => item.type !== 'rent');
+                    const purchaseDelivered = !hasPurchase || (type === 'buy' ? true : parent.courierStatus === 'delivered');
+                    if (rentalsDelivered && purchaseDelivered && ['pending', 'processing'].includes(parent.status)) {
+                        await Order.updateOne({ _id: parent._id, status: { $in: ['pending', 'processing'] } }, { $set: { status: 'completed' } }, { session });
+                        if (type === 'buy') updated.status = 'completed';
+                    }
+                });
+            } finally {
+                await session.endSession();
+            }
         }
 
         if (!updated) return NextResponse.json({ success: false }, { status: 409 });

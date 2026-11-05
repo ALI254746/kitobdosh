@@ -165,6 +165,23 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
   const valid='demo-valid@example.invalid';await api(contexts.anon,'/api/auth/register','POST',{email:valid,password});const code=JSON.parse(fs.readFileSync(process.env.MOCK_OTP_PATH)).code;
   assert.equal((await api(contexts.anon,'/api/auth/verify','POST',{email:valid,otp:code})).status(),201);await deny(contexts.anon,'/api/auth/verify','POST',{email:valid,otp:code},400);
  });
+ await test(16,'rental and mixed-order delivery synchronization and ownership',async()=>{
+  const mk=async(types,parentStatus='processing')=>{
+   const oid=id(), rents=types.filter(t=>t==='rent').map(()=>id());
+   await db.collection('orders').insertOne({_id:oid,user:actors.user._id,items:types.map(type=>({book:bookId,title:'Demo',type,quantity:1,price:1000})),customer:{name:'Demo',phone:'000',address:'Demo'},deliveryMethod:'courier',totalPrice:1000,status:parentStatus,courierStatus:'on_way',courierId:actors.courier._id});
+   if(rents.length)await db.collection('rents').insertMany(rents.map(_id=>({_id,orderId:oid,user:actors.user._id,book:bookId,bookTitle:'Demo',fullName:'Demo',phone:'000',address:'Demo',days:2,totalPrice:1000,paymentMethod:'cash',status:'approved',courierStatus:'on_way',courierId:actors.courier._id})));
+   return {oid,rents};
+  };
+  const deliver=(kind,record,ctx=contexts.courier)=>api(ctx,'/api/courier','PUT',{id:String(record),type:kind,status:'delivered'});
+  const status=async oid=>(await db.collection('orders').findOne({_id:oid})).status;
+  const rentOnly=await mk(['rent'],'pending');assert.equal((await deliver('rent',rentOnly.rents[0])).status(),200);assert.equal(await status(rentOnly.oid),'completed');
+  const mixed=await mk(['buy','rent']);assert.equal((await deliver('buy',mixed.oid)).status(),200);assert.equal(await status(mixed.oid),'processing');assert.equal((await deliver('rent',mixed.rents[0])).status(),200);assert.equal(await status(mixed.oid),'completed');
+  const mixedReverse=await mk(['buy','rent']);assert.equal((await deliver('rent',mixedReverse.rents[0])).status(),200);assert.equal(await status(mixedReverse.oid),'processing');assert.equal((await deliver('buy',mixedReverse.oid)).status(),200);assert.equal(await status(mixedReverse.oid),'completed');
+  const parallel=await mk(['rent','rent'],'pending');const responses=await Promise.all(parallel.rents.map(r=>deliver('rent',r)));assert.deepEqual(responses.map(r=>r.status()),[200,200]);assert.equal(await status(parallel.oid),'completed');
+  const cancelled=await mk(['rent'],'cancelled');await deny(contexts.courier,'/api/courier','PUT',{id:String(cancelled.rents[0]),type:'rent',status:'delivered'},409);assert.equal((await db.collection('rents').findOne({_id:cancelled.rents[0]})).status,'approved');
+  const guarded=await mk(['rent'],'pending');await deny(contexts.courier2,'/api/courier','PUT',{id:String(guarded.rents[0]),type:'rent',status:'delivered'},403);
+  const standalone=await mk(['rent'],'pending');await db.collection('rents').updateOne({_id:standalone.rents[0]},{$unset:{orderId:''}});assert.equal((await deliver('rent',standalone.rents[0])).status(),200);
+ });
  await test(15,'500, network errors and empty catalog are distinct, retry works',async()=>{
   for(const [kind,body] of [['500',null],['network',null],['empty',{success:true,data:[],totalPages:0,totalItems:0}]]){
    const page=await contexts.user.newPage();await page.route('**/api/books?**',r=>kind==='network'?r.abort():r.fulfill({status:kind==='500'?500:200,contentType:'application/json',body:JSON.stringify(body||{success:false})}));await page.goto(base+'/mainPage/sotibolish',{waitUntil:'domcontentloaded'});

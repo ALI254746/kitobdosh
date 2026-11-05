@@ -49,7 +49,7 @@ if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(base||'')||!/^mongodb:\/\/127\.0\.0\.1:\d
   console.log('PASS UI → cart API/Redis → cash '+(rent?'rental':'purchase')+' → MongoDB → profile');return data;
  };
  const purchase=await place(false);const rentalOrder=await place(true);const rental=await db.collection('rents').findOne({orderId:new mongoose.Types.ObjectId(rentalOrder._id)});assert.ok(rental&&rental.totalPrice===7000&&rental.paymentMethod==='cash');
- await login('admin');const a=pages.admin;await goto(a,'/AdminPanel/sotuvdagiKitoblar');await a.getByRole('button',{name:/Buyurtmalar \(/}).click();await expect(a.getByText('Demo Cash Xaridor',{exact:true})).toBeVisible();await a.getByRole('button',{name:'Tasdiqlash (Kuryerga)',exact:true}).click();await waitDb('orders',{_id:new mongoose.Types.ObjectId(purchase._id)},'status','processing');await shot(a,'10-admin-cash-order');
+ await login('admin');const a=pages.admin;await goto(a,'/AdminPanel/sotuvdagiKitoblar');await expect(a.getByRole('button',{name:'Buyurtmalar (1)',exact:true})).toBeVisible();await a.getByRole('button',{name:'Buyurtmalar (1)',exact:true}).click();await expect(a.getByText('Demo Cash Xaridor',{exact:true})).toBeVisible();await a.getByRole('button',{name:'Tasdiqlash (Kuryerga)',exact:true}).click();await waitDb('orders',{_id:new mongoose.Types.ObjectId(purchase._id)},'status','processing');await shot(a,'10-admin-cash-order');
  await goto(a,'/AdminPanel/rentRequest');await expect(a.getByText('Demo Ijara Xaridor',{exact:true})).toBeVisible();await a.getByRole('button',{name:'Tasdiqlash',exact:true}).click();await waitDb('rents',{_id:rental._id},'status','approved');await shot(a,'11-admin-rental');
  await login('courier');const c=pages.courier;
  for(const [record,type,name]of[[purchase,'buy','purchase'],[rental,'rent','rental']]){
@@ -66,7 +66,7 @@ if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(base||'')||!/^mongodb:\/\/127\.0\.0\.1:\d
  await goto(p,'/mobile/components/mobileprofile');await p.getByRole('button',{name:/Mening Buyurtmalarim/}).click();await expect(p.getByText('Yetkazildi',{exact:true})).toBeVisible();await expect(p.getByText('Ijara faol',{exact:true})).toBeVisible();await shot(p,'15-user-final-delivery-status');
  const providers=fs.readFileSync(process.env.MOCK_AUDIT_PATH,'utf8').trim().split('\n').map(JSON.parse);assert.ok(providers.some(e=>e.provider==='cloudinary'&&e.type==='authenticated'));
  assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS: Mongo replica set + real Redis + browser/DB journey; Cloudinary mocked, no email delivery test; external browser/server egress blocked.');
- const parent=await db.collection('orders').findOne({_id:new mongoose.Types.ObjectId(rentalOrder._id)});console.log('OBSERVED rental parent Order status: '+parent.status+'; delivered Rent status: active (lifecycle sync remains a deployment blocker).');
+ const parent=await db.collection('orders').findOne({_id:new mongoose.Types.ObjectId(rentalOrder._id)});assert.equal(parent.status,'completed');console.log('PASS delivered rental and parent order status are synchronized');
  console.log('Screenshots saved in '+shots);console.log('Blocked external browser domains: '+[...new Set(outbound)].join(', '));
  }catch(e){for(const [name,page]of Object.entries(pages)){await page.screenshot({path:`/tmp/kitobdosh-journey-${name}-failure.png`,fullPage:true}).catch(()=>{});console.log(name+': '+(await page.locator('body').innerText()).slice(0,3500));}throw e;}
  finally{await browser.close();await mongoose.disconnect();}
