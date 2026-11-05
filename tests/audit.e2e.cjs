@@ -112,8 +112,17 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
   await db.collection('rents').updateOne({_id:new mongoose.Types.ObjectId(rent._id)},{$set:{status:'approved',courierId:actors.courier._id,courierStatus:'accepted'}});
   const jobs=await(await api(contexts.courier,'/api/courier')).json();const job=jobs.data.find(j=>String(j.id)===rent._id);assert.equal(job.address,'Demo manual address');assert.equal(job.lat,0);
   const before=await snapshot();const invalid=await contexts.user.request.post(base+'/api/rent',{multipart:{name:'Demo',phone:'+998000000000',address:'Demo',lat:'91',lng:'0',bookId:String(bookId),days:'1',payment:'cash',passport:{name:'Demo.png',mimeType:'image/png',buffer:png}}});assert.equal(invalid.status(),400);assert.equal(await snapshot(),before);
+  const incomplete=await contexts.user.request.post(base+'/api/rent',{multipart:{name:'Demo',phone:'+998000000000',address:'Demo',lat:'',lng:'1',bookId:String(bookId),days:'1',payment:'cash',passport:{name:'Demo.png',mimeType:'image/png',buffer:png}}});assert.equal(incomplete.status(),400);assert.equal(await snapshot(),before);
  });
  await test(12,'17+ catalog pagination/search and immediate cache invalidation',async()=>{
+  // Admin global search must not return unrelated orders for short terms or
+  // interpret punctuation as a regular expression.
+  const unmatched=await api(contexts.admin,'/api/admin/search?q=nonexistent-search-xyz');
+  assert.equal(unmatched.status(),200);assert.deepEqual((await unmatched.json()).results.orders,[]);
+  const bracket=await api(contexts.admin,'/api/admin/search?q=%5B%5B');
+  assert.equal(bracket.status(),200);assert.deepEqual((await bracket.json()).results.orders,[]);
+  const byId=await api(contexts.admin,'/api/admin/search?q='+orderId);
+  assert.equal(byId.status(),200);assert.ok((await byId.json()).results.orders.some(o=>String(o._id)===orderId));
   await db.collection('books').insertMany(Array.from({length:18},(_,i)=>({...fixture,_id:id(),title:'Demo Page '+String(i).padStart(2,'0'),createdAt:new Date(Date.now()+i)})));
   const second=await(await api(contexts.admin,'/api/books?page=2&limit=16')).json();assert.ok(second.data.length>=3);
   const page=await contexts.admin.newPage();await page.goto(base+'/AdminPanel/Kitoblar',{waitUntil:'domcontentloaded'});await expect(page.getByRole('button',{name:'Keyingi sahifa',exact:true})).toBeEnabled();await page.getByRole('button',{name:'Keyingi sahifa',exact:true}).click();await expect(page.getByText('2 / 2',{exact:true})).toBeVisible();

@@ -1,4 +1,5 @@
 import { requireRole } from "@/lib/require-role";
+import { adminOrderSearch } from "@/lib/catalog-input.mjs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
@@ -12,7 +13,7 @@ export async function GET(req) {
   if (denied) return denied;
   try {
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get("q");
+    const query = (searchParams.get("q") || "").trim().slice(0, 120);
 
     if (!query || query.length < 2) {
       return NextResponse.json({ success: true, results: { books: [], users: [], couriers: [], orders: [] } });
@@ -20,7 +21,7 @@ export async function GET(req) {
 
     await dbConnect();
 
-    const regex = new RegExp(query, "i");
+    const { regex, orderFilter } = adminOrderSearch(query);
 
     // 1. Kitoblarni qidirish
     const books = await Book.find({
@@ -50,14 +51,8 @@ export async function GET(req) {
     }).limit(5).select("fullName email avatar role");
 
     // 4. Buyurtmalarni qidirish (Order va Rent)
-    // ID bo'yicha qidirish uchun so'nggi 6 raqamni tekshirish murakkab, shuning uchun regex bilan mijoz ismini tekshiramiz
-    const orders = await Order.find({
-      $or: [
-        { "customer.name": regex },
-        { "customer.phone": regex },
-        { "_id": query.length === 24 ? query : { $exists: true } } // Agar to'liq ID bo'lsa
-      ]
-    }).limit(5).select("customer.name totalPrice status createdAt");
+    // Only a complete valid ObjectId participates in ID matching.
+    const orders = await Order.find(orderFilter).limit(5).select("customer.name totalPrice status createdAt");
 
     const rents = await Rent.find({
       $or: [
