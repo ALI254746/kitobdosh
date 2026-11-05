@@ -100,18 +100,17 @@ export async function GET(req) {
         const foundUsers = await User.find({
             $or: [
                 { fullName: userRegex },
-                { email: userRegex }
+                { fullName: userRegex }
             ]
         })
-        .select("fullName avatar email")
+        .select("fullName avatar")
         .limit(5)
         .lean();
 
         const userObjects = foundUsers.map(user => ({
             _id: user._id,
-            name: user.fullName || user.email.split('@')[0],
+            name: user.fullName || 'Kitobxon',
             avatar: user.avatar,
-            email: user.email,
             type: 'user'
         }));
 

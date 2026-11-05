@@ -1,3 +1,5 @@
+> Yangilanish: mustaqil auditdan keyingi holat va bandlar [audit hisobotida](audit-71d7fec-vs-current.md). Order/Rent/stock uchun MongoDB replica set talab qilinadi. Lokal standalone demo buyurtma uchun yetarli emas. Onlayn to‘lov UI’da yopiq, Payme live callback 503 qaytaradi. Eski natijalarni joriy versiyaning to‘liq tekshiruvi deb qabul qilmang.
+
 # Kitobdosh himoya nazorat ro‘yxati — 2026-11-06
 
 ## Holat va chegaralar

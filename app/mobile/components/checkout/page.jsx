@@ -1,10 +1,11 @@
 "use client";
+import { deliveryFee } from "@/lib/checkout-pricing.mjs";
 import { cartItemTotal } from "@/lib/order-input.mjs";
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ChevronLeft, User, Phone, MapPin, Truck, Wallet, 
+import {
+  ChevronLeft, User, Phone, MapPin, Truck, Wallet,
   CheckCircle2, ArrowRight, Loader2, Sparkles, Home,
   CreditCard, Banknote, Search, AlertCircle, Briefcase
 } from "lucide-react";
@@ -22,14 +23,14 @@ const Step1PersonalInfo = () => {
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Shaxsiy ma&apos;lumotlar</h2>
             <p className="text-sm text-slate-400 font-medium leading-relaxed">Buyurtmangizni kuryer yetkazishi uchun ism-sharif va telefon raqamingizni tasdiqlang.</p>
-            
+
             <div className="space-y-4">
                 <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">To&apos;liq ism-sharif</label>
                     <div className="relative">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             value={checkoutData.fullName}
                             onChange={(e) => updateCheckoutData({ fullName: e.target.value })}
                             className="w-full bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-800 dark:text-white focus:border-[#52C6DA] transition-all outline-none"
@@ -42,8 +43,8 @@ const Step1PersonalInfo = () => {
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Telefon raqam</label>
                     <div className="relative">
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
-                        <input 
-                            type="tel" 
+                        <input
+                            type="tel"
                             value={checkoutData.phone}
                             onChange={(e) => updateCheckoutData({ phone: e.target.value })}
                             className="w-full bg-white dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-slate-800 dark:text-white focus:border-[#52C6DA] transition-all outline-none"
@@ -58,38 +59,14 @@ const Step1PersonalInfo = () => {
 
 const Step2Address = () => {
     const { checkoutData, updateCheckoutData } = useCheckout();
-    const [savedAddresses] = useState([
-        { id: 1, type: 'Uy', detail: 'Toshkent sh, Yunusobod tumani, 4-kvartal, 12-uy' },
-        { id: 2, type: 'Ish', detail: 'Toshkent sh, Shayxontohur tumani, Navoiy ko\'chasi, 1-uy' }
-    ]);
-
     return (
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Yetkazish manzili</h2>
-            
-            <div className="space-y-4">
-                {savedAddresses.map((addr) => (
-                    <div 
-                        key={addr.id}
-                        onClick={() => updateCheckoutData({ address: addr })}
-                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4 ${checkoutData.address?.id === addr.id ? 'border-[#52C6DA] bg-[#52C6DA]/5' : 'border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-800'}`}
-                    >
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${checkoutData.address?.id === addr.id ? 'bg-[#52C6DA] text-white' : 'bg-slate-50 dark:bg-slate-700 text-slate-400'}`}>
-                            {addr.type === 'Uy' ? <Home size={24} /> : <Briefcase size={24} />}
-                        </div>
-                        <div className="flex-1">
-                            <h4 className="font-black text-sm text-slate-800 dark:text-white">{addr.type} manzili</h4>
-                            <p className="text-xs text-slate-400 font-medium line-clamp-1">{addr.detail}</p>
-                        </div>
-                        {checkoutData.address?.id === addr.id && <CheckCircle2 className="text-[#52C6DA]" size={20} />}
-                    </div>
-                ))}
-            </div>
-
-            <button className="w-full py-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:border-[#52C6DA] hover:text-[#52C6DA] transition-all">
-                <MapPin size={16} /> Yangi manzil qo&apos;shish
-            </button>
-        </motion.div>
+      <motion.div className="space-y-6">
+        <h2 className="text-2xl font-black text-slate-800 dark:text-white">Yetkazish manzili</h2>
+        <label className="block font-bold">Manzil
+          <textarea aria-label="Yetkazish manzili" required className="w-full p-4 rounded-2xl border dark:bg-slate-800" placeholder="Shahar, ko‘cha, uy va xonadon" value={checkoutData.address?.detail || ''} onChange={e => updateCheckoutData({ address: { ...checkoutData.address, detail: e.target.value } })} />
+        </label>
+        <p className="text-sm text-slate-500">Olib ketishni tanlasangiz, yetkazish manzili talab qilinmaydi.</p>
+      </motion.div>
     );
 };
 
@@ -103,10 +80,10 @@ const Step3Delivery = () => {
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Yetkazish usuli</h2>
-            
+
             <div className="space-y-4">
                 {options.map((opt) => (
-                    <div 
+                    <div
                         key={opt.id}
                         onClick={() => updateCheckoutData({ deliveryMethod: opt.id })}
                         className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${checkoutData.deliveryMethod === opt.id ? 'border-[#52C6DA] bg-[#52C6DA]/5' : 'border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-800'}`}
@@ -133,18 +110,18 @@ const Step3Delivery = () => {
 const Step4Payment = () => {
     const { checkoutData, updateCheckoutData } = useCheckout();
     const options = [
-        { id: 'payme', label: 'Payme', icon: <CreditCard size={24} />, color: 'bg-[#52C6DA]' },
-        { id: 'click', label: 'Click', icon: <CreditCard size={24} />, color: 'bg-blue-600' },
+
+
         { id: 'cash', label: 'Naqd pulda', icon: <Banknote size={24} />, color: 'bg-slate-900' }
     ];
 
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">To&apos;lov turi</h2>
-            
+            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">To&apos;lov turi</h2><p className="text-sm text-slate-500">Onlayn to‘lov hozircha mavjud emas. To‘lov qabul qilganda amalga oshiriladi.</p>
+
             <div className="grid grid-cols-1 gap-4">
                 {options.map((opt) => (
-                    <div 
+                    <div
                         key={opt.id}
                         onClick={() => updateCheckoutData({ paymentMethod: opt.id })}
                         className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${checkoutData.paymentMethod === opt.id ? 'border-[#52C6DA] bg-[#52C6DA]/5' : 'border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-800'}`}
@@ -169,7 +146,7 @@ const StepPassport = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            updateCheckoutData({ 
+            updateCheckoutData({
                 passportFile: file,
                 passportPreview: URL.createObjectURL(file)
             });
@@ -180,7 +157,7 @@ const StepPassport = () => {
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Pasport ma&apos;lumotlari</h2>
             <p className="text-sm text-slate-400 font-medium leading-relaxed">Kitobni ijaraga olish uchun pasportingizning asosiy sahifasi rasmini yuklashingiz kerak. Bu xavfsizlik uchun talab qilinadi.</p>
-            
+
             <div className="relative aspect-video w-full bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden flex flex-col items-center justify-center gap-4 group hover:border-[#52C6DA] transition-all cursor-pointer">
                 {checkoutData.passportPreview ? (
                     <>
@@ -197,14 +174,14 @@ const StepPassport = () => {
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-[#52C6DA] transition-all">Rasm tanlang yoki oling</span>
                     </>
                 )}
-                <input 
-                    type="file" 
+                <input
+                    type="file"
                     accept="image/*"
                     onChange={handleFileChange}
                     className="absolute inset-0 opacity-0 cursor-pointer"
                 />
             </div>
-            
+
             <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border-2 border-blue-100 dark:border-blue-900/30 flex gap-3">
                 <AlertCircle className="text-blue-500 shrink-0" size={20} />
                 <p className="text-[10px] text-blue-900 dark:text-blue-200 font-bold leading-tight uppercase">Sizning ma&apos;lumotlaringiz xavfsiz saqlanadi va faqat mahsulotni topshirish-qabul qilish uchun ishlatiladi.</p>
@@ -220,7 +197,7 @@ const StepReview = ({ items, total }) => {
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Tasdiqlash</h2>
-            
+
             <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 border-2 border-slate-50 dark:border-slate-800 space-y-6">
                 {/* User Summary */}
                 <div className="flex flex-col gap-3">
@@ -282,7 +259,7 @@ const CheckoutContent = () => {
     // Calculate Totals
     const totalAmount = cartItems?.reduce((acc, item) => {
         return acc + cartItemTotal(item);
-    }, 0) || 0;
+    }, 0) + (deliveryFee(checkoutData.deliveryMethod) || 0);
 
     const formatPrice = (price) => new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
 
@@ -291,7 +268,7 @@ const CheckoutContent = () => {
             toast.error("Ismingiz va raqamingiz bo'lmasa, sizni qanday topamiz? 😊");
             return;
         }
-        if (currentStep === 2 && !checkoutData.address) {
+        if (currentStep === 2 && checkoutData.deliveryMethod !== "pickup" && !checkoutData.address?.detail?.trim()) {
             toast.error("Sizni qayerda kutaylik? Manzilni ko'rsatib yuboring 📍");
             return;
         }
@@ -311,7 +288,8 @@ const CheckoutContent = () => {
             formData.append('customer', JSON.stringify({
                 name: checkoutData.fullName,
                 phone: checkoutData.phone,
-                address: checkoutData.address?.detail || "",
+                address: checkoutData.address?.detail || "Olib ketish",
+                lat: checkoutData.address?.lat, lng: checkoutData.address?.lng,
             }));
             formData.append('items', JSON.stringify((cartItems || []).map(i => ({
                 book: i.bookId?._id || i._id,
@@ -335,10 +313,10 @@ const CheckoutContent = () => {
                 method: 'POST',
                 body: formData
             });
-            
+
             const data = await res.json();
             if (data.success) {
-                toast.success("Muborak bo'lsin! Kitobingiz yo'lga hozirlik ko'rmoqda! 🚀📚✨");
+                toast.success("Buyurtma qabul qilindi. To‘lov kutilmoqda.");
                 clearCart();
                 router.push('/mobile/components/actions');
             } else {
@@ -379,17 +357,17 @@ const CheckoutContent = () => {
             <div className="px-6 py-8">
                 <div className="flex justify-between items-center relative">
                     <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-slate-100 dark:bg-slate-800 -translate-y-1/2 z-0"></div>
-                    <motion.div 
+                    <motion.div
                         className="absolute top-1/2 left-0 h-[2px] bg-[#52C6DA] -translate-y-1/2 z-0"
                         initial={{ width: 0 }}
                         animate={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
                         transition={{ duration: 0.5 }}
                     />
-                    
+
                     {steps_ui_raw.map((s) => (
                         <div key={s.id} className="relative z-10">
-                            <motion.div 
-                                animate={{ 
+                            <motion.div
+                                animate={{
                                     scale: currentStep === s.id ? 1.2 : 1,
                                     backgroundColor: s.id <= currentStep ? "#52C6DA" : "#CBD5E1"
                                 }}
@@ -422,7 +400,7 @@ const CheckoutContent = () => {
                         <span className="text-xl font-black text-slate-800 dark:text-white">{formatPrice(totalAmount)}</span>
                     </div>
                     {currentStep === totalSteps ? (
-                        <button 
+                        <button
                             onClick={handleSubmitOrder}
                             disabled={isSubmitting}
                             className="bg-[#52C6DA] text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-[#52C6DA]/30 flex items-center gap-2 active:scale-95 transition-all disabled:opacity-50"
@@ -430,7 +408,7 @@ const CheckoutContent = () => {
                             {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : "Buyurtma berish"}
                         </button>
                     ) : (
-                        <button 
+                        <button
                             onClick={nextStep}
                             className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all flex items-center gap-2"
                         >

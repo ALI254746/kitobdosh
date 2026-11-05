@@ -11,14 +11,14 @@ import { BOOK_CATEGORIES, PUBLISHERS } from "../../../lib/constants";
 
 // --- COMPONENTS ---
 
-const FilterSidebar = ({ darkMode }) => {
+const FilterSidebar = ({ darkMode, onCategory }) => {
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className={`hidden lg:block w-72 rounded-2xl p-6 h-fit sticky top-28 border backdrop-blur-md
-                ${darkMode 
-                    ? "bg-[#163201]/40 border-[#A3ED96]/20" 
+                ${darkMode
+                    ? "bg-[#163201]/40 border-[#A3ED96]/20"
                     : "bg-white border-gray-100 shadow-xl"
                 }
             `}
@@ -33,14 +33,14 @@ const FilterSidebar = ({ darkMode }) => {
                     Kategoriyalar
                 </p>
                 <div className="space-y-2">
-                    <div className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 group bg-[#163201] text-[#A3ED96]`}>
+                    <div onClick={() => onCategory("Barchasi")} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 group bg-[#163201] text-[#A3ED96]`}>
                         <div className="flex items-center gap-3">
                             <FaLayerGroup />
                             <span className="font-bold text-sm">Barchasi</span>
                         </div>
                     </div>
                     {BOOK_CATEGORIES.map((cat, index) => (
-                        <div key={index} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 group
+                        <div key={index} onClick={() => onCategory(cat.id)} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 group
                             ${darkMode ? "hover:bg-white/5 text-gray-300" : "hover:bg-gray-50 text-gray-600"}
                         `}>
                             <div className="flex items-center gap-3">
@@ -79,17 +79,17 @@ const BookCard = ({ book, darkMode, onEdit, onDelete, onView }) => {
             exit={{ opacity: 0, scale: 0.9 }}
             whileHover={{ y: -8, transition: { duration: 0.2 } }}
             className={`group relative rounded-2xl overflow-hidden shadow-lg border backdrop-blur-sm transition-all duration-300
-                ${darkMode 
-                    ? "bg-[#163201]/40 border-[#A3ED96]/20 text-white hover:border-[#A3ED96]/50" 
+                ${darkMode
+                    ? "bg-[#163201]/40 border-[#A3ED96]/20 text-white hover:border-[#A3ED96]/50"
                     : "bg-white border-gray-100 text-gray-800 hover:shadow-xl"
                 }
             `}
         >
             <div className="relative w-full h-64 overflow-hidden bg-gray-100">
-                <Image 
-                    src={book.images && book.images[0] ? book.images[0] : "https://placehold.co/400x600?text=No+Image"} 
-                    alt={book.title} 
-                    fill 
+                <Image
+                    src={book.images && book.images[0] ? book.images[0] : "https://placehold.co/400x600?text=No+Image"}
+                    alt={book.title}
+                    fill
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
@@ -161,7 +161,7 @@ const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <motion.div 
+                    <motion.div
                          initial={{ opacity: 0, scale: 0.9 }}
                          animate={{ opacity: 1, scale: 1 }}
                          exit={{ opacity: 0, scale: 0.9 }}
@@ -174,7 +174,7 @@ const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
                          </div>
                          <h3 className="text-xl font-bold mb-2">Ishonchingiz komilmi?</h3>
                          <p className="text-sm opacity-70 mb-6">Bu kitob butunlay o&apos;chiriladi. Bu amalni ortga qaytarib bo&apos;lmaydi.</p>
-                         
+
                          <div className="flex gap-3">
                              <button onClick={onClose} className="flex-1 py-3 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">Bekor qilish</button>
                              <button onClick={onConfirm} className="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30">O&apos;chirish</button>
@@ -190,9 +190,9 @@ const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
 const BookFormModal = ({ isOpen, onClose, onSubmit, initialData, darkMode }) => {
     const isEdit = !!initialData;
     const [formData, setFormData] = useState({
-        title: "", author: "", price: "", category: "Badiiy Adabiyotlar", 
+        title: "", author: "", price: "", category: "Badiiy Adabiyotlar",
         description: "", stock: 1, isRentable: false, rentalPricePerDay: 0,
-        imageUrl: "", publisher: "Kitobdosh" 
+        imageUrl: "", publisher: "Kitobdosh"
     });
     const [loading, setLoading] = useState(false);
 
@@ -252,7 +252,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, initialData, darkMode }) => 
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -263,9 +263,9 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, initialData, darkMode }) => 
                         <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-black/10 rounded-full transition-colors">
                             <FaTimes />
                         </button>
-                        
+
                         <h2 className="text-2xl font-black mb-6">{isEdit ? "Kitobni Tahrirlash" : "Yangi Kitob Qo'shish"}</h2>
-                        
+
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
@@ -296,7 +296,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, initialData, darkMode }) => 
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div className="space-y-1">
                                 <label className="text-xs font-bold opacity-70">Kitob Rasmi</label>
                                 <div className="flex gap-4 items-center">
@@ -311,7 +311,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, initialData, darkMode }) => 
                                         </div>
                                         <input type="file" required={!isEdit} accept="image/*" className="hidden" onChange={handleFileChange} />
                                     </label>
-                                    
+
                                     {formData.imageUrl && (
                                         <div className="w-24 h-32 rounded-xl overflow-hidden shadow-lg border-2 border-white/10 flex-shrink-0 bg-gray-100">
                                             <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
@@ -357,7 +357,7 @@ const ViewBookModal = ({ isOpen, onClose, book, darkMode }) => {
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
@@ -370,10 +370,10 @@ const ViewBookModal = ({ isOpen, onClose, book, darkMode }) => {
                         </button>
 
                         <div className="w-full md:w-2/5 h-64 md:h-auto relative bg-gray-200">
-                             <Image 
-                                src={book.images && book.images[0] ? book.images[0] : "https://placehold.co/400x600?text=No+Image"} 
-                                alt={book.title} 
-                                fill 
+                             <Image
+                                src={book.images && book.images[0] ? book.images[0] : "https://placehold.co/400x600?text=No+Image"}
+                                alt={book.title}
+                                fill
                                 className="object-cover"
                             />
                         </div>
@@ -384,7 +384,7 @@ const ViewBookModal = ({ isOpen, onClose, book, darkMode }) => {
                             </span>
                             <h2 className="text-3xl font-black mb-1 leading-tight">{book.title}</h2>
                             <p className="text-lg opacity-70 mb-6 font-medium">{book.author}</p>
-                            
+
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className={`p-4 rounded-xl border ${darkMode ? "border-white/10 bg-white/5" : "border-gray-100 bg-gray-50"}`}>
                                      <p className="text-xs font-bold opacity-50 uppercase">Sotuv Narxi</p>
@@ -419,21 +419,27 @@ export default function BooksPage() {
   const { darkMode } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [books, setBooks] = useState([]);
-  
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('Barchasi');
+
   // Modals State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  
+
   const [selectedBook, setSelectedBook] = useState(null);
 
   // Fetch books from API
   const fetchBooks = async () => {
     try {
-        const res = await fetch('/api/books');
+        const res = await fetch(`/api/books?page=${page}&limit=16&search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}`);
         const data = await res.json();
         if(data.success) {
             setBooks(data.data);
+            setPages(Math.max(1, data.totalPages)); setTotal(data.totalItems);
         }
     } catch (error) {
         console.error("Failed to fetch books", error);
@@ -444,18 +450,18 @@ export default function BooksPage() {
   };
 
   useEffect(() => {
-    fetchBooks();
-  }, []);
+    setLoading(true); fetchBooks();
+  }, [page, search, category]);
 
   // CRUD OPERATIONS
    const handleCreateOrUpdate = async (formData) => {
       // images array qilib yuboramiz
-      const payload = { 
-        ...formData, 
+      const payload = {
+        ...formData,
         images: [formData.imageUrl],
         cloudinaryIds: formData.cloudinaryId ? [formData.cloudinaryId] : []
       };
-      
+
       if (selectedBook) {
           // UPDATE
           try {
@@ -514,12 +520,12 @@ export default function BooksPage() {
   };
 
   const openDeleteModal = (id) => {
-      // Bizga butun kitob objekti kerak emas deleteda, lekin id yetadi. 
+      // Bizga butun kitob objekti kerak emas deleteda, lekin id yetadi.
       // State structureni buzmaslik uchun vaqtinchalik { _id: id } deb qo'yamiz
       setSelectedBook({ _id: id });
       setIsDeleteOpen(true);
   };
-  
+
   const openViewModal = (book) => {
       setSelectedBook(book);
       setIsViewOpen(true);
@@ -532,36 +538,36 @@ export default function BooksPage() {
 
   return (
     <div className={`min-h-screen p-6 sm:p-8 transition-colors duration-300 ${darkMode ? "bg-[#0b1a00]" : "bg-[#f8fafc]"}`}>
-      
+
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
-            <motion.h1 
+            <motion.h1
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className={`text-3xl font-black tracking-tight mb-2 ${darkMode ? "text-white" : "text-[#163201]"}`}
             >
                 Kitoblar Boshqaruvi
             </motion.h1>
-            <motion.p 
+            <motion.p
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
                 className={`text-sm ${darkMode ? "text-[#A3ED96]/60" : "text-gray-500"}`}
             >
-                Jami {books.length} ta kitob mavjud
+                Jami {total} ta kitob mavjud
             </motion.p>
           </div>
 
-          <motion.button 
+          <motion.button
              onClick={() => setIsFormOpen(true)}
              initial={{ opacity: 0, scale: 0.9 }}
              animate={{ opacity: 1, scale: 1 }}
              whileHover={{ scale: 1.05 }}
              whileTap={{ scale: 0.95 }}
              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all
-                ${darkMode 
-                    ? "bg-[#A3ED96] text-[#163201] hover:bg-[#bbfeb0]" 
+                ${darkMode
+                    ? "bg-[#A3ED96] text-[#163201] hover:bg-[#bbfeb0]"
                     : "bg-[#163201] text-[#A3ED96] hover:bg-[#1f4202]"
                 }
              `}
@@ -572,11 +578,11 @@ export default function BooksPage() {
       </div>
 
      <div className="flex flex-col lg:flex-row gap-8 items-start">
-        <FilterSidebar darkMode={darkMode} />
+        <FilterSidebar darkMode={darkMode} onCategory={value => { setCategory(value); setPage(1); }} />
 
         <div className="flex-1 w-full">
             {/* Toolkit */}
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -584,12 +590,12 @@ export default function BooksPage() {
             >
                 <div className="flex-1 relative">
                     <FaSearch className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? "text-[#A3ED96]/50" : "text-gray-400"}`} />
-                    <input 
-                        type="text" 
-                        placeholder="Qidirish (Nomi, Muallifi)..." 
+                    <input
+                        type="text"
+                        placeholder="Qidirish (Nomi, Muallifi)..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
                         className={`w-full pl-12 pr-4 py-4 rounded-xl border outline-none font-bold transition-all
-                            ${darkMode 
-                                ? "bg-[#163201]/40 border-[#A3ED96]/20 text-white focus:border-[#A3ED96] placeholder-[#A3ED96]/30" 
+                            ${darkMode
+                                ? "bg-[#163201]/40 border-[#A3ED96]/20 text-white focus:border-[#A3ED96] placeholder-[#A3ED96]/30"
                                 : "bg-white border-gray-200 text-gray-900 focus:border-[#163201] focus:ring-1 focus:ring-[#163201]"
                             }
                         `}
@@ -598,8 +604,8 @@ export default function BooksPage() {
                  <div className="relative">
                     <FaSortAmountDown className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? "text-[#A3ED96]/50" : "text-gray-400"}`} />
                     <select className={`pl-12 pr-8 py-4 rounded-xl border outline-none font-bold cursor-pointer appearance-none
-                        ${darkMode 
-                            ? "bg-[#163201]/40 border-[#A3ED96]/20 text-[#A3ED96] focus:border-[#A3ED96]" 
+                        ${darkMode
+                            ? "bg-[#163201]/40 border-[#A3ED96]/20 text-[#A3ED96] focus:border-[#A3ED96]"
                             : "bg-white border-gray-200 text-gray-700 focus:border-[#163201]"
                         }
                     `}>
@@ -612,18 +618,18 @@ export default function BooksPage() {
             </motion.div>
 
             {/* Grid Content */}
-            <motion.div 
+            <motion.div
                 layout
                 className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6"
             >
                 <AnimatePresence>
-                    {loading 
+                    {loading
                         ? [...Array(6)].map((_, i) => <BookSkeleton key={i} darkMode={darkMode} />)
                         : books.map((book) => (
-                            <BookCard 
-                                key={book._id} 
-                                book={book} 
-                                darkMode={darkMode} 
+                            <BookCard
+                                key={book._id}
+                                book={book}
+                                darkMode={darkMode}
                                 onEdit={openEditModal}
                                 onDelete={(id) => openDeleteModal(id)}
                                 onView={openViewModal}
@@ -639,24 +645,29 @@ export default function BooksPage() {
             </motion.div>
         </div>
      </div>
-     
+
+     <nav aria-label="Katalog sahifalari" className="flex gap-4 justify-center py-4">
+       <button disabled={page <= 1} onClick={() => setPage(p => p-1)}>Oldingi sahifa</button>
+       <span>{page} / {pages}</span>
+       <button disabled={page >= pages} onClick={() => setPage(p => p+1)}>Keyingi sahifa</button>
+     </nav>
      {/* Modals */}
-     <BookFormModal 
-        isOpen={isFormOpen} 
-        onClose={handleCloseForm} 
+     <BookFormModal
+        isOpen={isFormOpen}
+        onClose={handleCloseForm}
         onSubmit={handleCreateOrUpdate}
         initialData={selectedBook}
         darkMode={darkMode}
      />
-     
-     <ConfirmDeleteModal 
+
+     <ConfirmDeleteModal
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleDelete}
         darkMode={darkMode}
      />
-     
-     <ViewBookModal 
+
+     <ViewBookModal
         isOpen={isViewOpen}
         onClose={() => { setIsViewOpen(false); setSelectedBook(null); }}
         book={selectedBook}

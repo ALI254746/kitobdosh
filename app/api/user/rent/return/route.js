@@ -1,9 +1,12 @@
+import { authorize } from "@/lib/server-auth";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Rent from "@/model/Rent";
 import Notification from "@/model/Notification"; // Optional: Notify couriers?
 
 export async function POST(req) {
+    const access = await authorize();
+    if (access.response) return access.response;
     try {
         await dbConnect();
         const { rentId } = await req.json();
@@ -14,9 +17,9 @@ export async function POST(req) {
 
         // Update status to 'return_requested'
         // Bu status user kitobni qaytarmoqchi ekanligini bildiradi
-        const updatedRent = await Rent.findByIdAndUpdate(
-            rentId, 
-            { status: 'return_requested' }, 
+        const updatedRent = await Rent.findOneAndUpdate(
+            { _id: rentId, user: access.user.id, status: { $in: ['active', 'approved', 'late'] } },
+            { status: 'return_requested' },
             { new: true }
         );
 

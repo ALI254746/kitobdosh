@@ -56,11 +56,12 @@ const RequestCard = ({ request, updateStatus, darkMode }) => {
                 <div className="flex items-center gap-2">
                     <FaMapMarkerAlt className="text-blue-500" /> <span className="truncate">{request.address}</span>
                 </div>
-                {request.passportUrl && (
-                    <a href={request.passportUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-400 hover:underline">
-                        <FaFileAlt /> Pasportni ko&apos;rish
-                    </a>
-                )}
+                <button className="flex items-center gap-2 text-blue-400 hover:underline" onClick={async () => {
+                  const response = await fetch(`/api/rent/${request._id}/document`);
+                  const data = await response.json();
+                  if (response.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
+                  else toast.error("Hujjatni ochib bo‘lmadi. Eski hujjat uchun kirish siyosatini administrator tekshirsin.");
+                }}>Hujjatni ko‘rish</button>
             </div>
 
             {/* Footer Stats */}

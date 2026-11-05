@@ -11,7 +11,11 @@ export async function middleware(req) {
     return NextResponse.json({ success: false, message: 'Ruxsat yo‘q' }, { status: 401 });
   }
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-  if (canAccess(access, token)) return NextResponse.next();
+  if (canAccess(access, token)) {
+    const response = NextResponse.next();
+    response.cookies.set('kitobdosh_token', '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 0 });
+    return response;
+  }
   if (!req.nextUrl.pathname.startsWith('/api/')) return NextResponse.redirect(new URL('/', req.url));
   return NextResponse.json({ success: false, message: token ? 'Bu amal uchun ruxsat yo‘q' : 'Avval tizimga kiring' }, { status: token ? 403 : 401 });
 }

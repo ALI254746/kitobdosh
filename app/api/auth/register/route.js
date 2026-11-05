@@ -1,3 +1,4 @@
+import { rateLimit, newOtp, otpKey } from "@/lib/otp";
 import { dbConnect } from "@/lib/db.Connect";
 import User from "@/model/user";
 import { randomInt } from "node:crypto";
@@ -26,6 +27,7 @@ export async function POST(req) {
       );
     }
 
+    if (!await rateLimit(req, email, 'send')) return NextResponse.json({ message: 'Ko‘p urinish. 15 daqiqadan keyin qayta urinib ko‘ring' }, { status: 429 });
     await dbConnect();
 
     // 1. Email mavjudligini tekshirish
@@ -38,7 +40,7 @@ export async function POST(req) {
     }
 
     // 2. OTP yaratish
-    const otp = randomInt(100000, 1000000).toString(); // 6 xonali
+    const { code: otp, hash: otpHash } = newOtp(); // 6 xonali
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -46,16 +48,16 @@ export async function POST(req) {
     const tempUserData = {
         email,
         password: hashedPassword,
-        otp
+        otpHash
     };
 
-    await redis.setex(`register_otp:${email}`, 300, JSON.stringify(tempUserData));
+    await redis.setex(otpKey(email), 300, JSON.stringify(tempUserData));
 
     // 4. Email yuborish
     try {
         await sendOTP(email, otp);
     } catch (emailError) {
-        console.error("Email yuborishda xato:", emailError.message);
+        await redis.del(otpKey(email));
         return NextResponse.json(
           { message: "Tasdiqlash xatini yuborib bo‘lmadi. Keyinroq qayta urinib ko‘ring." },
           { status: 500 }
@@ -68,7 +70,7 @@ export async function POST(req) {
     );
 
   } catch (err) {
-    console.error("❌ Register xatolik:", err);
+
     return NextResponse.json(
       { message: "Server xatolik yuz berdi" },
       { status: 500 }

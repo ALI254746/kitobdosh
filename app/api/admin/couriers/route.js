@@ -46,7 +46,7 @@ export async function POST(req) {
         occupation: 'courier' // Additional info
     });
 
-    return NextResponse.json({ success: true, data: newCourier }, { status: 201 });
+    return NextResponse.json({ success: true, data: { _id: newCourier._id, fullName: newCourier.fullName, email: newCourier.email, phone: newCourier.phone, role: newCourier.role } }, { status: 201 });
 
   } catch (error) {
     console.error("Create Courier Error:", error);

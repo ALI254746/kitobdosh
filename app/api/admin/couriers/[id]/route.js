@@ -20,7 +20,7 @@ export async function PUT(req, { params }) {
             updateData.password = await bcrypt.hash(password, 10);
         }
 
-        const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
+        const updatedUser = await User.findOneAndUpdate({ _id: id, role: { $in: ['kurier', 'kurer', 'courier'] } }, updateData, { new: true, runValidators: true }).select('-password');
 
         if (!updatedUser) {
              return NextResponse.json({ success: false, message: "Kuryer topilmadi" }, { status: 404 });
@@ -39,7 +39,7 @@ export async function DELETE(req, { params }) {
         await dbConnect();
         const { id } = params;
         
-        const deletedUser = await User.findByIdAndDelete(id);
+        const deletedUser = await User.findOneAndDelete({ _id: id, role: { $in: ['kurier', 'kurer', 'courier'] } });
 
         if (!deletedUser) {
              return NextResponse.json({ success: false, message: "Kuryer topilmadi" }, { status: 404 });

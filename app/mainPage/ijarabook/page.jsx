@@ -64,7 +64,7 @@ const RentalModal = ({ isOpen, onClose, rentalData }) => {
     lat: null,
     lng: null,
     passport: null,
-    payment: "payme"
+    payment: "cash"
   });
   const [showMap, setShowMap] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,12 +106,8 @@ const RentalModal = ({ isOpen, onClose, rentalData }) => {
         data.append("bookImage", book.images?.[0] || "");
         data.append("days", days);
         data.append("totalPrice", totalPrice);
-        if (formData.lat && formData.lng) {
-            data.append("lat", formData.lat);
-            data.append("lng", formData.lng);
-        }
 
-        if (formData.lat && formData.lng) {
+        if (formData.lat != null && formData.lng != null) {
             data.append("lat", formData.lat);
             data.append("lng", formData.lng);
         }
@@ -299,7 +295,7 @@ const RentalModal = ({ isOpen, onClose, rentalData }) => {
                         ${darkMode ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30" : "bg-[#1F2937] text-white hover:bg-[#96C7B9] shadow-gray-200"}
                     `}
                 >         
-                    <span>To&apos;lov Qilish</span>
+                    <span>Ijara so‘rovini yuborish</span>
                     <span className="bg-white/20 px-2 py-0.5 rounded text-xs">
                         {totalPrice.toLocaleString()} so&apos;m
                     </span>
@@ -443,7 +439,7 @@ export default function RentPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   
   // API Call with params
-  const { data: booksData, isLoading: booksLoading } = useGetBooksQuery({
+  const { data: booksData, isLoading: booksLoading, isError: booksError, refetch } = useGetBooksQuery({
     page,
     limit,
     category: filterCategory,
@@ -591,7 +587,7 @@ export default function RentPage() {
       {/* CONTENT */}
       <main className="max-w-7xl mx-auto px-6 py-10">
          <AnimatePresence mode="wait">
-            {booksLoading ? (
+            {booksError ? (<div role="alert" className="p-8 text-center"><p>Katalogni yuklab bo‘lmadi. Tarmoqni tekshiring.</p><button onClick={refetch} className="px-6 py-3 rounded-xl border mt-4">Qayta urinish</button></div>) : booksLoading ? (
                 <motion.div 
                    key="skeleton"
                    initial={{ opacity: 0 }}

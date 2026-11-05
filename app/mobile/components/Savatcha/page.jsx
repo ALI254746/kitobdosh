@@ -1,4 +1,5 @@
 "use client";
+import { cartItemTotal } from "@/lib/order-input.mjs";
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,18 +42,16 @@ export default function SavatchaPage() {
 
     (cartItems || []).forEach(item => {
       if (item.type === 'rent') {
-        const base = item.bookId?.rentalPrice || item.rentalPrice || 0;
-        const durationOption = RENTAL_DURATIONS.find(d => d.days === item.rentDays) || RENTAL_DURATIONS[0];
-        rObj += base * durationOption.multiplier;
+        rObj += cartItemTotal(item);
       } else {
-        bObj += (item.bookId?.price || item.price || 0);
+        bObj += cartItemTotal(item);
       }
     });
 
     return { 
       rentTotal: rObj, 
       buyTotal: bObj, 
-      totalCount: cartItems?.length || 0,
+      totalCount: cartItems?.reduce((n, item) => n + (item.quantity || 1), 0) || 0,
       displayedItems: filtered
     };
   }, [cartItems, activeTab]);
@@ -101,7 +100,7 @@ export default function SavatchaPage() {
   );
 
   // --- Empty State ---
-  if (!loading && (cartItems?.length || 0) === 0) {
+  if (!loading && (cartItems?.reduce((n, item) => n + (item.quantity || 1), 0) || 0) === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 text-center p-6 transition-colors duration-300 pb-24">
         <div className="w-24 h-24 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
@@ -288,7 +287,7 @@ export default function SavatchaPage() {
                                 {book.rating ? `${book.rating} reyting` : 'Siz uchun tanlov'}
                               </p>
                               <span className="font-bold text-blue-600 dark:text-blue-400">
-                                {formatPrice((book.rentalPrice || 0) * (RENTAL_DURATIONS.find(d => d.days === item.rentDays)?.multiplier || 1))}
+                                {formatPrice(cartItemTotal(item))}
                               </span>
                             </div>
                           </div>

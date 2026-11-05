@@ -1,3 +1,5 @@
+> Bu oldingi e9f0662 tekshiruvining hisoboti. Joriy o‘zgarishlar va yangi test natijalari: [mustaqil audit](audit-71d7fec-vs-current.md).
+
 # Tekshiruv hisoboti
 
 ## Izolyatsiya

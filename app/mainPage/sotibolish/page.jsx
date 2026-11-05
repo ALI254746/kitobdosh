@@ -491,7 +491,7 @@ export default function MarketPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   
   // API Call with params
-  const { data: booksData, isLoading: booksLoading } = useGetBooksQuery({
+  const { data: booksData, isLoading: booksLoading, isError: booksError, refetch } = useGetBooksQuery({
     page,
     limit,
     category: filterCategory,
@@ -634,7 +634,7 @@ export default function MarketPage() {
       {/* CONTENT GRID */}
       <main className="max-w-7xl mx-auto px-6 py-10">
         <AnimatePresence mode="wait">
-             {booksLoading ? (
+             {booksError ? (<div role="alert" className="p-8 text-center"><p>Katalogni yuklab bo‘lmadi. Tarmoqni tekshiring.</p><button onClick={refetch} className="px-6 py-3 rounded-xl border mt-4">Qayta urinish</button></div>) : booksLoading ? (
                  <motion.div 
                    key="skeleton"
                    initial={{ opacity: 0 }}

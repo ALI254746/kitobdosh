@@ -1,3 +1,14 @@
+import { publicRecord } from "@/lib/server-auth";
+import Book from '@/model/Book';
+import Asset from '@/model/UploadAsset';
+import { v2 as cloudinary } from 'cloudinary';
+import { authorize } from '@/lib/server-auth';
+import { createOrder } from '@/lib/create-order';
+import { prepareOrder, OrderInputError } from '@/lib/order-input.mjs';
+import { coordinates } from '@/lib/checkout-pricing.mjs';
+import { isObjectId } from '@/lib/catalog-input.mjs';
+import { uploadImage, configureCloudinary, UploadInputError } from '@/lib/uploads';
+import { clearCache } from '@/lib/utils/cache';
 import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
@@ -13,92 +24,22 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 export async function POST(req) {
+  const access = await authorize(); if (access.response) return access.response;
+  let document;
   try {
     await dbConnect();
-    
-    // Auth: Extract User ID
-    let userId = null;
-    
-    // 1. Check NextAuth Session
-    const session = await getServerSession(authOptions);
-    if (session?.user?.id) {
-        userId = session.user.id;
-    }
-
-    // 2. Fallback: Check Custom Token
-    if (!userId) {
-        try {
-            const cookieStore = await cookies();
-            const token = cookieStore.get("kitobdosh_token")?.value;
-            if (token) {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded.userId;
-            }
-        } catch (e) {
-            console.error("Rent API Auth Error:", e);
-        }
-    }
-
-    if (!userId) {
-        return NextResponse.json({ success: false, message: "Iltimos, avval tizimga kiring!" }, { status: 401 });
-    }
-
-    const formData = await req.formData();
-    const file = formData.get("passport");
-    
-    // Validate File
-    if (!file) {
-      return NextResponse.json({ success: false, message: "Pasport rasmi yuklanmadi" }, { status: 400 });
-    }
-
-    // Upload to Cloudinary instead of local storage
-    const { v2: cloudinary } = await import('cloudinary');
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET
-    });
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          folder: 'kitobdosh/passports',
-          resource_type: 'auto'
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(buffer);
-    });
-
-    const fileUrl = uploadResult.secure_url;
-
-    // Extract other fields
-    const newRent = new Rent({
-      user: userId, // Link to user
-      book: formData.get("bookId"),
-      bookTitle: formData.get("bookTitle"),
-      bookImage: formData.get("bookImage"),
-      fullName: formData.get("name"),
-      phone: formData.get("phone"),
-      address: formData.get("address"),
-      passportUrl: fileUrl,
-      passportCloudinaryId: uploadResult.public_id, // Store for deletion
-      days: Number(formData.get("days")),
-      totalPrice: Number(formData.get("totalPrice")),
-      paymentMethod: formData.get("payment")
-    });
-
-    await newRent.save();
-
-    return NextResponse.json({ success: true, message: "Ijara so'rovi yuborildi", data: newRent });
+    const form = await req.formData();
+    const payload = { customer: { name: form.get('name'), phone: form.get('phone'), address: form.get('address'), ...coordinates(form.get('lat'), form.get('lng')) }, items: [{ book: form.get('bookId'), type: 'rent', quantity: 1, rentDays: Number(form.get('days')) }], deliveryMethod: 'pickup', paymentMethod: form.get('payment') || 'cash' };
+    if (!isObjectId(payload.items[0].book)) return NextResponse.json({ success: false }, { status: 400 });
+    prepareOrder(payload, await Book.find({ _id: payload.items[0].book }).lean());
+    document = await uploadImage(form.get('passport'), access.user.id, 'kitobdosh/passports', true);
+    const order = await createOrder(payload, access.user.id, document);
+    const rent = await Rent.findOne({ orderId: order._id }).select('-passportUrl -passportCloudinaryId -passportFormat');
+    await clearCache(`profile_full:${access.user.id}`);
+    return NextResponse.json({ success: true, message: 'Ijara so‘rovi qabul qilindi. To‘lov kutilmoqda.', data: rent });
   } catch (error) {
-    console.error("Rent API Error:", error);
-    return NextResponse.json({ success: false, message: "Server xatosi: " + error.message }, { status: 500 });
+    if (document) { try { configureCloudinary(); await cloudinary.uploader.destroy(document.publicId, { type: 'authenticated' }); await Asset.deleteOne({ publicId: document.publicId, owner: access.user.id }); } catch {} }
+    return NextResponse.json({ success: false, message: 'Ijara ma’lumotlari yoki hujjat rasmi noto‘g‘ri' }, { status: error instanceof OrderInputError || error instanceof UploadInputError || error.name === 'ValidationError' || error.message === 'Koordinatalar noto‘g‘ri' ? 400 : 503 });
   }
 }
 
@@ -109,7 +50,7 @@ export async function PUT(req) {
         await dbConnect();
         const { id, status } = await req.json();
 
-        if (!id || !status) {
+        if (!isObjectId(id) || !['pending', 'approved', 'rejected', 'returned', 'late', 'active', 'return_requested'].includes(status)) {
             return NextResponse.json({ success: false, message: "Ma'lumotlar yetarli emas" }, { status: 400 });
         }
 
@@ -125,7 +66,7 @@ export async function PUT(req) {
             console.log(`Rent API: Request Approved. Setting courierStatus to 'new' and returnDate to ${updateFull.returnDate}. ID: ${id}`);
         }
         console.log(`Rent API: Updating Rent ${id} status to ${status}`);
-        const updatedRent = await Rent.findByIdAndUpdate(id, updateFull, { new: true });
+        const updatedRent = await Rent.findByIdAndUpdate(id, updateFull, { new: true, runValidators: true });
         
         if (!updatedRent) {
              return NextResponse.json({ success: false, message: "Topilmadi" }, { status: 404 });
@@ -159,7 +100,7 @@ export async function PUT(req) {
              });
         }
 
-        return NextResponse.json({ success: true, data: updatedRent });
+        return NextResponse.json({ success: true, data: publicRecord(updatedRent) });
     } catch (error) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
@@ -170,8 +111,8 @@ export async function GET() {
   if (denied) return denied;
   try {
      await dbConnect();
-     const rentals = await Rent.find().sort({ createdAt: -1 });
-     return NextResponse.json({ success: true, data: rentals });
+     const rentals = await Rent.find().select('-passportUrl -passportCloudinaryId -passportAssetId').sort({ createdAt: -1 });
+     return NextResponse.json({ success: true, data: publicRecord(rentals) });
   } catch (error) {
      return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

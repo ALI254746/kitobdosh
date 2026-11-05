@@ -1,3 +1,4 @@
+import { publicRecord } from "@/lib/server-auth";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { NextResponse } from "next/server";

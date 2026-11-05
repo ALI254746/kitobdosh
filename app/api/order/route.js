@@ -1,3 +1,10 @@
+import { publicRecord } from "@/lib/server-auth";
+import { authorize } from '@/lib/server-auth';
+import { createOrder } from '@/lib/create-order';
+import { uploadImage, configureCloudinary, UploadInputError } from '@/lib/uploads';
+import { v2 as cloudinary } from 'cloudinary';
+import Asset from '@/model/UploadAsset';
+import { clearCache } from '@/lib/utils/cache';
 import { requireRole } from "@/lib/require-role";
 import Book from "@/model/Book";
 import { prepareOrder, OrderInputError } from "@/lib/order-input.mjs";
@@ -15,126 +22,26 @@ import { authOptions } from "@/lib/authOptions";
 import mongoose from 'mongoose';
 
 export async function POST(req) {
+  const access = await authorize(); if (access.response) return access.response;
+  let document;
   try {
     await dbConnect();
-    
-    let payload = {};
-    const contentType = req.headers.get("content-type") || "";
-
-    if (contentType.includes("multipart/form-data")) {
-        const formData = await req.formData();
-        const customer = JSON.parse(formData.get("customer") || "{}");
-        const items = JSON.parse(formData.get("items") || "[]");
-        const passportFile = formData.get("passport");
-
-        payload = {
-            customer,
-            items,
-            deliveryMethod: formData.get("deliveryMethod"),
-            paymentMethod: formData.get("paymentMethod"),
-            totalPrice: Number(formData.get("totalPrice")),
-        };
-
-        // Handle Passport Upload to Cloudinary
-        if (passportFile && passportFile.size > 0) {
-            if (passportFile.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(passportFile.type)) {
-              return NextResponse.json({ success: false, message: 'Hujjat rasmi JPG, PNG yoki WebP bo‘lsin (5 MB gacha)' }, { status: 400 });
-            }
-            const { v2: cloudinary } = await import('cloudinary');
-            cloudinary.config({
-                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-                api_key: process.env.CLOUDINARY_API_KEY,
-                api_secret: process.env.CLOUDINARY_API_SECRET
-            });
-
-            const bytes = await passportFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-
-            const uploadResult = await new Promise((resolve, reject) => {
-                cloudinary.uploader.upload_stream(
-                    {
-                        folder: 'kitobdosh/passports',
-                        resource_type: 'auto'
-                    },
-                    (error, result) => {
-                        if (error) reject(error);
-                        else resolve(result);
-                    }
-                ).end(buffer);
-            });
-            payload.passportUrl = uploadResult.secure_url;
-            payload.passportCloudinaryId = uploadResult.public_id;
-        }
-    } else {
-        payload = await req.json();
-    }
-
-    // 1. Auth Check: Session
-    const session = await getServerSession(authOptions);
-    let userId = session?.user?.id;
-
-    // 2. Fallback: Token
-    if (!userId) {
-        try {
-            const cookieStore = await cookies();
-            const token = cookieStore.get("kitobdosh_token")?.value;
-            
-            if (token) {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded.userId;
-            }
-        } catch (e) {
-            console.error("DEBUG: Token error", e);
-        }
-    }
-
-    if (!userId) {
-         return NextResponse.json({ success: false, message: "Iltimos, avval tizimga kiring!" }, { status: 401 });
-    }
-
-    if (!Array.isArray(payload.items) || !payload.items.length || payload.items.some(i => !isObjectId(i.book))) {
-      return NextResponse.json({ success: false, message: "Savatchadagi kitoblar noto‘g‘ri" }, { status: 400 });
-    }
-    const books = await Book.find({ _id: { $in: payload.items.map(i => i.book) } }).lean();
-    const validated = prepareOrder(payload, books);
-    const finalOrderData = {
-        ...validated,
-        passportUrl: payload.passportUrl,
-        passportCloudinaryId: payload.passportCloudinaryId,
-        user: userId
-    };
-
-    const newOrder = new Order(finalOrderData);
-    const rentalDocs = finalOrderData.items.filter(i => i.type === 'rent').map(item => new Rent({
-      user: userId, book: item.book, bookTitle: item.title, bookImage: item.image,
-      fullName: finalOrderData.customer.name, phone: finalOrderData.customer.phone,
-      address: finalOrderData.customer.address, passportUrl: finalOrderData.passportUrl || '',
-      passportCloudinaryId: finalOrderData.passportCloudinaryId,
-      days: item.rentDays, totalPrice: item.price * item.quantity,
-      paymentMethod: finalOrderData.paymentMethod, status: 'pending', orderId: newOrder._id
-    }));
-    // Validate every record before writing; a failed rental must not be reported as success.
-    await newOrder.validate();
-    await Promise.all(rentalDocs.map(rent => rent.validate()));
-    await newOrder.save();
-    for (const rent of rentalDocs) await rent.save();
-
-    // Notify Admins
-    try {
-        await pusherServer.trigger("admin-channel", "new-order", {
-            message: "Yangi buyurtma keldi!",
-            orderId: newOrder._id,
-            customer: newOrder.customer?.name || "Noma'lum",
-            totalPrice: newOrder.totalPrice
-        });
-    } catch (pusherError) {
-        console.error("Pusher Admin Trigger Error:", pusherError);
-    }
-
-    return NextResponse.json({ success: true, message: "Buyurtma qabul qilindi", data: newOrder });
+    let payload;
+    if ((req.headers.get('content-type') || '').includes('multipart/form-data')) {
+      const form = await req.formData();
+      payload = { customer: JSON.parse(form.get('customer') || '{}'), items: JSON.parse(form.get('items') || '[]'), deliveryMethod: form.get('deliveryMethod'), paymentMethod: form.get('paymentMethod') };
+      // Validate before any external upload; private storage identifiers are server-owned.
+      const books = await Book.find({ _id: { $in: (Array.isArray(payload.items) ? payload.items : []).filter(i => isObjectId(i.book)).map(i => i.book) } }).lean();
+      prepareOrder(payload, books);
+      if (payload.items.some(i => i.type === 'rent')) document = await uploadImage(form.get('passport'), access.user.id, 'kitobdosh/passports', true);
+    } else payload = await req.json();
+    const order = await createOrder(payload, access.user.id, document);
+    await clearCache(`profile_full:${access.user.id}`);
+    return NextResponse.json({ success: true, message: 'Buyurtma qabul qilindi. To‘lov kutilmoqda.', data: order });
   } catch (error) {
-    console.error("Order API Error:", error);
-    return NextResponse.json({ success: false, message: error instanceof OrderInputError ? error.message : "Buyurtmani saqlab bo‘lmadi" }, { status: error instanceof OrderInputError || error.name === "ValidationError" ? 400 : 500 });
+    if (document) { try { configureCloudinary(); await cloudinary.uploader.destroy(document.publicId, { type: 'authenticated' }); await Asset.deleteOne({ publicId: document.publicId, owner: access.user.id }); } catch {} }
+    const invalid = error instanceof OrderInputError || error instanceof UploadInputError || error instanceof SyntaxError || error.name === 'ValidationError';
+    return NextResponse.json({ success: false, message: invalid ? 'Buyurtma maydonlari yoki hujjat rasmi noto‘g‘ri' : 'Buyurtmani saqlab bo‘lmadi. Qayta urinib ko‘ring.' }, { status: invalid ? 400 : 503 });
   }
 }
 
@@ -143,7 +50,7 @@ export async function GET() {
   if (denied) return denied;
     try {
         await dbConnect();
-        const orders = await Order.find().populate('user', 'email').sort({ createdAt: -1 });
+        const orders = await Order.find().select('-passportUrl -passportCloudinaryId -passportAssetId').populate('user', 'email').sort({ createdAt: -1 });
         return NextResponse.json({ success: true, data: orders });
     } catch (error) {
         console.error("Order GET Error:", error);
@@ -223,7 +130,7 @@ export async function PUT(req) {
              console.log("Order PUT - Skipping Notification (No User or Status mismatch)");
         }
 
-        return NextResponse.json({ success: true, data: updatedOrder });
+        return NextResponse.json({ success: true, data: publicRecord(updatedOrder) });
     } catch (error) {
         console.error("Order PUT Error:", error);
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });

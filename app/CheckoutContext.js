@@ -12,7 +12,7 @@ export const CheckoutProvider = ({ children }) => {
     phone: "",
     address: null, // { city, district, street, house, apartment }
     deliveryMethod: "courier", // 'courier', 'pickup'
-    paymentMethod: "payme", // 'payme', 'click', 'cash'
+    paymentMethod: "cash", // 'payme', 'click', 'cash'
     passportFile: null,
     passportPreview: null,
     notes: ""

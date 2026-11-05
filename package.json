@@ -9,7 +9,9 @@
     "lint": "next lint",
     "test": "node --test tests/*.test.mjs",
     "test:defense": "node tests/defense.e2e.cjs",
-    "seed:demo": "node scripts/seed-demo.cjs"
+    "seed:demo": "node scripts/seed-demo.cjs",
+    "test:audit": "node tests/audit.e2e.cjs",
+    "test:audit:local": "node scripts/run-audit-local.cjs"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",

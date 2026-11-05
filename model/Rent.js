@@ -36,7 +36,7 @@ const RentSchema = new mongoose.Schema({
   lng: { type: Number },
   passportUrl: {
     type: String, 
-    required: true,
+    required: function () { return !this.passportCloudinaryId; },
   },
   days: {
     type: Number,

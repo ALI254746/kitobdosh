@@ -150,7 +150,7 @@ export default function AuthPage() {
                 password,
               });
               
-              if (signInRes?.ok) {
+              if (signInRes?.ok && !signInRes.error) {
                   router.push(window.innerWidth < 728 ? "/mobile" : "/mainPage");
               } else {
                   setShowOTP(false);

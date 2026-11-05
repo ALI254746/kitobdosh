@@ -12,6 +12,7 @@ export async function POST(req) {
     if (!session?.user?.id) return NextResponse.json({ error: 'Avval tizimga kiring' }, { status: 401 });
     const { orderId } = await req.json();
     if (!isObjectId(orderId)) return NextResponse.json({ error: 'Buyurtma ID noto‘g‘ri' }, { status: 400 });
+    if (process.env.PAYME_MODE !== 'sandbox') return NextResponse.json({ error: 'Onlayn to‘lov hozircha mavjud emas' }, { status: 503 });
     if (!process.env.PAYME_MERCHANT_ID) return NextResponse.json({ error: 'Onlayn to‘lov hozircha sozlanmagan' }, { status: 503 });
     await dbConnect();
     const order = await Order.findOne({ _id: orderId, user: session.user.id }) || await Rent.findOne({ _id: orderId, user: session.user.id });

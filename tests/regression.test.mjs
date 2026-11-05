@@ -41,3 +41,17 @@ test('mobile totals include quantity and all rental days', () => {
  assert.equal(cartItemTotal({...book,type:'rent',rentDays:3,quantity:2}),6000);
  assert.equal(cartItemTotal({...book,type:'buy',quantity:2}),60000);
 });
+
+test('delivery totals, duplicate stock and coordinates stay consistent', async () => {
+ const { deliveryFee, coordinates } = await import('../lib/checkout-pricing.mjs');
+ assert.equal(deliveryFee('courier'),15000);assert.equal(deliveryFee('pickup'),0);
+ assert.deepEqual(coordinates(0,0),{lat:0,lng:0});assert.throws(()=>coordinates(91,0));
+ assert.throws(()=>prepareOrder({...payload,items:[{...payload.items[0],quantity:3},{...payload.items[0],quantity:3}]},[book]));
+ assert.equal(prepareOrder({...payload,deliveryMethod:'courier'},[book]).totalPrice,21000);
+});
+test('build keeps lint enabled and unsafe fixture route has no DB access', async () => {
+ const {readFile}=await import('node:fs/promises');
+ assert.ok(!(await readFile(new URL('../next.config.js',import.meta.url),'utf8')).includes('ignoreDuringBuilds'));
+ const route=await readFile(new URL('../app/api/test/setup-notification/route.js',import.meta.url),'utf8');
+ assert.ok(route.includes('status: 404'));assert.ok(!route.includes('dbConnect'));
+});
