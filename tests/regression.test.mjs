@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { requiredAccess, canAccess } from '../lib/access-policy.mjs';
-import { escapeSearch, positiveInt, isObjectId } from '../lib/catalog-input.mjs';
+import { escapeSearch, positiveInt, isObjectId, adminOrderSearch } from '../lib/catalog-input.mjs';
 import { prepareOrder, cartItemTotal } from '../lib/order-input.mjs';
 
 test('admin and courier routes reject anonymous and user tokens', () => {
@@ -25,6 +25,17 @@ test('search treats brackets and regex operators literally; pagination is bounde
  assert.equal(positiveInt('999999',16,100),100);
  assert.equal(isObjectId('bad'),false);
 });
+test('admin search matches only the requested text or a valid full order ID', () => {
+ const short=adminOrderSearch('not-a-customer');
+ assert.equal(short.orderFilter.$or.length,2);
+ assert.equal(short.regex.test('Demo customer'),false);
+ assert.equal(short.orderFilter.$or.some(c => '_id' in c),false);
+ assert.equal(adminOrderSearch('[[').regex.test('[['),true);
+ assert.equal(adminOrderSearch('.*').regex.test('Demo customer'),false);
+ assert.equal(adminOrderSearch('g'.repeat(24)).orderFilter.$or.length,2);
+ const id='507f1f77bcf86cd799439011';
+ assert.deepEqual(adminOrderSearch(id).orderFilter.$or[2],{_id:id});
+});
 const book={_id:'507f1f77bcf86cd799439011',title:'Demo kitob',author:'Demo',images:[],price:30000,stock:5,isRentable:true,rentalPricePerDay:1000};
 const payload={items:[{book:book._id,quantity:2,type:'rent',rentDays:3,price:1}],customer:{name:'Demo',phone:'+998000000000',address:'Demo manzil'},deliveryMethod:'standard',paymentMethod:'cash',totalPrice:1,paymentStatus:'paid',status:'completed'};
 test('server prices rentals from catalog and ignores forged payment/status totals', () => {
@@ -47,6 +58,9 @@ test('delivery totals, duplicate stock and coordinates stay consistent', async (
  const { deliveryFee, coordinates } = await import('../lib/checkout-pricing.mjs');
  assert.equal(deliveryFee('courier'),15000);assert.equal(deliveryFee('pickup'),0);
  assert.deepEqual(coordinates(0,0),{lat:0,lng:0});assert.throws(()=>coordinates(91,0));
+ assert.deepEqual(coordinates('',''),{});
+ assert.throws(()=>coordinates('', 1));assert.throws(()=>coordinates(1, ' '));
+ assert.throws(()=>coordinates(true, 1));
  assert.throws(()=>prepareOrder({...payload,items:[{...payload.items[0],quantity:3},{...payload.items[0],quantity:3}]},[book]));
  assert.equal(prepareOrder({...payload,deliveryMethod:'courier'},[book]).totalPrice,21000);
 });

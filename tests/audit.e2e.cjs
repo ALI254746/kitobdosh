@@ -112,8 +112,17 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
   await db.collection('rents').updateOne({_id:new mongoose.Types.ObjectId(rent._id)},{$set:{status:'approved',courierId:actors.courier._id,courierStatus:'accepted'}});
   const jobs=await(await api(contexts.courier,'/api/courier')).json();const job=jobs.data.find(j=>String(j.id)===rent._id);assert.equal(job.address,'Demo manual address');assert.equal(job.lat,0);
   const before=await snapshot();const invalid=await contexts.user.request.post(base+'/api/rent',{multipart:{name:'Demo',phone:'+998000000000',address:'Demo',lat:'91',lng:'0',bookId:String(bookId),days:'1',payment:'cash',passport:{name:'Demo.png',mimeType:'image/png',buffer:png}}});assert.equal(invalid.status(),400);assert.equal(await snapshot(),before);
+  const incomplete=await contexts.user.request.post(base+'/api/rent',{multipart:{name:'Demo',phone:'+998000000000',address:'Demo',lat:'',lng:'1',bookId:String(bookId),days:'1',payment:'cash',passport:{name:'Demo.png',mimeType:'image/png',buffer:png}}});assert.equal(incomplete.status(),400);assert.equal(await snapshot(),before);
  });
  await test(12,'17+ catalog pagination/search and immediate cache invalidation',async()=>{
+  // Admin global search must not return unrelated orders for short terms or
+  // interpret punctuation as a regular expression.
+  const unmatched=await api(contexts.admin,'/api/admin/search?q=nonexistent-search-xyz');
+  assert.equal(unmatched.status(),200);assert.deepEqual((await unmatched.json()).results.orders,[]);
+  const bracket=await api(contexts.admin,'/api/admin/search?q=%5B%5B');
+  assert.equal(bracket.status(),200);assert.deepEqual((await bracket.json()).results.orders,[]);
+  const byId=await api(contexts.admin,'/api/admin/search?q='+orderId);
+  assert.equal(byId.status(),200);assert.ok((await byId.json()).results.orders.some(o=>String(o._id)===orderId));
   await db.collection('books').insertMany(Array.from({length:18},(_,i)=>({...fixture,_id:id(),title:'Demo Page '+String(i).padStart(2,'0'),createdAt:new Date(Date.now()+i)})));
   const second=await(await api(contexts.admin,'/api/books?page=2&limit=16')).json();assert.ok(second.data.length>=3);
   const page=await contexts.admin.newPage();await page.goto(base+'/AdminPanel/Kitoblar',{waitUntil:'domcontentloaded'});await expect(page.getByRole('button',{name:'Keyingi sahifa',exact:true})).toBeEnabled();await page.getByRole('button',{name:'Keyingi sahifa',exact:true}).click();await expect(page.getByText('2 / 2',{exact:true})).toBeVisible();
@@ -155,6 +164,23 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
   await page.goto(base,{waitUntil:'domcontentloaded'});await page.getByRole('button',{name:"Ro'yxatdan o'tish",exact:true}).first().click();await page.getByPlaceholder('name@company.com').fill('demo-ui@example.invalid');await page.getByPlaceholder('••••••••').fill(password);await page.getByRole('button',{name:'Davom etish',exact:true}).click();await page.getByPlaceholder('123456').fill('123456');await page.getByRole('button',{name:'Tasdiqlash',exact:true}).click();await expect(page.getByText('Hisob yaratildi. Endi email va parol bilan kiring.',{exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Kirish',exact:true}).last()).toBeEnabled();await page.close();
   const valid='demo-valid@example.invalid';await api(contexts.anon,'/api/auth/register','POST',{email:valid,password});const code=JSON.parse(fs.readFileSync(process.env.MOCK_OTP_PATH)).code;
   assert.equal((await api(contexts.anon,'/api/auth/verify','POST',{email:valid,otp:code})).status(),201);await deny(contexts.anon,'/api/auth/verify','POST',{email:valid,otp:code},400);
+ });
+ await test(16,'rental and mixed-order delivery synchronization and ownership',async()=>{
+  const mk=async(types,parentStatus='processing')=>{
+   const oid=id(), rents=types.filter(t=>t==='rent').map(()=>id());
+   await db.collection('orders').insertOne({_id:oid,user:actors.user._id,items:types.map(type=>({book:bookId,title:'Demo',type,quantity:1,price:1000})),customer:{name:'Demo',phone:'000',address:'Demo'},deliveryMethod:'courier',totalPrice:1000,status:parentStatus,courierStatus:'on_way',courierId:actors.courier._id});
+   if(rents.length)await db.collection('rents').insertMany(rents.map(_id=>({_id,orderId:oid,user:actors.user._id,book:bookId,bookTitle:'Demo',fullName:'Demo',phone:'000',address:'Demo',days:2,totalPrice:1000,paymentMethod:'cash',status:'approved',courierStatus:'on_way',courierId:actors.courier._id})));
+   return {oid,rents};
+  };
+  const deliver=(kind,record,ctx=contexts.courier)=>api(ctx,'/api/courier','PUT',{id:String(record),type:kind,status:'delivered'});
+  const status=async oid=>(await db.collection('orders').findOne({_id:oid})).status;
+  const rentOnly=await mk(['rent'],'pending');assert.equal((await deliver('rent',rentOnly.rents[0])).status(),200);assert.equal(await status(rentOnly.oid),'completed');
+  const mixed=await mk(['buy','rent']);assert.equal((await deliver('buy',mixed.oid)).status(),200);assert.equal(await status(mixed.oid),'processing');assert.equal((await deliver('rent',mixed.rents[0])).status(),200);assert.equal(await status(mixed.oid),'completed');
+  const mixedReverse=await mk(['buy','rent']);assert.equal((await deliver('rent',mixedReverse.rents[0])).status(),200);assert.equal(await status(mixedReverse.oid),'processing');assert.equal((await deliver('buy',mixedReverse.oid)).status(),200);assert.equal(await status(mixedReverse.oid),'completed');
+  const parallel=await mk(['rent','rent'],'pending');const responses=await Promise.all(parallel.rents.map(r=>deliver('rent',r)));assert.deepEqual(responses.map(r=>r.status()),[200,200]);assert.equal(await status(parallel.oid),'completed');
+  const cancelled=await mk(['rent'],'cancelled');await deny(contexts.courier,'/api/courier','PUT',{id:String(cancelled.rents[0]),type:'rent',status:'delivered'},409);assert.equal((await db.collection('rents').findOne({_id:cancelled.rents[0]})).status,'approved');
+  const guarded=await mk(['rent'],'pending');await deny(contexts.courier2,'/api/courier','PUT',{id:String(guarded.rents[0]),type:'rent',status:'delivered'},403);
+  const standalone=await mk(['rent'],'pending');await db.collection('rents').updateOne({_id:standalone.rents[0]},{$unset:{orderId:''}});assert.equal((await deliver('rent',standalone.rents[0])).status(),200);
  });
  await test(15,'500, network errors and empty catalog are distinct, retry works',async()=>{
   for(const [kind,body] of [['500',null],['network',null],['empty',{success:true,data:[],totalPages:0,totalItems:0}]]){
