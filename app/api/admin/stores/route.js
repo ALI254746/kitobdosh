@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Store from "@/model/Store";
@@ -5,6 +6,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/authOptions";
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
@@ -20,6 +23,8 @@ export async function GET() {
 }
 
 export async function POST(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
@@ -42,6 +47,8 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
@@ -60,6 +67,8 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });

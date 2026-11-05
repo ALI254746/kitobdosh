@@ -1,3 +1,4 @@
+import { isObjectId } from "@/lib/catalog-input.mjs";
 import React from "react";
 import Image from "next/image";
 import SafeImage from "@/app/components/SafeImage";
@@ -9,6 +10,7 @@ import Link from "next/link";
 
 // 1. Dinamik Metadata (Google va Telegram uchun)
 export async function generateMetadata({ params }) {
+    if (!isObjectId(params.id)) return { title: "Kitob topilmadi | Kitobdosh" };
     await dbConnect();
     const book = await Book.findById(params.id);
     
@@ -37,6 +39,7 @@ export async function generateMetadata({ params }) {
 
 export default async function BookPage({ params }) {
     const { id } = params;
+    if (!isObjectId(id)) notFound();
     await dbConnect();
     const book = await Book.findById(id);
 
@@ -61,10 +64,12 @@ export default async function BookPage({ params }) {
         },
         "aggregateRating": {
             "@type": "AggregateRating",
-            "ratingValue": book.averageRating || 5,
-            "reviewCount": book.numReviews || 1
+            "ratingValue": book.averageRating || 0,
+            "reviewCount": book.numReviews || 0
         }
     };
+
+    if (!book.numReviews) delete jsonLd.aggregateRating;
 
     return (
         <main className="min-h-screen bg-white dark:bg-slate-900 transition-colors pt-24 pb-12">
@@ -125,12 +130,12 @@ export default async function BookPage({ params }) {
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                 <div>
                                     <p className="text-sm font-bold text-gray-400 uppercase mb-1">Sotuv narxi</p>
-                                    <p className="text-4xl font-black text-[#96C7B9]">{book.price?.toLocaleString()} <span className="text-lg">so'm</span></p>
+                                    <p className="text-4xl font-black text-[#96C7B9]">{book.price?.toLocaleString()} <span className="text-lg">so&apos;m</span></p>
                                 </div>
                                 {book.isRentable && (
                                     <div className="md:text-right">
                                         <p className="text-sm font-bold text-gray-400 uppercase mb-1">Ijara narxi (kuniga)</p>
-                                        <p className="text-3xl font-black text-blue-500">{book.rentalPricePerDay?.toLocaleString()} <span className="text-lg">so'm</span></p>
+                                        <p className="text-3xl font-black text-blue-500">{book.rentalPricePerDay?.toLocaleString()} <span className="text-lg">so&apos;m</span></p>
                                     </div>
                                 )}
                             </div>
@@ -145,7 +150,7 @@ export default async function BookPage({ params }) {
 
                         <div className="flex flex-col sm:flex-row gap-4 mt-auto">
                            <button className="flex-1 bg-[#1F2937] text-white py-5 rounded-2xl font-black text-lg hover:bg-[#96C7B9] transition-all flex items-center justify-center gap-3 active:scale-95">
-                                <FaShoppingCart /> Savatchaga qo'shish
+                                <FaShoppingCart /> Savatchaga qo&apos;shish
                            </button>
                            {book.isRentable && (
                                <button className="flex-1 bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-500 transition-all flex items-center justify-center gap-3 active:scale-95">

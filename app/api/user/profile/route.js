@@ -57,6 +57,10 @@ export async function GET(req) {
     // 2. Determine Target User (defaults to current)
     const url = new URL(req.url);
     const queryUserId = url.searchParams.get("userId");
+    if (!currentUserId) return NextResponse.json({ success: false, message: "Avval tizimga kiring" }, { status: 401 });
+    if (queryUserId && queryUserId !== currentUserId && session?.user?.role !== 'admin') {
+      return NextResponse.json({ success: false, message: "Bu profil uchun ruxsat yo‘q" }, { status: 403 });
+    }
     let targetUserId = queryUserId || currentUserId;
 
     console.log("- Target User ID:", targetUserId);

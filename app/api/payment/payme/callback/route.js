@@ -23,6 +23,11 @@ const ERR_ORDER_ALREADY_PAID = -31051;
 
 export async function POST(req) {
     try {
+        const expected = process.env.PAYME_SECRET_KEY;
+        const auth = req.headers.get('authorization');
+        if (!expected || auth !== `Basic ${Buffer.from(`Paycom:${expected}`).toString('base64')}`) {
+            return NextResponse.json({ error: { code: -32504, message: "Avtorizatsiya xatosi" } }, { status: 401 });
+        }
         await dbConnect();
         const body = await req.json();
         const { method, params, id } = body;

@@ -164,7 +164,7 @@ export default function TopNavbar({ mobileMenuOpen, setMobileMenuOpen }) {
                   {notifications.length === 0 ? (
                       <div className="py-12 text-center text-slate-300 dark:text-slate-600">
                           <FaBell size={32} className="mx-auto mb-2 opacity-20" />
-                          <p className="text-[10px] font-black uppercase tracking-widest">Xabarlar yo'q</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest">Xabarlar yo&apos;q</p>
                       </div>
                   ) : (
                       notifications.map((note) => (

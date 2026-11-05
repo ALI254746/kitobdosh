@@ -192,8 +192,8 @@ export default function KurierHome() {
                  <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center text-slate-300 dark:text-slate-600 mb-6 transition-transform hover:rotate-12 cursor-default">
                      <FaTruck size={32} />
                  </div>
-                 <h3 className="font-black text-slate-900 dark:text-white text-2xl mb-2">Hozircha bo'shliq...</h3>
-                 <p className="text-slate-400 dark:text-slate-500 text-sm font-medium mb-8 max-w-xs mx-auto uppercase tracking-widest leading-relaxed">Hozirda hech qanday faol yetkazish topshirig'ingiz mavjud emas.</p>
+                 <h3 className="font-black text-slate-900 dark:text-white text-2xl mb-2">Hozircha bo&apos;shliq...</h3>
+                 <p className="text-slate-400 dark:text-slate-500 text-sm font-medium mb-8 max-w-xs mx-auto uppercase tracking-widest leading-relaxed">Hozirda hech qanday faol yetkazish topshirig&apos;ingiz mavjud emas.</p>
                  <Link href="/KurierPanel/buyurtmalar" className="px-10 py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-slate-200 dark:shadow-none">
                      Yangi topshiriqlar
                  </Link>
@@ -205,8 +205,8 @@ export default function KurierHome() {
       <div>
         <div className="flex items-center justify-between mb-8 px-2">
             <div>
-                <h3 className="font-black text-slate-900 dark:text-white text-xl uppercase tracking-tighter">Bugungi ko'rsatkichlar</h3>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Real-vaqt ma'lumotlari</p>
+                <h3 className="font-black text-slate-900 dark:text-white text-xl uppercase tracking-tighter">Bugungi ko&apos;rsatkichlar</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Real-vaqt ma&apos;lumotlari</p>
             </div>
             <button className="p-3 bg-white dark:bg-slate-800 rounded-2xl text-[#96C7B9] border border-slate-100 dark:border-slate-700 shadow-sm hover:scale-105 transition-transform">
                 <FaHistory />

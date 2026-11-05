@@ -1,3 +1,7 @@
+import { requireRole } from "@/lib/require-role";
+import Book from "@/model/Book";
+import { prepareOrder, OrderInputError } from "@/lib/order-input.mjs";
+import { isObjectId } from "@/lib/catalog-input.mjs";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Order from "@/model/Order";
@@ -33,6 +37,9 @@ export async function POST(req) {
 
         // Handle Passport Upload to Cloudinary
         if (passportFile && passportFile.size > 0) {
+            if (passportFile.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(passportFile.type)) {
+              return NextResponse.json({ success: false, message: 'Hujjat rasmi JPG, PNG yoki WebP bo‘lsin (5 MB gacha)' }, { status: 400 });
+            }
             const { v2: cloudinary } = await import('cloudinary');
             cloudinary.config({
                 cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -85,39 +92,32 @@ export async function POST(req) {
          return NextResponse.json({ success: false, message: "Iltimos, avval tizimga kiring!" }, { status: 401 });
     }
 
+    if (!Array.isArray(payload.items) || !payload.items.length || payload.items.some(i => !isObjectId(i.book))) {
+      return NextResponse.json({ success: false, message: "Savatchadagi kitoblar noto‘g‘ri" }, { status: 400 });
+    }
+    const books = await Book.find({ _id: { $in: payload.items.map(i => i.book) } }).lean();
+    const validated = prepareOrder(payload, books);
     const finalOrderData = {
-        ...payload,
+        ...validated,
+        passportUrl: payload.passportUrl,
+        passportCloudinaryId: payload.passportCloudinaryId,
         user: userId
     };
 
     const newOrder = new Order(finalOrderData);
+    const rentalDocs = finalOrderData.items.filter(i => i.type === 'rent').map(item => new Rent({
+      user: userId, book: item.book, bookTitle: item.title, bookImage: item.image,
+      fullName: finalOrderData.customer.name, phone: finalOrderData.customer.phone,
+      address: finalOrderData.customer.address, passportUrl: finalOrderData.passportUrl || '',
+      passportCloudinaryId: finalOrderData.passportCloudinaryId,
+      days: item.rentDays, totalPrice: item.price * item.quantity,
+      paymentMethod: finalOrderData.paymentMethod, status: 'pending', orderId: newOrder._id
+    }));
+    // Validate every record before writing; a failed rental must not be reported as success.
+    await newOrder.validate();
+    await Promise.all(rentalDocs.map(rent => rent.validate()));
     await newOrder.save();
-    
-    // 3. For RENTAL items: Create records in Rent collection for Admin Panel visibility
-    const rentalItems = finalOrderData.items.filter(i => i.type === 'rent');
-    if (rentalItems.length > 0) {
-        for (const item of rentalItems) {
-            try {
-                await Rent.create({
-                    user: userId,
-                    book: item.book,
-                    bookTitle: item.title,
-                    bookImage: item.image || "", // Try to pass image in checkout or fetch later
-                    fullName: finalOrderData.customer.name,
-                    phone: finalOrderData.customer.phone,
-                    address: finalOrderData.customer.address,
-                    passportUrl: finalOrderData.passportUrl || "",
-                    days: item.rentDays || 1,
-                    totalPrice: item.price,
-                    paymentMethod: finalOrderData.paymentMethod,
-                    status: 'pending',
-                    orderId: newOrder._id // Cross-reference
-                });
-            } catch (rentError) {
-                console.error("Error creating Rent entry for order item:", rentError);
-            }
-        }
-    }
+    for (const rent of rentalDocs) await rent.save();
 
     // Notify Admins
     try {
@@ -134,11 +134,13 @@ export async function POST(req) {
     return NextResponse.json({ success: true, message: "Buyurtma qabul qilindi", data: newOrder });
   } catch (error) {
     console.error("Order API Error:", error);
-    return NextResponse.json({ success: false, message: "Xatolik yuz berdi: " + error.message }, { status: 500 });
+    return NextResponse.json({ success: false, message: error instanceof OrderInputError ? error.message : "Buyurtmani saqlab bo‘lmadi" }, { status: error instanceof OrderInputError || error.name === "ValidationError" ? 400 : 500 });
   }
 }
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
         const orders = await Order.find().populate('user', 'email').sort({ createdAt: -1 });
@@ -150,12 +152,14 @@ export async function GET() {
 }
 
 export async function PUT(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
         const { id, status } = await req.json();
         console.log(`Order PUT - Updating Order ${id} to ${status}`);
 
-        if (!id || !status) {
+        if (!isObjectId(id) || !['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
             return NextResponse.json({ success: false, message: "Ma'lumot kam" }, { status: 400 });
         }
 
@@ -166,7 +170,7 @@ export async function PUT(req) {
         }
         
         console.log(`Order API: Updating Order ${id} status to ${status}`);
-        const updatedOrder = await Order.findByIdAndUpdate(id, updateFull, { new: true });
+        const updatedOrder = await Order.findByIdAndUpdate(id, updateFull, { new: true, runValidators: true });
 
         if (!updatedOrder) {
              return NextResponse.json({ success: false, message: "Buyurtma topilmadi" }, { status: 404 });

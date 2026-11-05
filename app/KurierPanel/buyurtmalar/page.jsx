@@ -120,8 +120,8 @@ export default function OrdersPage() {
                     <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 dark:text-slate-600 mx-auto mb-4">
                         <FaBox size={24} />
                     </div>
-                    <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-lg">Hozircha buyurtmalar yo'q</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Yangi topshiriqlar shu yerda paydo bo'ladi</p>
+                    <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-lg">Hozircha buyurtmalar yo&apos;q</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Yangi topshiriqlar shu yerda paydo bo&apos;ladi</p>
                 </motion.div>
             )}
           </div>

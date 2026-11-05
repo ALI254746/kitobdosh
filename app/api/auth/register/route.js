@@ -1,5 +1,6 @@
 import { dbConnect } from "@/lib/db.Connect";
 import User from "@/model/user";
+import { randomInt } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import redis from "@/lib/redis";
@@ -7,9 +8,11 @@ import { sendOTP } from "@/lib/email";
 
 export async function POST(req) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const password = body.password;
 
-    if (!email || !password) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || typeof password !== "string") {
       return NextResponse.json(
         { message: "Email va parol to‘ldirilishi shart" },
         { status: 400 }
@@ -35,9 +38,8 @@ export async function POST(req) {
     }
 
     // 2. OTP yaratish
-    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 xonali
-    console.log("🔐 TASDIQLASH KODI (TEST):", otp); // Terminalda ko'rish uchun!
-    
+    const otp = randomInt(100000, 1000000).toString(); // 6 xonali
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // 3. Redisga saqlash (5 daqiqa)
@@ -46,7 +48,7 @@ export async function POST(req) {
         password: hashedPassword,
         otp
     };
-    
+
     await redis.setex(`register_otp:${email}`, 300, JSON.stringify(tempUserData));
 
     // 4. Email yuborish
@@ -55,7 +57,7 @@ export async function POST(req) {
     } catch (emailError) {
         console.error("Email yuborishda xato:", emailError.message);
         return NextResponse.json(
-          { message: "Email yuborishda xatolik yuz berdi: " + emailError.message }, 
+          { message: "Tasdiqlash xatini yuborib bo‘lmadi. Keyinroq qayta urinib ko‘ring." },
           { status: 500 }
         );
     }

@@ -1,9 +1,12 @@
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import User from "@/model/user";
 import bcrypt from "bcryptjs";
 
 export async function PUT(req, { params }) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
         const { id } = params;
@@ -30,6 +33,8 @@ export async function PUT(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
         const { id } = params;

@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
@@ -7,6 +8,8 @@ import Order from "@/model/Order";
 import Rent from "@/model/Rent";
 
 export async function GET(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
   try {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q");

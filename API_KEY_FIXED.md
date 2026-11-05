@@ -5,7 +5,7 @@
 
 ## Tuzatildi:
 ```env
-RESEND_API_KEY=re_cRtWwyLk_GHPsSzUh33GbKanUKxzLhcyA
+RESEND_API_KEY=<RESEND_API_KEY>
 ```
 
 ## 🚀 Keyingi Qadam:

@@ -266,7 +266,7 @@ export default function CourierStats() {
                             exit={{ scale: 0.9, opacity: 0 }}
                             className={`w-full max-w-md rounded-2xl p-6 shadow-2xl ${darkMode ? "bg-[#0b1a00] border border-[#A3ED96]/20" : "bg-white"}`}
                         >
-                            <h2 className={`text-xl font-bold mb-6 ${darkMode ? "text-white" : "text-gray-900"}`}>Yangi Kuryer Qo'shish</h2>
+                            <h2 className={`text-xl font-bold mb-6 ${darkMode ? "text-white" : "text-gray-900"}`}>Yangi Kuryer Qo&apos;shish</h2>
                             
                             <form onSubmit={handleCreate} className="space-y-4">
                                 <div>

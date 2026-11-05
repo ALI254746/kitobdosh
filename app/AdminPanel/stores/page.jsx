@@ -154,14 +154,14 @@ export default function AdminStoresPage() {
     <div className="p-6 max-w-7xl mx-auto bg-slate-50 min-h-screen">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-black text-slate-900">Do'konlar Boshqaruvi</h1>
-          <p className="text-slate-500 font-medium">Market sahifasidagi do'konlar va bannerlarni boshqarish</p>
+          <h1 className="text-3xl font-black text-slate-900">Do&apos;konlar Boshqaruvi</h1>
+          <p className="text-slate-500 font-medium">Market sahifasidagi do&apos;konlar va bannerlarni boshqarish</p>
         </div>
         <button 
           onClick={() => { resetForm(); setIsModalOpen(true); }}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95 text-sm"
         >
-          <Plus size={20} /> Yangi Do'kon Qo'shish
+          <Plus size={20} /> Yangi Do&apos;kon Qo&apos;shish
         </button>
       </div>
 
@@ -226,7 +226,7 @@ export default function AdminStoresPage() {
             <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
               <div>
                 <h2 className="text-2xl font-black text-slate-900">{currentStore ? "Do'konni tahrirlash" : "Yangi Do'kon"}</h2>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Ma'lumotlarni to'ldiring</p>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Ma&apos;lumotlarni to&apos;ldiring</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="p-3 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl transition-all">
                 <X size={20} />
@@ -236,7 +236,7 @@ export default function AdminStoresPage() {
             <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Do'kon nomi</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Do&apos;kon nomi</label>
                   <input 
                     required
                     type="text" 
@@ -344,7 +344,7 @@ export default function AdminStoresPage() {
                     onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
                     className="w-5 h-5 rounded-lg border-slate-200 text-green-600 focus:ring-green-500"
                   />
-                  <label htmlFor="isActive" className="text-sm font-bold text-slate-700">Faol (Marketda ko'rinadi)</label>
+                  <label htmlFor="isActive" className="text-sm font-bold text-slate-700">Faol (Marketda ko&apos;rinadi)</label>
                 </div>
                 <div className="flex-1 flex items-center justify-end gap-3">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tartib:</label>

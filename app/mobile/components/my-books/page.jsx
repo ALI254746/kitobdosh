@@ -295,15 +295,15 @@ function MyBooksContent() {
             <div className="bg-white dark:bg-slate-800/50 backdrop-blur-xl border border-slate-100 dark:border-slate-700/50 p-5 rounded-[24px] shadow-sm flex justify-between text-center divide-x divide-slate-100 dark:divide-slate-700">
                 <div className="flex-1 flex flex-col pr-2">
                     <span className="text-lg font-black text-slate-900 dark:text-white leading-none mb-1">{books.length}</span>
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">To'plam</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">To&apos;plam</span>
                 </div>
                 <div className="flex-1 flex flex-col px-2">
                     <span className="text-lg font-black text-slate-900 dark:text-white leading-none mb-1">{stats.friends || 0}</span>
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Do'stlar</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">Do&apos;stlar</span>
                 </div>
                 <div className="flex-1 flex flex-col px-2">
                     <span className="text-lg font-black text-slate-900 dark:text-white leading-none mb-1">{stats.reading}</span>
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">O'qishda</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-widest">O&apos;qishda</span>
                 </div>
                 <div className="flex-1 flex flex-col pl-2">
                     <span className="text-lg font-black text-slate-900 dark:text-white leading-none mb-1">{stats.finished}</span>
@@ -344,7 +344,7 @@ function MyBooksContent() {
              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${activeTab === 'library' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400'}`}
           >
               <Grid size={16} />
-              <span className="text-[11px] font-black uppercase tracking-widest">To'plam</span>
+              <span className="text-[11px] font-black uppercase tracking-widest">To&apos;plam</span>
           </button>
           <button 
              onClick={() => setActiveTab('favorites')}
@@ -544,7 +544,7 @@ function MyBooksContent() {
                             onClick={() => router.push(`/mobile/book/${selectedBook.id || selectedBook._id}`)}
                             className="flex-1 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[#52C6DA] transition-colors"
                          >
-                            Kitobni ko'rish
+                            Kitobni ko&apos;rish
                          </button>
                          <button 
                             onClick={() => setSelectedBook(null)}

@@ -1,3 +1,5 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/authOptions";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Rent from "@/model/Rent";
@@ -6,6 +8,8 @@ import { pusherServer } from "@/lib/pusher";
 
 export async function POST(req) {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.id) return NextResponse.json({ success: false, message: "Avval tizimga kiring" }, { status: 401 });
         await dbConnect();
         const reqData = await req.json();
         const { rentId, action, notifId, days } = reqData;
@@ -15,11 +19,16 @@ export async function POST(req) {
         }
 
         const rent = await Rent.findById(rentId).populate('user', 'fullName address location phone').populate('book', 'title');
-        
+
         if (!rent) {
             return NextResponse.json({ success: false, message: "Ijara topilmadi" }, { status: 404 });
         }
 
+        if (String(rent.user?._id) !== session.user.id) return NextResponse.json({ success: false, message: "Ruxsat yo‘q" }, { status: 403 });
+        if (!['return', 'extend'].includes(action) || (action === 'extend' && (!Number.isInteger(days) || days < 1 || days > 30))) {
+            return NextResponse.json({ success: false, message: "Amal yoki muddat noto‘g‘ri" }, { status: 400 });
+        }
+        if (!['active', 'approved'].includes(rent.status)) return NextResponse.json({ success: false, message: "Ijara faol emas" }, { status: 409 });
         if (action === 'return') {
             // 1. Update Rent Status
             rent.status = 'return_requested';
@@ -33,7 +42,7 @@ export async function POST(req) {
                      rentId: rent._id,
                      bookTitle: rent.book?.title
                  });
-                 
+
                  // Notify the user too
                  await pusherServer.trigger(`user-${rent.user._id}`, "status-update", {
                     message: "Qaytarish so'rovi yuborildi",
@@ -47,17 +56,17 @@ export async function POST(req) {
         } else if (action === 'extend') {
             // 1. Extend Date by X Days
             const extendDays = days || 1; // Use 'days' from request body
-            
-            const baseDate = rent.returnDate && new Date(rent.returnDate) > new Date() 
-                ? new Date(rent.returnDate) 
+
+            const baseDate = rent.returnDate && new Date(rent.returnDate) > new Date()
+                ? new Date(rent.returnDate)
                 : new Date();
-            
+
             const newDate = new Date(baseDate);
             newDate.setDate(newDate.getDate() + extendDays);
-            
+
             rent.returnDate = newDate;
-            rent.days = (rent.days || 1) + extendDays; 
-            
+            rent.days = (rent.days || 1) + extendDays;
+
             await rent.save();
 
             // Notify user via Pusher
@@ -74,20 +83,20 @@ export async function POST(req) {
 
         // 3. Mark Notification as Read AND Update Type to Success
         if (notifId) {
-            const finalMessage = action === 'return' 
-                ? "Topshirish so'rovi yuborildi. Kuryer tez orada bog'lanadi." 
+            const finalMessage = action === 'return'
+                ? "Topshirish so'rovi yuborildi. Kuryer tez orada bog'lanadi."
                 : `Ijara muddati ${days || 1} kunga uzaytirildi.`;
 
-            await Notification.findByIdAndUpdate(notifId, { 
+            await Notification.findOneAndUpdate({ _id: notifId, user: session.user.id }, {
                 isRead: true,
                 type: 'success',
-                message: finalMessage 
+                message: finalMessage
             });
         }
 
-        return NextResponse.json({ 
-            success: true, 
-            message: action === 'return' ? "Kuryerga xabar berildi. Kutib turing!" : `Ijara muddati ${days || 1} kunga uzaytirildi.` 
+        return NextResponse.json({
+            success: true,
+            message: action === 'return' ? "Kuryerga xabar berildi. Kutib turing!" : `Ijara muddati ${days || 1} kunga uzaytirildi.`
         });
 
     } catch (error) {

@@ -1,14 +1,16 @@
+import { requireRole } from "@/lib/require-role";
+import { escapeSearch, positiveInt } from "@/lib/catalog-input.mjs";
 import { dbConnect } from "@/lib/db.Connect";
 import Book from "@/model/Book";
 import { NextResponse } from "next/server";
-import { getOrSetCache, clearCachePattern } from "@/lib/utils/cache";
+import { getOrSetCache, clearCachePattern, clearCache } from "@/lib/utils/cache";
 
 // 1. BARCHA KITOBLARNI OLISH (GET)
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 16;
+    const page = positiveInt(searchParams.get("page"), 1, 10000);
+    const limit = positiveInt(searchParams.get("limit"), 16, 100);
     const skip = (page - 1) * limit;
     
     // Filters
@@ -23,8 +25,8 @@ export async function GET(req) {
     if (category && category !== "Barchasi") query.category = category;
     if (search) {
       query.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { author: { $regex: search, $options: "i" } }
+        { title: { $regex: escapeSearch(search), $options: "i" } },
+        { author: { $regex: escapeSearch(search), $options: "i" } }
       ];
     }
     if (type === 'rent') query.isRentable = true;
@@ -57,12 +59,14 @@ export async function GET(req) {
 
 // 2. YANGI KITOB YARATISH (POST) - Faqat Admin uchun
 export async function POST(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
   try {
     const body = await req.json();
     await dbConnect();
 
     // Ma'lumotlarni tekshirish (Validation)
-    if (!body.title || !body.price || !body.author || !body.category) {
+    if (!body.title || body.price == null || !body.author || !body.category) {
        return NextResponse.json(
          { success: false, message: "Iltimos, barcha majburiy maydonlarni to'ldiring!" },
          { status: 400 }
@@ -70,10 +74,11 @@ export async function POST(req) {
     }
 
     // Kitobni bazaga saqlash
-    const newBook = await Book.create(body);
+    const newBook = await Book.create({ ...body, averageRating: 0, numReviews: 0 });
 
     // Muvaffaqiyatli qo'shildimi? Unda barcha kitob keshlarini o'chiramiz!
     await clearCachePattern('books_*');
+    await Promise.all(['best_books_home', 'recommended_home_p2', 'popular_authors_aggr'].map(clearCache));
 
     return NextResponse.json(
       { success: true, message: "Kitob muvaffaqiyatli qo'shildi!", data: newBook },
@@ -83,8 +88,8 @@ export async function POST(req) {
   } catch (error) {
     console.error("Kitob qo'shishda xatolik:", error);
     return NextResponse.json(
-      { success: false, message: "Xatolik yuz berdi: " + error.message },
-      { status: 500 }
+      { success: false, message: error.name === "ValidationError" ? "Kitob maydonlari noto‘g‘ri yoki to‘liq emas" : "Kitobni saqlab bo‘lmadi" },
+      { status: error.name === "ValidationError" ? 400 : 500 }
     );
   }
 }

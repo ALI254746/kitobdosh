@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import SystemConfig from "@/model/SystemConfig";
@@ -10,6 +11,8 @@ async function checkAdmin() {
 }
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
         let config = await SystemConfig.findOne({ key: 'main_config' });
@@ -25,6 +28,8 @@ export async function GET() {
 }
 
 export async function PUT(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         if (!await checkAdmin()) {
             return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });

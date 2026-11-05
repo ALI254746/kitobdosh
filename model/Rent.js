@@ -49,7 +49,7 @@ const RentSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['payme', 'click'],
+    enum: ['cash', 'payme', 'click'],
     required: true,
   },
   status: {

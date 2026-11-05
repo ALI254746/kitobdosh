@@ -140,11 +140,11 @@ export default function BookReturn() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
                   <div>
                       <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Kitob Qaytarish</h1>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Foydalanuvchilardan ijarani yig'ish</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Foydalanuvchilardan ijarani yig&apos;ish</p>
                   </div>
                   <div className="flex items-center gap-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm self-start">
                       <FaUndo className="text-[#96C7B9]" />
-                      <span className="text-xs font-black text-slate-900 dark:text-white uppercase">{returnsList.length} ta so'rov</span>
+                      <span className="text-xs font-black text-slate-900 dark:text-white uppercase">{returnsList.length} ta so&apos;rov</span>
                   </div>
               </div>
 
@@ -202,7 +202,7 @@ export default function BookReturn() {
                       {returnsList.length === 0 && (
                           <div className="text-center py-20 bg-white dark:bg-slate-800/50 rounded-[3rem] border border-dashed border-slate-200 dark:border-slate-700">
                               <FaUndo className="mx-auto text-slate-200 dark:text-slate-700 mb-4" size={40} />
-                              <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Hozircha qaytarish so'rovlari yo'q</p>
+                              <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Hozircha qaytarish so&apos;rovlari yo&apos;q</p>
                           </div>
                       )}
                   </div>
@@ -259,9 +259,9 @@ export default function BookReturn() {
                     <FaUndo />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">So'rovni Tasdiqlang</h2>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">So&apos;rovni Tasdiqlang</h2>
                     <p className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-widest leading-relaxed max-w-sm mx-auto">
-                       Mijoz kitobni topshirishga tayyor. Siz ushbu topshiriqni qabul qilib, manzilga yo'l olishingiz kerak.
+                       Mijoz kitobni topshirishga tayyor. Siz ushbu topshiriqni qabul qilib, manzilga yo&apos;l olishingiz kerak.
                     </p>
                 </div>
                 <button onClick={handleAccept} className="w-full py-6 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl text-sm font-black uppercase tracking-[0.3em] shadow-2xl hover:bg-[#96C7B9] dark:hover:bg-[#96C7B9] dark:hover:text-white transition-all active:scale-95 flex items-center justify-center gap-4 group">
@@ -319,7 +319,7 @@ export default function BookReturn() {
                     </div>
 
                     <div>
-                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Qo'shimcha izoh</label>
+                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Qo&apos;shimcha izoh</label>
                          <textarea className="w-full bg-slate-50 dark:bg-slate-700 border-none rounded-[2rem] p-5 text-sm font-medium focus:ring-4 ring-[#96C7B9]/10 transition-all outline-none dark:text-white" placeholder="Nuqsonlar bormi?..." rows={3} value={bookComment} onChange={(e) => setBookComment(e.target.value)} />
                     </div>
 

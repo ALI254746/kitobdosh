@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { dbConnect } from "@/lib/db.Connect";
 import PromoBanner from "@/model/PromoBanner";
 import { NextResponse } from "next/server";
@@ -6,6 +7,8 @@ import { authOptions } from "@/lib/authOptions";
 
 // GET: Mashhur bannerlarni olish
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
         const banners = await PromoBanner.find().sort({ createdAt: -1 });
@@ -17,6 +20,8 @@ export async function GET() {
 
 // POST: Yangi banner qo'shish yoki mavjudini yangilash
 export async function POST(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         const session = await getServerSession(authOptions);
         if (!session || session.user.role !== 'admin') {
@@ -48,6 +53,8 @@ export async function POST(req) {
 
 // DELETE: Bannerni o'chirish
 export async function DELETE(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         const session = await getServerSession(authOptions);
         if (!session || session.user.role !== 'admin') {

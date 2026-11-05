@@ -31,7 +31,7 @@ npm run dev
 
 ### `.env.local` faylni tekshiring:
 ```bash
-RESEND_API_KEY=re_cRtWwyLk_GHPsSzUh33GbKanUKxzLhcyA
+RESEND_API_KEY=<RESEND_API_KEY>
 ```
 
 ### Console logs'ni ko'ring:

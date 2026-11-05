@@ -323,7 +323,7 @@ const DashboardView = ({ user, stats, onEdit, setActiveTab }) => {
             <div className="bg-slate-900 dark:bg-white p-5 rounded-[2.5rem] text-white dark:text-slate-900 flex items-center justify-between shadow-xl">
                 <div>
                    <h4 className="text-lg font-black leading-tight">Shaxsiy Profilingiz</h4>
-                   <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Ma'lumotlarni tahrirlash</p>
+                   <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Ma&apos;lumotlarni tahrirlash</p>
                 </div>
                 <button 
                    onClick={onEdit}
@@ -585,7 +585,7 @@ const EditProfileModal = ({ user, onClose, onSave }) => {
                             <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                         </label>
                     </div>
-                    <span className="text-xs font-bold text-[#52C6DA]">Rasm o'zgartirish</span>
+                    <span className="text-xs font-bold text-[#52C6DA]">Rasm o&apos;zgartirish</span>
                 </div>
 
                 {/* Inputs */}
@@ -613,14 +613,14 @@ const EditProfileModal = ({ user, onClose, onSave }) => {
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Mashg'ulot</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Mashg&apos;ulot</label>
                             <select 
                                 className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-[#52C6DA] transition-all appearance-none"
                                 value={formData.occupation}
                                 onChange={(e) => setFormData({...formData, occupation: e.target.value})}
                             >
                                 <option value="student">Talaba</option>
-                                <option value="teacher">O'qituvchi</option>
+                                <option value="teacher">O&apos;qituvchi</option>
                                 <option value="courier">Kuryer</option>
                                 <option value="other">Boshqa</option>
                             </select>
@@ -668,7 +668,7 @@ const EditProfileModal = ({ user, onClose, onSave }) => {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">O'zingiz haqingizda (Bio)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">O&apos;zingiz haqingizda (Bio)</label>
                         <textarea 
                             className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-[#52C6DA] transition-all min-h-[80px] resize-none"
                             value={formData.bio}

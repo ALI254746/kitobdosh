@@ -35,6 +35,8 @@ export async function POST(req) {
     // We can distinguish by a specific flag or separate endpoint, but keeping it simple here:
     // If 'replyToMessageId' and 'replyText' are present, handle as reply.
     if (data.action === 'reply') {
+        const session = await getServerSession(authOptions);
+        if (session?.user?.role !== 'admin') return NextResponse.json({ success: false, message: 'Ruxsat yo‘q' }, { status: 403 });
         const { messageId, replyText, userId } = data;
         
         if (!userId) {

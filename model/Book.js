@@ -31,6 +31,8 @@ const bookSchema = new mongoose.Schema(
         "Psixologiya va Biznes",
         "Ilmiy Kitoblar",
         "Diniy Adabiyotlar",
+        "Detektiv va Triller", "Sarguzashtlar", "Tarixiy Kitoblar",
+        "Biografiya va Memuarlar", "Fantastika va Fentezi", "Chet tillari",
         "Boshqa"
       ],
     },

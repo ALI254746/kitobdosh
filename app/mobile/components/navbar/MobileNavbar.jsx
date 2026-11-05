@@ -217,7 +217,7 @@ export default function MobileNavbar() {
                                                                 <FaStar size={10} />
                                                                 <span className="text-[10px] font-bold">{book.rating}</span>
                                                             </div>
-                                                            <span className="text-[10px] text-[#52C6DA] font-bold">{book.price?.toLocaleString()} so'm</span>
+                                                            <span className="text-[10px] text-[#52C6DA] font-bold">{book.price?.toLocaleString()} so&apos;m</span>
                                                         </div>
                                                     </div>
                                                 </button>
@@ -266,7 +266,7 @@ export default function MobileNavbar() {
                             <div className="p-10 text-center text-slate-400">
                                 <Search size={32} className="mx-auto mb-2 opacity-20" />
                                 <p className="text-sm">Hech narsa topilmadi</p>
-                                <p className="text-[10px] mt-1">Boshqa kalit so'z sinab ko'ring</p>
+                                <p className="text-[10px] mt-1">Boshqa kalit so&apos;z sinab ko&apos;ring</p>
                             </div>
                         )}
                     </motion.div>

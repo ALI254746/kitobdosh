@@ -39,7 +39,7 @@ const RequestCard = ({ request, updateStatus, darkMode }) => {
                  </div>
                  <div className="flex-1 overflow-hidden">
                      <h4 className={`font-bold text-sm truncate ${darkMode ? "text-white" : "text-gray-900"}`}>{request.bookTitle}</h4>
-                     <p className={`text-xs truncate ${darkMode ? "text-[#A3ED96]/70" : "text-gray-500"}`}>Jami: {request.totalPrice?.toLocaleString()} so'm</p>
+                     <p className={`text-xs truncate ${darkMode ? "text-[#A3ED96]/70" : "text-gray-500"}`}>Jami: {request.totalPrice?.toLocaleString()} so&apos;m</p>
                      
                      <div className="flex items-center gap-2 mt-2">
                         <FaUser className="text-gray-400 text-xs" />
@@ -58,7 +58,7 @@ const RequestCard = ({ request, updateStatus, darkMode }) => {
                 </div>
                 {request.passportUrl && (
                     <a href={request.passportUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-400 hover:underline">
-                        <FaFileAlt /> Pasportni ko'rish
+                        <FaFileAlt /> Pasportni ko&apos;rish
                     </a>
                 )}
             </div>
@@ -125,7 +125,7 @@ const KanbanColumn = ({ status, items, updateStatus, darkMode }) => {
                  ))}
                  {items.length === 0 && (
                      <div className={`text-center py-4 text-xs italic ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-                        Bo'sh
+                        Bo&apos;sh
                      </div>
                  )}
              </div>
@@ -186,7 +186,7 @@ export default function RentRequestsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
             <h1 className={`text-3xl font-black tracking-tight mb-2 ${darkMode ? "text-white" : "text-[#163201]"}`}>
-                Ijara So'rovlari
+                Ijara So&apos;rovlari
             </h1>
             <p className={`text-sm ${darkMode ? "text-[#A3ED96]/60" : "text-gray-500"}`}>
                 Joriy va yakunlangan ijara holati

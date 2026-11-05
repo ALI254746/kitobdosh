@@ -147,7 +147,7 @@ const BookDetailPage = () => {
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-1 text-yellow-400 mb-1">
                                 <FaStar />
-                                <span className="text-slate-800 dark:text-white font-black">{book.rating || "5.0"}</span>
+                                <span className="text-slate-800 dark:text-white font-black">{book.rating || "Baholanmagan"}</span>
                             </div>
                             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Reyting</span>
                         </div>

@@ -173,11 +173,11 @@ const ConfirmDeleteModal = ({ isOpen, onClose, onConfirm, darkMode }) => {
                              <FaExclamationTriangle />
                          </div>
                          <h3 className="text-xl font-bold mb-2">Ishonchingiz komilmi?</h3>
-                         <p className="text-sm opacity-70 mb-6">Bu kitob butunlay o'chiriladi. Bu amalni ortga qaytarib bo'lmaydi.</p>
+                         <p className="text-sm opacity-70 mb-6">Bu kitob butunlay o&apos;chiriladi. Bu amalni ortga qaytarib bo&apos;lmaydi.</p>
                          
                          <div className="flex gap-3">
                              <button onClick={onClose} className="flex-1 py-3 rounded-xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">Bekor qilish</button>
-                             <button onClick={onConfirm} className="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30">O'chirish</button>
+                             <button onClick={onConfirm} className="flex-1 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30">O&apos;chirish</button>
                          </div>
                     </motion.div>
                 </div>
@@ -280,7 +280,7 @@ const BookFormModal = ({ isOpen, onClose, onSubmit, initialData, darkMode }) => 
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold opacity-70">Narxi (so'm)</label>
+                                    <label className="text-xs font-bold opacity-70">Narxi (so&apos;m)</label>
                                     <input type="number" required className="w-full p-3 rounded-xl border bg-transparent" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} placeholder="50000" />
                                 </div>
                                 <div className="space-y-1">
@@ -388,7 +388,7 @@ const ViewBookModal = ({ isOpen, onClose, book, darkMode }) => {
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div className={`p-4 rounded-xl border ${darkMode ? "border-white/10 bg-white/5" : "border-gray-100 bg-gray-50"}`}>
                                      <p className="text-xs font-bold opacity-50 uppercase">Sotuv Narxi</p>
-                                     <p className="text-xl font-bold text-blue-500">{book.price?.toLocaleString()} so'm</p>
+                                     <p className="text-xl font-bold text-blue-500">{book.price?.toLocaleString()} so&apos;m</p>
                                 </div>
                                 <div className={`p-4 rounded-xl border ${darkMode ? "border-white/10 bg-white/5" : "border-gray-100 bg-gray-50"}`}>
                                      <p className="text-xs font-bold opacity-50 uppercase">Ijara Narxi</p>
@@ -403,7 +403,7 @@ const ViewBookModal = ({ isOpen, onClose, book, darkMode }) => {
                             </p>
 
                             <div className="text-xs opacity-50">
-                                Qo'shilgan sana: {new Date(book.createdAt).toLocaleDateString()}
+                                Qo&apos;shilgan sana: {new Date(book.createdAt).toLocaleDateString()}
                             </div>
                         </div>
                     </motion.div>
@@ -633,7 +633,7 @@ export default function BooksPage() {
                 </AnimatePresence>
                 {!loading && books.length === 0 && (
                     <div className="col-span-full text-center py-20 text-gray-400">
-                        Hozircha kitoblar yo'q. Yangi kitob qo'shing!
+                        Hozircha kitoblar yo&apos;q. Yangi kitob qo&apos;shing!
                     </div>
                 )}
             </motion.div>

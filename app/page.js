@@ -9,7 +9,7 @@ import {
   useMotionValue, 
   useTransform 
 } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 
@@ -152,6 +152,10 @@ export default function AuthPage() {
               
               if (signInRes?.ok) {
                   router.push(window.innerWidth < 728 ? "/mobile" : "/mainPage");
+              } else {
+                  setShowOTP(false);
+                  setIsRegister(false);
+                  toast.error("Hisob yaratildi. Endi email va parol bilan kiring.");
               }
               return;
           }
@@ -190,7 +194,7 @@ export default function AuthPage() {
       console.error(err);
       toast.error("Tarmoq xatosi!");
     } finally {
-      if(!showOTP || !isRegister) setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -203,14 +207,7 @@ export default function AuthPage() {
       onMouseMove={handleMouseMove}
       className="min-h-screen flex bg-white font-sans overflow-hidden"
     >
-      <Toaster position="top-center" toastOptions={{
-        style: {
-          background: '#1F2937',
-          color: '#fff',
-          borderRadius: '16px',
-          fontWeight: 'bold',
-        }
-      }} />
+
 
       {/* --- LEFT SIDE: ARTWORK & SHOWCASE (Desktop) --- */}
       <div className="hidden lg:flex w-1/2 relative bg-[#1F2937] items-center justify-center p-12 overflow-hidden">
@@ -276,17 +273,6 @@ export default function AuthPage() {
             </div>
         </motion.div>
 
-        {/* Bottom Stats */}
-        <div className="absolute bottom-10 left-10 flex gap-8 z-10">
-            <div>
-                <p className="text-2xl font-black text-white">5K+</p>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Foydalanuvchilar</p>
-            </div>
-            <div>
-                <p className="text-2xl font-black text-white">10K+</p>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Kitoblar</p>
-            </div>
-        </div>
       </div>
 
       {/* --- RIGHT SIDE: FORM (Desktop & Mobile) --- */}
@@ -392,7 +378,7 @@ export default function AuthPage() {
                                 />
                             </div>
                             <p className="text-xs text-center text-gray-400 font-medium">
-                                Kod {email} manziliga yuborildi. <button type="button" onClick={() => setShowOTP(false)} className="text-[#96C7B9] hover:underline">O'zgartirish</button>
+                                Kod {email} manziliga yuborildi. <button type="button" onClick={() => setShowOTP(false)} className="text-[#96C7B9] hover:underline">O&apos;zgartirish</button>
                             </p>
                         </motion.div>
                     )}

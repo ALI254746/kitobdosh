@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Book from "@/model/Book";
@@ -6,6 +7,8 @@ import Order from "@/model/Order";
 import Rent from "@/model/Rent";
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
   try {
     await dbConnect();
 

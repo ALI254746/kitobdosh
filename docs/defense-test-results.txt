@@ -1,0 +1,11 @@
+Demo foydalanuvchi, admin va kitob tayyor. Mavjud nusxalar ko‘paytirilmadi.
+
+PASS (MOCK ONLY): registration OTP failure re-enables the submit button; no email sent.
+PASS: desktop purchase form → API → MongoDB, cash pending (no payment).
+PASS: admin book creation (zero price and UI category), invalid form data returns 400.
+PASS: admin edit form → API → MongoDB → admin list.
+PASS: admin logout button clears the session.
+PASS: login, role restrictions, session reload, catalog, literal search, order API→MongoDB→profile, mobile home/detail, logout, admin API→MongoDB→catalog UI.
+Browser runtime errors: []
+
+

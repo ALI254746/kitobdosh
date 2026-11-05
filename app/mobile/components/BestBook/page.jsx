@@ -113,7 +113,7 @@ export default function PopularBooks({ data }) {
                 <div className="flex items-center gap-1 mb-3">
                   <FaStar className="w-4 h-4 text-yellow-400" />
                   <span className="text-xs font-medium text-gray-700 dark:text-slate-300">
-                    {book.rating || "5.0"}
+                    {book.rating || "Baholanmagan"}
                   </span>
                 </div>
 

@@ -1,4 +1,5 @@
 "use client";
+import { cartItemTotal } from "@/lib/order-input.mjs";
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,12 +20,12 @@ const Step1PersonalInfo = () => {
     const { checkoutData, updateCheckoutData } = useCheckout();
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Shaxsiy ma'lumotlar</h2>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Shaxsiy ma&apos;lumotlar</h2>
             <p className="text-sm text-slate-400 font-medium leading-relaxed">Buyurtmangizni kuryer yetkazishi uchun ism-sharif va telefon raqamingizni tasdiqlang.</p>
             
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">To'liq ism-sharif</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">To&apos;liq ism-sharif</label>
                     <div className="relative">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
                         <input 
@@ -86,7 +87,7 @@ const Step2Address = () => {
             </div>
 
             <button className="w-full py-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:border-[#52C6DA] hover:text-[#52C6DA] transition-all">
-                <MapPin size={16} /> Yangi manzil qo'shish
+                <MapPin size={16} /> Yangi manzil qo&apos;shish
             </button>
         </motion.div>
     );
@@ -139,7 +140,7 @@ const Step4Payment = () => {
 
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">To'lov turi</h2>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">To&apos;lov turi</h2>
             
             <div className="grid grid-cols-1 gap-4">
                 {options.map((opt) => (
@@ -177,7 +178,7 @@ const StepPassport = () => {
 
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Pasport ma'lumotlari</h2>
+            <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">Pasport ma&apos;lumotlari</h2>
             <p className="text-sm text-slate-400 font-medium leading-relaxed">Kitobni ijaraga olish uchun pasportingizning asosiy sahifasi rasmini yuklashingiz kerak. Bu xavfsizlik uchun talab qilinadi.</p>
             
             <div className="relative aspect-video w-full bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden flex flex-col items-center justify-center gap-4 group hover:border-[#52C6DA] transition-all cursor-pointer">
@@ -206,7 +207,7 @@ const StepPassport = () => {
             
             <div className="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-2xl border-2 border-blue-100 dark:border-blue-900/30 flex gap-3">
                 <AlertCircle className="text-blue-500 shrink-0" size={20} />
-                <p className="text-[10px] text-blue-900 dark:text-blue-200 font-bold leading-tight uppercase">Sizning ma'lumotlaringiz xavfsiz saqlanadi va faqat mahsulotni topshirish-qabul qilish uchun ishlatiladi.</p>
+                <p className="text-[10px] text-blue-900 dark:text-blue-200 font-bold leading-tight uppercase">Sizning ma&apos;lumotlaringiz xavfsiz saqlanadi va faqat mahsulotni topshirish-qabul qilish uchun ishlatiladi.</p>
             </div>
         </motion.div>
     );
@@ -240,7 +241,7 @@ const StepReview = ({ items, total }) => {
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400"><Wallet size={16}/></div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">To'lov</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">To&apos;lov</p>
                             <p className="text-sm font-bold text-slate-800 dark:text-white uppercase">{checkoutData.paymentMethod}</p>
                         </div>
                     </div>
@@ -260,7 +261,7 @@ const StepReview = ({ items, total }) => {
 
             <div className="bg-amber-50 dark:bg-amber-900/10 p-4 rounded-2xl border-2 border-amber-100 dark:border-amber-900/30 flex gap-3">
                 <AlertCircle className="text-amber-500 shrink-0" size={20} />
-                <p className="text-[10px] text-amber-900 dark:text-amber-200 font-bold leading-tight uppercase">Buyurtma tasdiqlangandan so'ng u kuryerga yuboriladi. Iltimos, ma'lumotlarni qayta tekshiring.</p>
+                <p className="text-[10px] text-amber-900 dark:text-amber-200 font-bold leading-tight uppercase">Buyurtma tasdiqlangandan so&apos;ng u kuryerga yuboriladi. Iltimos, ma&apos;lumotlarni qayta tekshiring.</p>
             </div>
         </motion.div>
     );
@@ -280,8 +281,7 @@ const CheckoutContent = () => {
 
     // Calculate Totals
     const totalAmount = cartItems?.reduce((acc, item) => {
-        const price = item.type === 'rent' ? (item.rentalPrice || 0) : (item.price || 0);
-        return acc + price;
+        return acc + cartItemTotal(item);
     }, 0) || 0;
 
     const formatPrice = (price) => new Intl.NumberFormat('uz-UZ').format(price) + " so'm";
@@ -318,7 +318,7 @@ const CheckoutContent = () => {
                 title: i.bookId?.title || i.title,
                 author: i.bookId?.author || i.author || "Noma'lum",
                 quantity: i.quantity || 1,
-                price: i.type === 'rent' ? (i.rentalPrice || 0) : (i.price || 0),
+                price: cartItemTotal({ ...i, quantity: 1 }),
                 type: i.type === 'rent' ? 'rent' : 'buy', // Fix: convert 'sale' to 'buy'
                 rentDays: i.rentDays || 0,
                 image: i.bookId?.images?.[0] || i.image || ""

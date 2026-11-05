@@ -52,7 +52,7 @@ const NotificationCard = ({ notif, onMarkRead, onAction, onExtend }) => {
                         onClick={() => onMarkRead(notif._id)}
                         className={`text-xs font-bold underline ${darkMode ? "text-[#A3ED96]" : "text-blue-600"}`}
                     >
-                        O'qildi deb belgilash
+                        O&apos;qildi deb belgilash
                     </button>
                 )}
 
@@ -230,7 +230,7 @@ export default function NotificationPage() {
                         ${darkMode ? "bg-white/10 hover:bg-white/20 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}
                     `}
                 >
-                    Barchasini o'qildi qilish
+                    Barchasini o&apos;qildi qilish
                 </button>
             )}
         </div>
@@ -256,7 +256,7 @@ export default function NotificationPage() {
                 ) : (
                     <div className="text-center py-20 opacity-50">
                         <FaBell className="text-5xl mx-auto mb-4 text-gray-400" />
-                        <p className={darkMode ? "text-gray-400" : "text-gray-500"}>Hozircha yangilik yo'q</p>
+                        <p className={darkMode ? "text-gray-400" : "text-gray-500"}>Hozircha yangilik yo&apos;q</p>
                     </div>
                 )}
             </AnimatePresence>

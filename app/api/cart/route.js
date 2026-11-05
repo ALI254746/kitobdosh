@@ -24,7 +24,7 @@ export async function GET(req) {
         return NextResponse.json({ success: true, cart: cartItems });
     } catch (error) {
         console.error("Cart GET Error:", error);
-        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, message: "Savatchani server bilan sinxronlab bo‘lmadi. Shu qurilmadagi nusxa saqlanadi." }, { status: 503 });
     }
 }
 
@@ -55,7 +55,7 @@ export async function POST(req) {
         return NextResponse.json({ success: true, message: "Added to cart" });
     } catch (error) {
         console.error("Cart POST Error:", error);
-        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, message: "Savatchani server bilan sinxronlab bo‘lmadi. Shu qurilmadagi nusxa saqlanadi." }, { status: 503 });
     }
 }
 
@@ -86,6 +86,6 @@ export async function DELETE(req) {
         return NextResponse.json({ success: true, message: "Item removed" });
     } catch (error) {
          console.error("Cart DELETE Error:", error);
-        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, message: "Savatchani server bilan sinxronlab bo‘lmadi. Shu qurilmadagi nusxa saqlanadi." }, { status: 503 });
     }
 }

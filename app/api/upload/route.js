@@ -14,10 +14,16 @@ export async function POST(req) {
     const file = formData.get('file');
     const folder = formData.get('folder') || 'kitobdosh'; // Default folder
 
-    if (!file) {
+    if (!file || typeof file.arrayBuffer !== 'function') {
       return NextResponse.json({ success: false, message: 'Fayl topilmadi' }, { status: 400 });
     }
 
+    if (file.size > 5 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      return NextResponse.json({ success: false, message: 'JPG, PNG yoki WebP rasm tanlang (5 MB gacha)' }, { status: 400 });
+    }
+    if (typeof folder !== 'string' || !(/^(?:kitobdosh)(?:\/[a-zA-Z0-9_-]+)*$/.test(folder) || ['promo-banners', 'books', 'returns'].includes(folder))) {
+      return NextResponse.json({ success: false, message: 'Rasm papkasi noto‘g‘ri' }, { status: 400 });
+    }
     // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);

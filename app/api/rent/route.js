@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Rent from "@/model/Rent";
@@ -102,6 +103,8 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
         const { id, status } = await req.json();
@@ -163,6 +166,8 @@ export async function PUT(req) {
 }
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
   try {
      await dbConnect();
      const rentals = await Rent.find().sort({ createdAt: -1 });
