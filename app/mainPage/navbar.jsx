@@ -46,6 +46,7 @@ export default function Navbar() {
     { id: "mainPage", name: "Bosh sahifa", path: "/mainPage" },
     { id: "sotib-olish", name: "Sotib olish", path: "/mainPage/sotibolish" },
     { id: "ijarabook", name: "Ijara", path: "/mainPage/ijarabook" },
+    { id: "almashish", name: "Almashish", path: "/mainPage/almashish" },
     { id: "biz-haqimizda", name: "Biz haqimizda", path: "/mainPage/AboutUs" },
     { id: "boglanish", name: "Bog‘lanish", path: "/mainPage/contactUs" },
   ];
