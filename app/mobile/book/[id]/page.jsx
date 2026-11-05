@@ -71,7 +71,7 @@ const BookDetailPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-900 pb-32 transition-colors duration-300">
+        <div className="min-h-screen bg-white dark:bg-slate-900 pb-64 transition-colors duration-300">
             {/* Header Overlay */}
             <div className="fixed top-0 left-0 right-0 z-40 px-4 py-4 flex justify-between items-center bg-white/10 backdrop-blur-md">
                 <button 
@@ -143,7 +143,7 @@ const BookDetailPage = () => {
                     <h1 className="text-2xl font-black text-slate-800 dark:text-white leading-tight mb-2">{book.title}</h1>
                     <p className="text-slate-500 dark:text-slate-400 font-bold mb-4">{book.author}</p>
                     
-                    <div className="flex items-center justify-center gap-6">
+                    <div className="grid grid-cols-3 items-center gap-3 text-sm">
                         <div className="flex flex-col items-center">
                             <div className="flex items-center gap-1 text-yellow-400 mb-1">
                                 <FaStar />
@@ -151,16 +151,14 @@ const BookDetailPage = () => {
                             </div>
                             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Reyting</span>
                         </div>
-                        <div className="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
                         <div className="flex flex-col items-center">
                             <span className="text-slate-800 dark:text-white font-black mb-1">
                                 {book.category || "Badiiy"}
                             </span>
                             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Janr</span>
                         </div>
-                        <div className="w-px h-8 bg-slate-200 dark:bg-slate-800"></div>
                         <div className="flex flex-col items-center">
-                            <span className="text-slate-800 dark:text-white font-black mb-1">320</span>
+                            <span className="text-slate-800 dark:text-white font-black mb-1">{book.pages || "—"}</span>
                             <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Betlar</span>
                         </div>
                     </div>
@@ -245,7 +243,7 @@ const BookDetailPage = () => {
             </div>
 
             {/* Sticky Buy/Rent Bar */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-50 transition-colors">
+            <div className="fixed bottom-24 left-0 right-0 p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 z-50 transition-colors">
                 <div className="flex gap-4 items-center max-w-md mx-auto">
                     <div className="flex flex-col min-w-[100px]">
                         <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Narxi</span>
@@ -261,7 +259,7 @@ const BookDetailPage = () => {
                             Ijara
                         </button>
                         <button 
-                            onClick={() => addToCart(book, 'sale')}
+                            onClick={() => addToCart(book, 'buy')}
                             className="flex-1 py-4 bg-[#52C6DA] text-white font-bold rounded-2xl shadow-lg shadow-[#52C6DA]/30 active:scale-95 transition-all flex items-center justify-center gap-2"
                         >
                             <Zap size={18} fill="currentColor" />

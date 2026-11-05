@@ -12,6 +12,7 @@ test('admin and courier routes reject anonymous and user tokens', () => {
   assert.equal(canAccess(access,{id:'admin',role:'admin'}),true);
  }
  assert.equal(requiredAccess('/api/test/setup-notification','GET'),'disabled');
+ assert.equal(requiredAccess('/uploads/renters/demo.png','GET'),'disabled');
  assert.equal(requiredAccess('/api/cron/check-rentals','GET'),'cron');
  assert.equal(canAccess(requiredAccess('/KurierPanel','GET'),{id:'c',role:'kurer'}),true);
  assert.equal(requiredAccess('/api/books','GET'),null);
@@ -54,4 +55,12 @@ test('build keeps lint enabled and unsafe fixture route has no DB access', async
  assert.ok(!(await readFile(new URL('../next.config.js',import.meta.url),'utf8')).includes('ignoreDuringBuilds'));
  const route=await readFile(new URL('../app/api/test/setup-notification/route.js',import.meta.url),'utf8');
  assert.ok(route.includes('status: 404'));assert.ok(!route.includes('dbConnect'));
+});
+
+test('image optimizer only allows public local assets, never renter documents', async () => {
+ const {createRequire}=await import('node:module'); const require=createRequire(import.meta.url);
+ const config=require('../next.config.js');
+ const {hasLocalMatch}=require('next/dist/shared/lib/match-local-pattern');
+ assert.equal(hasLocalMatch(config.images.localPatterns,'/uploads/renters/demo.png'),false);
+ assert.equal(hasLocalMatch(config.images.localPatterns,'/demo-book.svg'),true);
 });

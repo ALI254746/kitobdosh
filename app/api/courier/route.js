@@ -72,7 +72,7 @@ export async function GET() {
                     phone: o.customer.phone,
                     book: o.items.map(i => i.title).join(", "),
                     author: "To'plam",
-                    image: "https://placehold.co/100x150.png?text=Order",
+                    image: o.items?.[0]?.image || "/icon-192x192.png",
                     status: o.courierStatus || 'new',
                     lat: o.customer.lat,
                     lng: o.customer.lng,
@@ -206,6 +206,7 @@ export async function PUT(req) {
 
         if (updated) {
             await clearCache(COURIER_CACHE_KEY);
+            if (updated.user) await clearCache(`profile_full:${updated.user}`);
         }
 
         return NextResponse.json({ success: true, data: publicRecord(updated) });

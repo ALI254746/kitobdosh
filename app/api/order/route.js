@@ -130,6 +130,7 @@ export async function PUT(req) {
              console.log("Order PUT - Skipping Notification (No User or Status mismatch)");
         }
 
+        if (updatedOrder.user) await clearCache(`profile_full:${updatedOrder.user}`);
         return NextResponse.json({ success: true, data: publicRecord(updatedOrder) });
     } catch (error) {
         console.error("Order PUT Error:", error);

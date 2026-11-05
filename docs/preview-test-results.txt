@@ -1,0 +1,41 @@
+Validation 2026-11-05
+Unit: 8/8; lint: exit 0, 24 warnings; production build: exit 0.
+Typecheck: no separate script.
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> my-app@0.1.0 test:audit:local
+> node scripts/run-audit-local.cjs
+
+PASS UI → cart API/Redis → cash purchase → MongoDB → profile
+PASS UI → cart API/Redis → cash rental → MongoDB → profile
+PASS admin approve → courier accept → admin handover → courier on_way/delivered: purchase
+PASS admin approve → courier accept → admin handover → courier on_way/delivered: rental
+PASS: Mongo replica set + real Redis + browser/DB journey; Cloudinary mocked, no email delivery test; external browser/server egress blocked.
+OBSERVED rental parent Order status: pending; delivered Rent status: active (lifecycle sync remains a deployment blocker).
+Screenshots saved in docs/screenshots/journey
+Blocked external browser domains: fonts.googleapis.com, upload.wikimedia.org
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> my-app@0.1.0 test:audit:local
+> node scripts/run-audit-local.cjs
+
+PASS 1: courier CRUD role matrix, target role constraint, password excluded
+PASS 2: order/rent/users management role matrix and private field projection
+PASS 3: catalog/contact/notification/courier guards and courier ownership
+PASS 4: Payme mock auth, amount, replay, state, duplicate concurrency, rental status
+PASS 5: fixture endpoint is 404 and never changes DB in production build
+PASS 6: legacy A cookie cannot override B; logout means protected APIs reject
+PASS 7: server price/status, stock, duplicate quantities and invalid input
+PASS 8: rental + order + stock are atomic, including failed DB save (Cloudinary mocked)
+PASS 9: online UI choices hidden; sandbox callbacks do not approve rentals
+PASS 10: same 2 copies × 3 days + delivery in server and pure pricing
+PASS 11: manual address + zero coordinates stored and visible to assigned courier
+PASS 12: 17+ catalog pagination/search and immediate cache invalidation
+PASS 13: upload role/owner/type limits and authenticated private document URL (provider mocked)
+OTP check: local mocked send
+OTP check: UI sign-in failure mock
+PASS 14: real Redis OTP send/attempt limits, expiry, replay; email mocked
+PASS 15: 500, network errors and empty catalog are distinct, retry works
+Audit scenarios passed: 15; Cloudinary/Resend mocked, Payme requests local mock only; no real payments or messages.

@@ -156,8 +156,8 @@ function OrderCard({ order, onUpdateStatus }) {
 
             <div className="flex flex-col sm:flex-row gap-6">
                  <div className="w-24 h-32 sm:w-28 sm:h-40 flex-shrink-0 bg-slate-50 dark:bg-slate-700 rounded-3xl overflow-hidden relative shadow-md group-hover:scale-105 transition-transform duration-500">
-                    {order.bookImage ? (
-                        <Image src={order.bookImage} alt="Cover" fill className="object-cover" />
+                    {(order.image || order.bookImage) ? (
+                        <Image src={order.image || order.bookImage} alt="Cover" fill className="object-cover" />
                     ) : (
                         <div className="flex items-center justify-center h-full text-slate-300 dark:text-slate-600"><FaBook size={32} /></div>
                     )}

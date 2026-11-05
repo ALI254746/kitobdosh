@@ -38,13 +38,13 @@ export default function ActiveOrder() {
                  };
 
                  setOrder({
-                     id: active._id,
+                     id: active.id || active._id,
                      type: active.type,
                      customer: active.userName || active.customer,
                      phone: active.userPhone || active.phone,
                      address: active.address || "Toshkent shahar",
                      book: active.bookTitle || active.book,
-                     image: active.bookImage,
+                     image: active.image || active.bookImage,
                      status: map[active.status] || "Qabul qildim",
                      apiStatus: active.status,
                      lat: active.lat,

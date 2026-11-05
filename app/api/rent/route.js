@@ -100,6 +100,7 @@ export async function PUT(req) {
              });
         }
 
+        if (updatedRent.user) await clearCache(`profile_full:${updatedRent.user}`);
         return NextResponse.json({ success: true, data: publicRecord(updatedRent) });
     } catch (error) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });

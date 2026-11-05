@@ -8,5 +8,7 @@ await mongoose.connect('mongodb://127.0.0.1:27019/?directConnection=true');await
 const rlog=fs.openSync('/tmp/kitobdosh-audit-redis.log','w');redis=spawn(process.env.REDIS_SERVER_BIN || 'redis-server',['--bind','127.0.0.1','--port','26379','--save','','--appendonly','no','--protected-mode','yes'],{env:{...env,LD_LIBRARY_PATH:process.env.REDIS_LIBRARY_PATH || process.env.LD_LIBRARY_PATH},stdio:['ignore',rlog,rlog]});
 const serverLog=fs.openSync('/tmp/kitobdosh-audit-server.log','w');server=spawn(process.execPath,['--require','./tests/mocks/providers.cjs','node_modules/next/dist/bin/next','start','-H','127.0.0.1'],{cwd,env,stdio:['ignore',serverLog,serverLog]});
 for(let i=0;i<100;i++){try{if((await fetch('http://127.0.0.1:3000/api/auth/csrf')).ok)break}catch{}await pause(300)}
-const child=spawn(process.execPath,['tests/audit.e2e.cjs'],{cwd,env,stdio:'inherit'});process.exitCode=await new Promise(resolve=>child.on('exit',code=>resolve(code||0)));
+const testFile = process.env.AUDIT_TEST_SCRIPT || 'tests/audit.e2e.cjs';
+if (!['tests/audit.e2e.cjs', 'tests/defense-journey.e2e.cjs'].includes(testFile)) throw new Error('Unknown test script');
+const child=spawn(process.execPath,[testFile],{cwd,env,stdio:'inherit'});process.exitCode=await new Promise(resolve=>child.on('exit',code=>resolve(code === null ? 1 : code)));
 })().catch(e=>{console.error(e.message);process.exitCode=1}).finally(()=>{server?.kill();redis?.kill();mongo?.kill()});

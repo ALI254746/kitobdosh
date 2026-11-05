@@ -5,6 +5,12 @@ const nextConfig = {
     missingSuspenseWithCSRBailout: false,
   },
   images: {
+    // Legacy renter documents must never be read by the image optimizer.
+    localPatterns: [
+      { pathname: '/icon-*.png' },
+      { pathname: '/demo-book.svg' },
+      { pathname: '/uploads/avatars/**' },
+    ],
     remotePatterns: [
       {
         protocol: "https",

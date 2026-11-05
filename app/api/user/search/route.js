@@ -35,6 +35,9 @@ export async function GET(req) {
                 category: book.category,
                 price: book.price,
                 rentalPrice: book.rentalPricePerDay,
+                rentalPricePerDay: book.rentalPricePerDay,
+                stock: book.stock,
+                pages: book.pages,
                 rating: book.averageRating || 0,
                 description: book.description,
                 isRentable: book.isRentable
@@ -80,7 +83,7 @@ export async function GET(req) {
             .sort({ [sort]: -1 })
             .skip(skip)
             .limit(limit)
-            .select("title author images category price rentalPricePerDay averageRating isRentable"),
+            .select("title author images category price rentalPricePerDay averageRating isRentable stock pages"),
         Book.countDocuments(bookFilter)
     ]);
 
@@ -127,6 +130,9 @@ export async function GET(req) {
           category: book.category,
           price: book.price,
           rentalPrice: book.rentalPricePerDay,
+                rentalPricePerDay: book.rentalPricePerDay,
+                stock: book.stock,
+                pages: book.pages,
           rating: book.averageRating || 0,
           isRentable: book.isRentable
       })),

@@ -140,6 +140,7 @@ export default function RentRequestsPage() {
   const { darkMode } = useAdmin();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [monthLabel, setMonthLabel] = useState("");
   
   const fetchRequests = async () => {
       try {
@@ -157,6 +158,7 @@ export default function RentRequestsPage() {
   };
 
   useEffect(() => {
+    setMonthLabel(new Date().toLocaleDateString("uz-UZ", { month: "long", year: "numeric", timeZone: "Asia/Tashkent" }));
     fetchRequests();
   }, []);
 
@@ -197,7 +199,7 @@ export default function RentRequestsPage() {
            {/* Quick Stats or Actions could go here */}
            <div className={`px-4 py-2 rounded-xl flex items-center gap-2 font-bold ${darkMode ? "bg-white/10 text-white" : "bg-white shadow text-gray-700"}`}>
                 <FaCalendarAlt className="text-[#A3ED96]" />
-                <span>{new Date().toLocaleDateString('uz-UZ', { month: 'long', year: 'numeric' })}</span>
+                <span>{monthLabel}</span>
            </div>
       </div>
 

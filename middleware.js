@@ -19,4 +19,4 @@ export async function middleware(req) {
   if (!req.nextUrl.pathname.startsWith('/api/')) return NextResponse.redirect(new URL('/', req.url));
   return NextResponse.json({ success: false, message: token ? 'Bu amal uchun ruxsat yo‘q' : 'Avval tizimga kiring' }, { status: token ? 403 : 401 });
 }
-export const config = { matcher: ['/api/:path*', '/AdminPanel/:path*', '/KurierPanel/:path*'] };
+export const config = { matcher: ['/uploads/renters/:path*', '/api/:path*', '/AdminPanel/:path*', '/KurierPanel/:path*'] };
