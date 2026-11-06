@@ -121,6 +121,19 @@ export default function AuthPage() {
                   return;
               }
               
+              if (data.requiresVerification === false) {
+                  toast.success("Hisob yaratildi!");
+                  const result = await signIn("credentials", { redirect: false, email, password });
+                  if (result?.ok && !result.error) {
+                      router.push(window.innerWidth < 728 ? "/mobile" : "/mainPage");
+                  } else {
+                      setIsRegister(false);
+                      setShowOTP(false);
+                      toast.error("Hisob yaratildi. Endi email va parol bilan kiring.");
+                  }
+                  return;
+              }
+
               toast.success("Kod yuborildi! Emailingizni tekshiring.", { icon: "📩" });
               setShowOTP(true);
               setLoading(false);
