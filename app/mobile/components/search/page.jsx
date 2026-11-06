@@ -33,7 +33,7 @@ import {
   Languages,
   LayoutGrid
 } from "lucide-react";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import { motion, AnimatePresence } from "framer-motion";
 import { BOOK_CATEGORIES } from "@/lib/constants";
 import { useRouter, useSearchParams } from "next/navigation";

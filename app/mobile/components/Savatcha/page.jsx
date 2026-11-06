@@ -4,7 +4,7 @@ import { cartItemTotal } from "@/lib/order-input.mjs";
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, ChevronDown, Info, ShoppingBag, Calendar, Loader2 } from 'lucide-react';
-import Image from 'next/image';
+import Image from "@/app/components/SafeImage";
 import { useCart } from "@/app/CartContext";
 import { useRouter } from "next/navigation";
 

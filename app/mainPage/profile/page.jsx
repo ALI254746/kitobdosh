@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import SafeImage from "../../components/SafeImage";
 import {
   FaBook,

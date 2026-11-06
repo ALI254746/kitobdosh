@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import { FaSearch, FaSync, FaEnvelope, FaUser } from "react-icons/fa";
 import toast from "react-hot-toast";
 

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Repeat, GitCommit, MessageSquare, Settings, ChevronRight, PenTool, MapPin, Eye, EyeOff, LayoutGrid, Award, Heart, Share2, MoreHorizontal, Loader2, Camera, X, Instagram, Send, User, ShoppingBag, Clock, CheckCircle2, AlertCircle, Library, Wallet, ShieldCheck, HelpCircle, Bell, ArrowRight } from 'lucide-react';
-import Image from 'next/image';
+import Image from "@/app/components/SafeImage";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from 'react-hot-toast';

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaCheckCircle, FaTimesCircle, FaClock, FaCalendarAlt, FaUser, FaPhone, FaMapMarkerAlt, FaFileAlt } from "react-icons/fa";
 import { useAdmin } from "../AdminContext";
@@ -56,12 +56,12 @@ const RequestCard = ({ request, updateStatus, darkMode }) => {
                 <div className="flex items-center gap-2">
                     <FaMapMarkerAlt className="text-blue-500" /> <span className="truncate">{request.address}</span>
                 </div>
-                <button className="flex items-center gap-2 text-blue-400 hover:underline" onClick={async () => {
+                <button disabled={request.hasDocument === false} className="flex items-center gap-2 text-blue-400 hover:underline disabled:text-slate-500 disabled:no-underline disabled:cursor-default" onClick={async () => {
                   const response = await fetch(`/api/rent/${request._id}/document`);
                   const data = await response.json();
                   if (response.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
                   else toast.error("Hujjatni ochib bo‘lmadi. Eski hujjat uchun kirish siyosatini administrator tekshirsin.");
-                }}>Hujjatni ko‘rish</button>
+                }}>{request.hasDocument === false ? "Hujjat biriktirilmagan" : "Hujjatni ko‘rish"}</button>
             </div>
 
             {/* Footer Stats */}
@@ -91,7 +91,7 @@ const RequestCard = ({ request, updateStatus, darkMode }) => {
                 </div>
             )}
             
-            {request.status === 'approved' && (
+            {['active', 'late', 'return_requested'].includes(request.status) && (
                 <div className="mt-3">
                     <button 
                         onClick={() => updateStatus(request._id, 'returned')}
@@ -109,7 +109,7 @@ const KanbanColumn = ({ status, items, updateStatus, darkMode }) => {
     const config = COLUMNS[status];
     
     return (
-        <div className="flex-1 min-w-[300px]">
+        <div className="min-w-0">
              <div className={`flex items-center justify-between mb-4 p-3 rounded-xl ${darkMode ? "bg-white/5" : "bg-gray-50"}`}>
                  <div className="flex items-center gap-3">
                      <span className={`w-3 h-3 rounded-full ${config.color}`} />
@@ -140,18 +140,18 @@ export default function RentRequestsPage() {
   const { darkMode } = useAdmin();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [monthLabel, setMonthLabel] = useState("");
   
   const fetchRequests = async () => {
       try {
-          const res = await fetch('/api/rent');
+          setError("");
+          const res = await fetch('/api/rent', {cache: 'no-store', signal: AbortSignal.timeout(15000)});
           const data = await res.json();
-          if(data.success) {
-              setRequests(data.data);
-          }
+          if(!res.ok || !data.success) throw new Error(data.message || 'Ijaralarni yuklab bo‘lmadi');
+          setRequests(data.data);
       } catch (error) {
-          console.error(error);
-          toast.error("Ma'lumotlarni yuklashda xatolik");
+          setError("Ijaralar yuklanmadi. Qayta urinib ko‘ring.");
       } finally {
           setLoading(false);
       }
@@ -204,17 +204,18 @@ export default function RentRequestsPage() {
       </div>
 
        {/* Kanban Board */}
-       <div className="flex gap-6 overflow-x-auto pb-8 snap-x">
+       {error && <div role="alert" className="dash-error">{error} <button onClick={fetchRequests} className="dash-action">Qayta urinish</button></div>}
+       {loading ? <div role="status" className="py-12 text-center text-slate-400">Ijaralar yuklanmoqda…</div> : <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-5 pb-8">
            {['pending', 'approved', 'returned', 'rejected'].map(status => (
                 <KanbanColumn 
                     key={status} 
                     status={status} 
-                    items={requests.filter(r => r.status === status)}
+                    items={requests.filter(r => status === "approved" ? ["approved", "active", "late", "return_requested", "courier_assigned", "courier_picked_up"].includes(r.status) : r.status === status)}
                     updateStatus={updateStatus}
                     darkMode={darkMode}
                 />
            ))}
-       </div>
+       </div>}
 
     </div>
   );

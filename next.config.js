@@ -9,6 +9,8 @@ const nextConfig = {
     localPatterns: [
       { pathname: '/icon-*.png' },
       { pathname: '/demo-book.svg' },
+      { pathname: '/book-cover.svg' },
+      { pathname: '/books/**' },
       { pathname: '/uploads/avatars/**' },
     ],
     remotePatterns: [

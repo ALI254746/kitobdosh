@@ -24,3 +24,10 @@
 
 .dash-dialog-backdrop{position:fixed;inset:0;background:#0009;z-index:100;display:grid;place-items:center;padding:20px;backdrop-filter:blur(4px)}.dash-dialog{width:100%;max-width:540px;max-height:90vh;overflow:auto;background:var(--adm-panel);border:1px solid var(--adm-border);border-radius:12px;box-shadow:0 25px 90px #0009}.dash-dialog-body{padding:0 20px 22px}.dash-dialog dl{display:grid;grid-template-columns:130px 1fr;gap:14px;margin:12px 0 24px}.dash-dialog dt{color:var(--adm-muted)}.dash-dialog dd{overflow-wrap:anywhere}.dash-dialog h3{font-weight:600;margin-bottom:10px}.dash-dialog li{display:flex;justify-content:space-between;gap:15px;border-top:1px solid var(--adm-border);padding:12px 0;color:#b8cae6}.dash-dialog ul{margin-bottom:20px}
 @media(max-width:640px){.admin-profile{display:none}.admin-topbar .flex.items-center.justify-between.gap-4{gap:10px}.admin-topbar input{font-size:11px!important;padding-left:36px!important}.dash-dialog dl{grid-template-columns:90px 1fr}}
+
+.admin-shell.dark .admin-content [class*="bg-[#A3ED96]"]{color:#e5f2ff!important}
+.admin-shell.dark .admin-content [class*="text-[#163201]"]{color:#d9eaff!important}
+.admin-shell.dark .admin-content input::placeholder,.admin-shell.dark .admin-content textarea::placeholder{color:#8ca4c5!important;opacity:1}
+.admin-shell.dark .admin-content input,.admin-shell.dark .admin-content select,.admin-shell.dark .admin-content textarea{color:#dceaff}
+.dash-heading-tools{display:flex;align-items:center;gap:12px;flex-shrink:0}.dash-heading-tools .dash-action{padding:8px}
+@media(max-width:640px){.dash-heading-tools{gap:0}.admin-content>div.min-h-screen{padding:12px!important}.admin-content h1.text-3xl{font-size:23px}}

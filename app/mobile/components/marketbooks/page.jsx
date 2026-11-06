@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Search, Bell, User, BookOpen, GraduationCap, HeartPulse, Activity, UserPlus, History, Trophy, TrendingUp, Star, Laptop, Briefcase, Lightbulb, Music, Palette, ShoppingBag, Globe, Book, Moon, Star as StarIcon, Zap, Loader2 } from 'lucide-react';
-import Image from 'next/image';
+import Image from "@/app/components/SafeImage";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from "next/navigation";
 import { BOOK_CATEGORIES } from "@/lib/constants";

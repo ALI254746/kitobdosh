@@ -9,7 +9,7 @@ import {
     ShieldCheck, Truck, RotateCcw,
     Info, MessageSquare, Loader2
 } from 'lucide-react';
-import Image from 'next/image';
+import Image from "@/app/components/SafeImage";
 import { useCart } from "@/app/CartContext";
 import { useFavorites } from "@/app/FavoritesContext";
 import { FaHeart, FaRegHeart, FaStar } from "react-icons/fa";

@@ -112,8 +112,11 @@ export async function GET() {
   if (denied) return denied;
   try {
      await dbConnect();
-     const rentals = await Rent.find().select('-passportUrl -passportCloudinaryId -passportAssetId').sort({ createdAt: -1 });
-     return NextResponse.json({ success: true, data: publicRecord(rentals) });
+     const rentals = await Rent.find().sort({ createdAt: -1 }).lean();
+     const safeRentals = rentals.map(({passportUrl, passportCloudinaryId, passportAssetId, ...record}) => ({
+       ...record, hasDocument: !!(passportUrl || passportCloudinaryId || passportAssetId)
+     }));
+     return NextResponse.json({ success: true, data: publicRecord(safeRentals) });
   } catch (error) {
      return NextResponse.json({ success: false, message: error.message }, { status: 500 });
   }

@@ -7,7 +7,7 @@ import {
   FaClipboardList, FaChevronRight, FaChevronLeft, FaSpinner,
   FaArrowRight, FaPhoneAlt, FaCheckDouble
 } from "react-icons/fa";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import toast, { Toaster } from 'react-hot-toast';
 import { uploadToCloudinary } from "../../../lib/cloudinary";
 

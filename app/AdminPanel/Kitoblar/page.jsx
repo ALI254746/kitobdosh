@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaEye, FaEdit, FaTrash, FaSearch, FaPlus, FaFilter, FaSortAmountDown, FaLayerGroup, FaTags, FaStar, FaBookmark, FaTimes, FaCamera, FaExclamationTriangle } from "react-icons/fa";
 import { useAdmin } from "../AdminContext";

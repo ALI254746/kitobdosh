@@ -1,6 +1,6 @@
 import { isObjectId } from "@/lib/catalog-input.mjs";
 import React from "react";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import SafeImage from "@/app/components/SafeImage";
 import { dbConnect } from "@/lib/db.Connect";
 import Book from "@/model/Book";

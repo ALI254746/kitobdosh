@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import { FaSearch } from "react-icons/fa";
 
 // Skeleton Component

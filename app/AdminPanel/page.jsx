@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ShoppingCart, BookOpen, Truck, Database, TrendingUp, ChartNoAxesCombined, ChartColumnIncreasing, ClipboardList, ArrowRight, Eye, RefreshCw, X } from "lucide-react";
 import { Line, Bar } from "react-chartjs-2";
@@ -17,21 +17,25 @@ export default function DashboardPage() {
   const [period, setPeriod] = useState(12);
   const [barPeriod, setBarPeriod] = useState(6);
   const [today, setToday] = useState("");
-  async function loadStats() {
-    setLoading(true);
+  const loadStats = useCallback(async ({silent = false} = {}) => {
+    if (!silent) setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/admin/stats", { cache: "no-store" });
+      const response = await fetch("/api/admin/stats", { cache: "no-store", signal: AbortSignal.timeout(15000) });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Ma’lumotlarni yuklab bo‘lmadi");
       setStats(result.stats);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
-  }
+  }, []);
   useEffect(() => {
     loadStats();
     setToday(new Date().toLocaleDateString("uz-UZ", { year:"numeric", month:"long", day:"numeric", weekday:"long", timeZone:"Asia/Tashkent" }));
-  }, []);
+    const refresh = () => loadStats({silent:true});
+    const timer = setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    return () => { clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [loadStats]);
   useEffect(() => {
     if (!selectedOrder) return;
     const previous = document.activeElement;
@@ -79,7 +83,7 @@ export default function DashboardPage() {
     { label:"Oylik tushum", value:dashboard.monthlyIncome, note:"Shu oydagi to‘langanlar", Icon:Database, color:"purple", money:true },
   ];
   return <div className="dash-dashboard">
-    <div className="dash-heading"><div><h1>Boshqaruv paneli</h1><p>Kitobdosh platformasining umumiy holati va asosiy ko‘rsatkichlari</p></div><div className="dash-date">Bugun: {today}</div></div>
+    <div className="dash-heading"><div><h1>Boshqaruv paneli</h1><p>Kitobdosh platformasining umumiy holati va asosiy ko‘rsatkichlari</p></div><div className="dash-heading-tools"><div className="dash-date">Bugun: {today}</div><button className="dash-action" aria-label="Statistikani yangilash" disabled={loading} onClick={()=>loadStats()}><RefreshCw size={15}/></button></div></div>
     {error && <div role="alert" className="dash-error">{error} <button onClick={loadStats} className="dash-action"><RefreshCw size={13}/> Qayta urinish</button></div>}
     <div className="dash-stats">
       {cards.map(({label,value,note,Icon,color,money}) => loading ? <div key={label} className="dash-loading" aria-label="Yuklanmoqda"/> : <section className="dash-card" key={label}><div className="dash-card-top"><span className={"dash-icon "+color}><Icon size={27} strokeWidth={1.6}/></span><div><p className="dash-label">{label}</p><p className={"dash-value "+(money?"money":"")}>{stats ? number(value) : "—"}{money && <small>so‘m</small>}</p></div></div><p className="dash-card-note"><TrendingUp size={13}/>{note}</p></section>)}

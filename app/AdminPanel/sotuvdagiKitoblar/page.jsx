@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "@/app/components/SafeImage";
 import { FaBook, FaPlus, FaShoppingCart, FaStore, FaChartLine, FaStart, FaEdit, FaTrash, FaSearch, FaFilter, FaTruck, FaMapMarkerAlt, FaPhone, FaUser, FaCheck, FaTimes, FaBox } from "react-icons/fa";
 import { delay, motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "../AdminContext";
