@@ -1,5 +1,8 @@
 "use client";
 
+import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import { FaBars, FaMoon, FaSun, FaBell, FaSearch, FaUserCircle, FaBook, FaUser, FaTruck, FaShoppingCart, FaHistory } from "react-icons/fa";
@@ -12,6 +15,7 @@ export default function TopNavbar({
   setSidebarOpen,
 }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const searchRef = useRef(null);
   const notifRef = useRef(null);
   const [mounted, setMounted] = useState(false);
@@ -145,9 +149,9 @@ export default function TopNavbar({
 
   return (
     <div
-      className={`sticky top-0 z-30 px-6 py-4 transition-all duration-300 backdrop-blur-md ${
+      className={`admin-topbar sticky top-0 z-30 px-6 py-4 transition-all duration-300 backdrop-blur-md ${
         darkMode 
-          ? "bg-[#163201]/90 border-b border-[#A3ED96]/20 shadow-lg shadow-black/20" 
+          ? "bg-[#101f38]/90 border-b border-[#90b4e5]/20 shadow-lg shadow-black/20" 
           : "bg-white/80 border-b border-gray-100 shadow-sm"
       }`}
     >
@@ -155,43 +159,44 @@ export default function TopNavbar({
         {/* Left Side: Toggle & Title/Date */}
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Menyuni ochish" onClick={() => setSidebarOpen(!sidebarOpen)}
             className={`p-2 rounded-xl transition-all duration-300 lg:hidden ${
               darkMode 
-                ? "text-[#A3ED96] hover:bg-[#A3ED96]/10" 
-                : "text-[#163201] hover:bg-gray-100"
+                ? "text-[#90b4e5] hover:bg-[#90b4e5]/10" 
+                : "text-[#101f38] hover:bg-gray-100"
             }`}
           >
             <FaBars className="text-xl" />
           </button>
 
-          <div className="hidden md:block">
-            <h2 className={`text-lg font-bold tracking-tight ${darkMode ? "text-white" : "text-[#163201]"}`}>
+          <div className="hidden">
+            <h2 className={`text-lg font-bold tracking-tight ${darkMode ? "text-white" : "text-[#101f38]"}`}>
               Boshqaruv Paneli
             </h2>
-            <p className={`text-xs font-medium ${darkMode ? "text-[#A3ED96]" : "text-gray-500"}`}>
+            <p className={`text-xs font-medium ${darkMode ? "text-[#90b4e5]" : "text-gray-500"}`}>
               {currentDate}
             </p>
           </div>
         </div>
 
         {/* Center: Search Bar (Desktop) */}
-        <div className="flex-1 max-w-xl mx-4 hidden sm:block relative group" ref={searchRef}>
+        <div className="flex-1 max-w-xl mx-0 relative group" ref={searchRef}>
           <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${
-            darkMode ? "text-[#A3ED96]/50 group-focus-within:text-[#A3ED96]" : "text-gray-400 group-focus-within:text-[#163201]"
+            darkMode ? "text-[#90b4e5]/50 group-focus-within:text-[#90b4e5]" : "text-gray-400 group-focus-within:text-[#101f38]"
           }`}>
             <FaSearch />
           </div>
           <input
             type="text"
+            aria-label="Kitob, mijoz yoki buyurtma qidirish"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => searchQuery.length >= 2 && setShowResults(true)}
-            placeholder="Qidirish... (Kitoblar, Foydalanuvchilar, Kuryerlar)"
+            placeholder="Kitob, mijoz yoki buyurtma bo‘yicha qidirish..."
             className={`w-full py-3 pl-11 pr-4 rounded-xl text-sm font-medium transition-all duration-300 outline-none border-2 ${
               darkMode 
-                ? "bg-[#163201] border-[#A3ED96]/20 text-white placeholder-[#A3ED96]/30 focus:border-[#A3ED96] focus:shadow-[0_0_15px_-3px_rgba(163,237,150,0.3)]" 
-                : "bg-gray-50 border-transparent text-gray-800 focus:bg-white focus:border-[#163201]/20 focus:shadow-lg"
+                ? "bg-[#101f38] border-[#90b4e5]/20 text-white placeholder-[#90b4e5]/30 focus:border-[#90b4e5] focus:shadow-[0_0_15px_-3px_rgba(54,132,255,0.2)]" 
+                : "bg-gray-50 border-transparent text-gray-800 focus:bg-white focus:border-[#101f38]/20 focus:shadow-lg"
             }`}
           />
 
@@ -203,7 +208,7 @@ export default function TopNavbar({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 className={`absolute top-full mt-2 left-0 right-0 rounded-2xl shadow-2xl border overflow-hidden max-h-[500px] overflow-y-auto ${
-                  darkMode ? "bg-[#163201] border-[#A3ED96]/20 text-white" : "bg-white border-gray-100 text-gray-800"
+                  darkMode ? "bg-[#101f38] border-[#90b4e5]/20 text-white" : "bg-white border-gray-100 text-gray-800"
                 }`}
               >
                 {isSearching && (
@@ -215,11 +220,11 @@ export default function TopNavbar({
                     {/* Kitoblar */}
                     {searchResults.books.length > 0 && (
                       <div>
-                        <h3 className="px-3 text-[10px] font-black uppercase tracking-widest text-[#A3ED96] mb-2 opacity-70">Kitoblar</h3>
+                        <h3 className="px-3 text-[10px] font-black uppercase tracking-widest text-[#90b4e5] mb-2 opacity-70">Kitoblar</h3>
                         <div className="space-y-1">
                           {searchResults.books.map(book => (
                             <button key={book._id} onClick={() => handleResultClick('/AdminPanel/Kitoblar')} className={`w-full text-left p-2 rounded-xl flex items-center gap-3 transition-colors ${darkMode ? 'hover:bg-white/5' : 'hover:bg-gray-50'}`}>
-                                <div className="w-8 h-8 rounded-lg bg-[#A3ED96]/20 flex items-center justify-center text-[#A3ED96] shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-[#90b4e5]/20 flex items-center justify-center text-[#90b4e5] shrink-0">
                                     <FaBook size={14} />
                                 </div>
                                 <div>
@@ -301,20 +306,14 @@ export default function TopNavbar({
 
         {/* Right Side: Actions */}
         <div className="flex items-center gap-3">
-          {/* Search Toggle (Mobile) */}
-          <button className={`sm:hidden p-2.5 rounded-xl transition-colors ${
-            darkMode ? "text-[#A3ED96] hover:bg-[#A3ED96]/10" : "text-gray-600 hover:bg-gray-100"
-          }`}>
-             <FaSearch size={18} />
-          </button>
-
+          <Link href="/AdminPanel/Sozlamalar" className="admin-profile"><span className="admin-avatar">{(session?.user?.name || "AD").slice(0,2).toUpperCase()}</span><span><strong>{session?.user?.name || "Administrator"}</strong><small>Tizim administratori</small></span></Link>
           {/* Theme Toggle */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => setDarkMode(!darkMode)}
+            aria-label="Rang rejimini almashtirish" onClick={() => setDarkMode(!darkMode)}
             className={`p-2.5 rounded-xl transition-all shadow-sm ${
               darkMode 
-                ? "bg-[#A3ED96]/10 text-[#A3ED96] hover:bg-[#A3ED96]/20" 
+                ? "bg-[#90b4e5]/10 text-[#90b4e5] hover:bg-[#90b4e5]/20" 
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -325,11 +324,11 @@ export default function TopNavbar({
           <div className="relative" ref={notifRef}>
             <motion.button 
               whileTap={{ scale: 0.9 }}
-              onClick={() => setShowNotifications(!showNotifications)}
+              aria-label="Bildirishnomalar" onClick={() => setShowNotifications(!showNotifications)}
               className={`relative p-2.5 rounded-xl transition-all shadow-sm ${
                 darkMode 
-                    ? "bg-[#163201] text-[#A3ED96] hover:bg-[#A3ED96]/10 border border-[#A3ED96]/20" 
-                    : "bg-white text-[#163201] hover:bg-gray-50 border border-gray-100"
+                    ? "bg-[#101f38] text-[#90b4e5] hover:bg-[#90b4e5]/10 border border-[#90b4e5]/20" 
+                    : "bg-white text-[#101f38] hover:bg-gray-50 border border-gray-100"
               }`}
             >
               <FaBell size={18} />
@@ -345,15 +344,15 @@ export default function TopNavbar({
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: 10 }}
                   className={`absolute right-0 mt-3 w-80 md:w-96 rounded-2xl shadow-2xl border overflow-hidden ${
-                    darkMode ? "bg-[#163201] border-[#A3ED96]/20" : "bg-white border-gray-100"
+                    darkMode ? "bg-[#101f38] border-[#90b4e5]/20" : "bg-white border-gray-100"
                   }`}
                 >
-                  <div className={`p-4 border-b flex justify-between items-center ${darkMode ? "border-[#A3ED96]/10" : "border-gray-100"}`}>
+                  <div className={`p-4 border-b flex justify-between items-center ${darkMode ? "border-[#90b4e5]/10" : "border-gray-100"}`}>
                     <h3 className={`font-black ${darkMode ? "text-white" : "text-gray-800"}`}>Bildirishnomalar</h3>
                     {unreadCount > 0 && (
                       <button 
                         onClick={markAllAsRead}
-                        className="text-[10px] font-bold uppercase tracking-widest text-[#A3ED96] hover:underline"
+                        className="text-[10px] font-bold uppercase tracking-widest text-[#90b4e5] hover:underline"
                       >
                         Hammasini o&apos;qildi
                       </button>
@@ -364,10 +363,13 @@ export default function TopNavbar({
                     {notifications.length > 0 ? (
                       notifications.map(notif => (
                         <div 
-                          key={notif._id} 
+                          key={notif._id}
+                          role="button" tabIndex={0}
+                          onClick={() => { handleResultClick('/AdminPanel/BildirishNomalar'); setShowNotifications(false); }}
+                          onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); handleResultClick('/AdminPanel/BildirishNomalar'); setShowNotifications(false); } }}
                           className={`p-4 border-b transition-colors cursor-pointer group ${
-                            darkMode ? "border-[#A3ED96]/5 hover:bg-white/5" : "border-gray-50 hover:bg-gray-50"
-                          } ${!notif.isRead ? (darkMode ? "bg-[#A3ED96]/5" : "bg-blue-50/50") : ""}`}
+                            darkMode ? "border-[#90b4e5]/5 hover:bg-white/5" : "border-gray-50 hover:bg-gray-50"
+                          } ${!notif.isRead ? (darkMode ? "bg-[#90b4e5]/5" : "bg-blue-50/50") : ""}`}
                         >
                           <div className="flex gap-3">
                             <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${
@@ -401,10 +403,10 @@ export default function TopNavbar({
                     )}
                   </div>
                   
-                  <div className={`p-3 text-center border-t ${darkMode ? "border-[#A3ED96]/10" : "border-gray-100"}`}>
+                  <div className={`p-3 text-center border-t ${darkMode ? "border-[#90b4e5]/10" : "border-gray-100"}`}>
                     <button 
                       onClick={() => { handleResultClick('/AdminPanel/BildirishNomalar'); setShowNotifications(false); }}
-                      className="text-xs font-bold text-[#A3ED96] hover:opacity-80 transition-all flex items-center justify-center gap-2 mx-auto"
+                      className="text-xs font-bold text-[#90b4e5] hover:opacity-80 transition-all flex items-center justify-center gap-2 mx-auto"
                     >
                       Barchasini ko&apos;rish <FaHistory size={10} />
                     </button>

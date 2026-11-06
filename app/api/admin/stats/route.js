@@ -79,9 +79,33 @@ export async function GET() {
         { $unwind: "$userDetails" }
     ]);
 
+    const yearAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const [totalOrders, inDelivery, recentOrders, orderActivity, rentalActivity, paidOrders, paidRents] = await Promise.all([
+      Order.countDocuments(),
+      Order.countDocuments({ status: "processing" }),
+      Order.find().sort({ createdAt: -1 }).limit(6).select("customer items totalPrice status createdAt").lean(),
+      Order.aggregate([
+        { $match: { createdAt: { $gte: yearAgo }, status: { $ne: "cancelled" } } },
+        { $group: { _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 }, sales: { $sum: { $cond: [{ $in: ["buy", "$items.type"] }, 1, 0] } } } },
+        { $sort: { "_id.year": 1, "_id.month": 1 } }
+      ]),
+      Rent.aggregate([
+        { $match: { createdAt: { $gte: yearAgo }, status: { $ne: "rejected" } } },
+        { $group: { _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } }, count: { $sum: 1 } } }
+      ]),
+      Order.aggregate([{ $match: { paymentStatus: "paid", status: { $ne: "cancelled" }, createdAt: { $gte: monthStart } } }, { $group: { _id: null, total: { $sum: "$totalPrice" } } }]),
+      Rent.aggregate([{ $match: { paymentStatus: "paid", status: { $ne: "rejected" }, order: { $exists: false }, createdAt: { $gte: monthStart } } }, { $group: { _id: null, total: { $sum: "$totalPrice" } } }])
+    ]);
+    const dashboard = {
+      totalOrders, inDelivery, recentOrders, orderActivity, rentalActivity,
+      monthlyIncome: (paidOrders[0]?.total || 0) + (paidRents[0]?.total || 0)
+    };
+
     return NextResponse.json({
       success: true,
       stats: {
+        dashboard,
         totalBooks,
         totalUsers,
         totalIncome,
