@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Plus, Trash2, Edit3, Save, X, ExternalLink, Megaphone, Image as ImageIcon, Upload, Info, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAdmin } from "../AdminContext";
 
 export default function PromoAdmin() {
+    const { darkMode } = useAdmin();
     const [banners, setBanners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
@@ -96,7 +98,7 @@ export default function PromoAdmin() {
     };
 
     return (
-        <div className="p-6 max-w-5xl mx-auto">
+        <div className={`promo-admin ${darkMode ? "dark" : ""} p-6 max-w-5xl mx-auto min-h-screen`}>
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -123,7 +125,7 @@ export default function PromoAdmin() {
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 mb-8"
+                        className={`p-6 rounded-2xl shadow-xl border mb-8 ${darkMode ? "bg-[#0f1e32] border-slate-700" : "bg-white border-gray-100"}`}
                     >
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,7 +263,7 @@ export default function PromoAdmin() {
                                 banner.isActive ? 'border-orange-500 shadow-md shadow-orange-500/5' : 'border-gray-100 opacity-60'
                             }`}
                         >
-                            <div className="bg-white p-6 rounded-[14px] flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className={`p-6 rounded-[14px] flex flex-col md:flex-row justify-between items-center gap-6 ${darkMode ? "bg-[#0f1e32]" : "bg-white"}`}>
                                 {banner.image && (
                                     <div className="w-24 h-16 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0">
                                         <img src={banner.image} alt="Banner" className="w-full h-full object-cover" />
@@ -307,6 +309,22 @@ export default function PromoAdmin() {
                     ))
                 )}
             </div>
+            <style jsx global>{`
+                .promo-admin.dark { color: #e2e8f0; }
+                .promo-admin.dark .text-gray-800,
+                .promo-admin.dark .text-gray-700,
+                .promo-admin.dark .text-gray-600 { color: #e2e8f0 !important; }
+                .promo-admin.dark .text-gray-500 { color: #94a3b8 !important; }
+                .promo-admin.dark .bg-gray-50,
+                .promo-admin.dark .bg-gray-100 { background-color: #0b1728 !important; }
+                .promo-admin.dark .border-gray-50,
+                .promo-admin.dark .border-gray-100,
+                .promo-admin.dark .border-gray-200 { border-color: rgba(148,163,184,.18) !important; }
+                .promo-admin.dark input,
+                .promo-admin.dark textarea { color: #f8fafc; }
+                .promo-admin.dark input::placeholder,
+                .promo-admin.dark textarea::placeholder { color: #64748b; }
+            `}</style>
         </div>
     );
 }
