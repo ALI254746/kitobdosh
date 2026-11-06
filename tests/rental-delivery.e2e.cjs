@@ -20,9 +20,11 @@ if(!/^http:\/\/127\.0\.0\.1:\d+$/.test(base||"")||!/^mongodb:\/\/127\.0\.0\.1:\d
   await db.collection("books").insertOne(book);
   const login=async name=>{const p=pages[name];await go(p,"/");await p.getByPlaceholder("name@company.com").fill(actors[name].email);await p.getByPlaceholder("••••••••").fill(process.env.DEMO_PASSWORD);await p.getByRole("button",{name:"Kirish",exact:true}).click();await p.waitForURL(name==="admin"?"**/AdminPanel":name==="user"?"**/mainPage":"**/KurierPanel");};
   await login("user");const user=pages.user;await user.setViewportSize({width:390,height:844});
-  await go(user,"/mobile/book/"+book._id);await user.getByRole("heading",{name:book.title,exact:true}).waitFor();
-  const [cart]=await Promise.all([user.waitForResponse(r=>r.url().endsWith("/api/cart")&&r.request().method()==="POST"),user.getByRole("button",{name:"Ijara",exact:true}).click()]);assert.equal(cart.status(),200);assert.equal((await db.collection("carts").findOne({_id:String(actors.user._id)})).items.length,1);
-  await go(user,"/mobile/components/Savatcha");await user.getByRole("heading",{name:book.title,exact:true}).waitFor();await user.getByRole("button",{name:"7 kun",exact:true}).click();await user.getByRole("button",{name:"Ijarani tasdiqlash",exact:true}).click();
+  await go(user,"/book/"+book._id);await user.getByRole("heading",{name:book.title,exact:true}).waitFor();
+  const [cart]=await Promise.all([user.waitForResponse(r=>r.url().endsWith("/api/cart")&&r.request().method()==="POST"),user.getByRole("button",{name:"Hoziroq ijara olish",exact:true}).click()]);assert.equal(cart.status(),200);await user.waitForURL("**/mobile/components/Savatcha");
+  assert.equal((await db.collection("carts").findOne({_id:String(actors.user._id)})).items.length,1);
+  await user.setViewportSize({width:1440,height:1000});await go(user,"/mainPage/savatcha");
+  await user.getByRole("button",{name:"Rasmiylashtirish",exact:true}).click();await user.waitForURL("**/mobile/components/checkout");
   await user.getByPlaceholder("Masalan: Aziz Azizov").fill("Sinov Kitobxon");await user.getByPlaceholder("+998",{exact:true}).fill("+998000000000");await user.getByRole("button",{name:"Keyingi",exact:true}).click();
   await user.getByRole("textbox",{name:"Yetkazish manzili",exact:true}).fill("Toshkent, Yunusobod");await user.getByRole("button",{name:"Keyingi",exact:true}).click();await user.getByText("Kuryer orqali",{exact:true}).click();await user.getByRole("button",{name:"Keyingi",exact:true}).click();await user.getByText("Naqd pulda",{exact:true}).click();await user.getByRole("button",{name:"Keyingi",exact:true}).click();
   const png=Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jWZkAAAAASUVORK5CYII=","base64");

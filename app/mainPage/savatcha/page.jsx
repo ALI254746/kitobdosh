@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "@/app/components/SafeImage";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   FaTrashAlt,
   FaMinus,
@@ -378,6 +379,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
 // --- MAIN PAGE ---
 
 export default function CartPage() {
+  const router = useRouter();
   const { cartItems, removeFromCart, updateQuantity, getTotalPrice, clearCart } = useCart();
   const { darkMode } = useMain();
   const [mounted, setMounted] = useState(false);
@@ -483,7 +485,13 @@ export default function CartPage() {
                         </div>
 
                         <button 
-                            onClick={() => setIsCheckoutOpen(true)}
+                            onClick={() => {
+                                if (cartItems.some(item => item.type === "rent")) {
+                                    router.push("/mobile/components/checkout");
+                                } else {
+                                    setIsCheckoutOpen(true);
+                                }
+                            }}
                             className={`w-full py-4 rounded-2xl font-bold shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2
                                 ${darkMode 
                                     ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/40" 

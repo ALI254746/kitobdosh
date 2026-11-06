@@ -1,3 +1,4 @@
+import BookActions from "./BookActions";
 import { isObjectId } from "@/lib/catalog-input.mjs";
 import React from "react";
 import Image from "@/app/components/SafeImage";
@@ -148,16 +149,12 @@ export default async function BookPage({ params }) {
                             </p>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row gap-4 mt-auto">
-                           <button className="flex-1 bg-[#1F2937] text-white py-5 rounded-2xl font-black text-lg hover:bg-[#96C7B9] transition-all flex items-center justify-center gap-3 active:scale-95">
-                                <FaShoppingCart /> Savatchaga qo&apos;shish
-                           </button>
-                           {book.isRentable && (
-                               <button className="flex-1 bg-blue-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-blue-500 transition-all flex items-center justify-center gap-3 active:scale-95">
-                                   <FaBolt /> Hoziroq ijara olish
-                               </button>
-                           )}
-                        </div>
+                        <BookActions book={{
+                            _id: book._id.toString(), title: book.title, author: book.author,
+                            images: book.images || [], price: book.price || 0,
+                            rentalPricePerDay: book.rentalPricePerDay || 0,
+                            isRentable: !!book.isRentable, stock: book.stock || 0
+                        }} />
                     </div>
                 </div>
             </div>
