@@ -87,6 +87,24 @@ Agar qatlam-qatlam ko‘rmoqchi bo‘lsangiz: PR #3 ni draftdan chiqarib `master
 
 Deploydan oldin Vercelda alohida preview bazasi, replica set, `NEXTAUTH_URL` va secretlarni tekshiring. Payme live ni yoqmang. Production bazasida seed ishlatmang.
 
+## Google bilan kirish — 2026-11-06 05:06 Toshkent
+
+Foydalanuvchi `kitobdosh.com` da Google orqali kirdi va “Access Denied” / “You do not have permission to sign in.” matnini ko‘rdi. Manzil `kitobdosh.com/api/a...` bilan boshlanadi. Bu NextAuthning `/api/auth/error?error=AccessDenied` sahifasi. Google o‘zi bu matnni `accounts.google.com` da ko‘rsatadi; bu yerda matn bizning domenimizda.
+
+Tekshiruv, haqiqiy hisob yaratmasdan:
+
+- `https://kitobdosh.com` va `https://kitobdosh.vercel.app` bir xil ETag bilan ochiladi. `https://kitobdosh-zcet.vercel.app` esa `DEPLOYMENT_NOT_FOUND`.
+- `www.kitobdosh.com` `https://kitobdosh.com/` ga 307 qiladi.
+- `GET /api/auth/providers` Google va credentials ni ko‘rsatadi. Callback: `https://kitobdosh.com/api/auth/callback/google`. Demak, Google ilovasi shu manzilni qabul qilgan va foydalanuvchini saytga qaytargan. `redirect_uri_mismatch` bo‘lsa, odam `accounts.google.com` da qolardi.
+- `GET /api/books` 12 soniyada 0 bayt qaytardi. Jonli katalog bazaga ulana olmayapti.
+- Eski `signIn` har qanday xatoni ushlab `false` qaytaradi. NextAuth buni “Access Denied” qilib ko‘rsatadi. Bazaga ulanish xatosi ham shu matnga aylanadi.
+
+Lokal Mongo’da `password: null` va katta-kichik harfli email o‘zi Access Denied bermadi. Asosiy jonli to‘siq — production Mongo. Kod endi emailni normallaydi, bir xil emailni qayta yaratmaydi, `javascript:` avatar ni tashlaydi va bazaga ulanmasa “Server error / configuration” ko‘rsatadi. Bu Google konsolidagi test-user ro‘yxatini o‘zgartirmaydi va login cheklovini o‘chirmaydi.
+
+Google konsolida ruxsat etilgan redirect URI: `https://kitobdosh.com/api/auth/callback/google`. `NEXTAUTH_URL` `https://kitobdosh.com` bo‘lsin. `GOOGLE_CLIENT_ID` va `GOOGLE_CLIENT_SECRET` Vercelda bo‘lishi kerak; ularning qiymati bu tekshiruvda o‘qilmagan. Mongo `MONGO_URI` Vercel serveridan ochilishi kerak. Lokalhost URI yoki Atlas IP cheklovi shu xatoni qaytaradi.
+
+Haqiqiy Google hisobi bilan productionda qayta urinilmadi. Shu sababli Google kirish jonli saytda tuzatildi deb aytilmaydi.
+
 ## Egasi qilishi shart bo‘lgan ishlar
 
 1. Lokal `DEMO_PASSWORD` ni o‘zingiz belgilang. Repoda va bu hujjatda yo‘q.
