@@ -87,6 +87,25 @@ Agar qatlam-qatlam ko‘rmoqchi bo‘lsangiz: PR #3 ni draftdan chiqarib `master
 
 Deploydan oldin Vercelda alohida preview bazasi, replica set, `NEXTAUTH_URL` va secretlarni tekshiring. Payme live ni yoqmang. Production bazasida seed ishlatmang.
 
+## Deploy natijasi — 2026-11-06 05:16 Toshkent
+
+PR #7 `master`ga qo‘shildi. Merge commit `7edcdc2630af6305a1429a9fb3963f631cc1f591`. Vercel Production shu commitni muvaffaqiyatli joyladi.
+
+Jonli tekshiruv, yozuvsiz:
+
+| Manzil | Natija |
+|---|---|
+| https://kitobdosh.com/api/exchange | 401, `Avval tizimga kiring`. Yangi almashuv kodi chiqdi. |
+| https://kitobdosh.com/mainPage/almashish | 200, “Kitob almashish” sahifasi ochiladi. |
+| https://kitobdosh.com/api/books | 500, taxminan 6 soniya, `Ma’lumotlar bazasiga ulanib bo‘lmadi`. |
+| https://kitobdosh.vercel.app/api/books | Xuddi shu 500. |
+| https://kitobdosh-zcet.vercel.app | Hali `DEPLOYMENT_NOT_FOUND`. |
+| Payme callback, avtorizatsiyasiz | 401. Live to‘lov ochilmagan. |
+
+`MONGO_URI sozlanmagan` emas. Kalit productionda bor, lekin Vercel serveri klasterga ulana olmadi. Preview manzili Vercel SSO ortida, uning bazasi bu yerdan o‘qilmadi. Lokal `127.0.0.1` test bazasi alohida va production ulanishini isbotlamaydi. Ota-ona chatidagi MongoDB plugin siri ishlatilmadi.
+
+Buyurtma, ijara va almashuv MongoDB replica set talab qiladi. `MONGO_DB_NAME` berilmasa kod `feruza_book` ni oladi.
+
 ## Google bilan kirish — 2026-11-06 05:06 Toshkent
 
 Foydalanuvchi `kitobdosh.com` da Google orqali kirdi va “Access Denied” / “You do not have permission to sign in.” matnini ko‘rdi. Manzil `kitobdosh.com/api/a...` bilan boshlanadi. Bu NextAuthning `/api/auth/error?error=AccessDenied` sahifasi. Google o‘zi bu matnni `accounts.google.com` da ko‘rsatadi; bu yerda matn bizning domenimizda.
@@ -103,7 +122,9 @@ Lokal Mongo’da `password: null` va katta-kichik harfli email o‘zi Access Den
 
 Google konsolida ruxsat etilgan redirect URI: `https://kitobdosh.com/api/auth/callback/google`. `NEXTAUTH_URL` `https://kitobdosh.com` bo‘lsin. `GOOGLE_CLIENT_ID` va `GOOGLE_CLIENT_SECRET` Vercelda bo‘lishi kerak; ularning qiymati bu tekshiruvda o‘qilmagan. Mongo `MONGO_URI` Vercel serveridan ochilishi kerak. Lokalhost URI yoki Atlas IP cheklovi shu xatoni qaytaradi.
 
-Haqiqiy Google hisobi bilan productionda qayta urinilmadi. Shu sababli Google kirish jonli saytda tuzatildi deb aytilmaydi.
+Haqiqiy Google hisobi bilan productionda qayta urinilmadi. Baza ulanmagani uchun Google kirish jonli saytda hali ishlaydi deb aytilmaydi. Yangi kod ulanish xatosini “ruxsat yo‘q” emas, server sozlamasi xatosi sifatida ko‘rsatadi.
+
+Egasi Vercel loyihasi `kitobdosh` (jamoa `ali254746s-projects`) da Production va Preview uchun `MONGO_URI` ni Vercel serveridan ochiladigan replica set ga qaratishi kerak. Qiymatni chatga yozmang. TLS va parol tekshiruvi o‘chirilmaydi. Keng `0.0.0.0/0` ruxsati bu ishda qo‘yilmadi. Atlasdagi mavjud Vercel integratsiyasi yoki shu klasterning joriy tarmoq ruxsati yetarli bo‘lishi kerak. `NEXTAUTH_URL=https://kitobdosh.com`. Google redirect: `https://kitobdosh.com/api/auth/callback/google`.
 
 ## Egasi qilishi shart bo‘lgan ishlar
 
