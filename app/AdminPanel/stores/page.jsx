@@ -7,6 +7,7 @@ import {
   Save, X, Upload, Loader2, Star, Move
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useAdmin } from "../AdminContext";
 
 const COLORS = [
   "#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", 
@@ -17,6 +18,7 @@ const COLORS = [
 const EMOJIS = ["🌙", "⭐", "📘", "📚", "🎨", "🔬", "🕌", "🎓", "🚀", "💡", "🏺", "🏛️"];
 
 export default function AdminStoresPage() {
+  const { darkMode } = useAdmin();
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -151,7 +153,7 @@ export default function AdminStoresPage() {
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600" size={40} /></div>;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto bg-slate-50 min-h-screen">
+    <div className={`admin-stores ${darkMode ? "dark" : ""} p-6 max-w-7xl mx-auto min-h-screen ${darkMode ? "bg-[#0b1220]" : "bg-slate-50"}`}>
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-900">Do&apos;konlar Boshqaruvi</h1>
@@ -367,6 +369,22 @@ export default function AdminStoresPage() {
           </div>
         </div>
       )}
+      <style jsx global>{`
+        .admin-stores.dark { color: #e2e8f0; }
+        .admin-stores.dark .bg-white { background-color: #0f1e32 !important; }
+        .admin-stores.dark .bg-slate-50 { background-color: #0b1728 !important; }
+        .admin-stores.dark .text-slate-900 { color: #f8fafc !important; }
+        .admin-stores.dark .text-slate-700 { color: #cbd5e1 !important; }
+        .admin-stores.dark .text-slate-500 { color: #94a3b8 !important; }
+        .admin-stores.dark .text-slate-400 { color: #94a3b8 !important; }
+        .admin-stores.dark .border-slate-100,
+        .admin-stores.dark .border-slate-50,
+        .admin-stores.dark .border-slate-200 { border-color: rgba(148,163,184,.16) !important; }
+        .admin-stores.dark input,
+        .admin-stores.dark textarea { color: #f8fafc; }
+        .admin-stores.dark input::placeholder,
+        .admin-stores.dark textarea::placeholder { color: #64748b; }
+      `}</style>
     </div>
   );
 }
