@@ -32,7 +32,7 @@ const RequestCard = ({ request, updateStatus, darkMode }) => {
                  <div className="relative w-12 h-16 shrink-0 shadow-md">
                      <Image 
                         src={request.bookImage || "https://placehold.co/100x150"} 
-                        alt="Cover" 
+                        alt={request.bookTitle || "Kitob muqovasi"} 
                         fill 
                         className="rounded-md object-cover" 
                      />

@@ -1,3 +1,4 @@
+import { presentBook } from "@/lib/book-display";
 import { requireRole } from "@/lib/require-role";
 import { escapeSearch, positiveInt } from "@/lib/catalog-input.mjs";
 import { dbConnect } from "@/lib/db.Connect";
@@ -50,7 +51,7 @@ export async function GET(req) {
         };
     }, 300); // 5 minutes cache
 
-    return NextResponse.json({ success: true, ...result }, { status: 200 });
+    return NextResponse.json({ success: true, ...result, data: result.data.map(presentBook) }, { status: 200 });
   } catch (error) {
     console.error("GET Books error:", error);
     return NextResponse.json({ success: false, message: "Server xatosi: " + error.message }, { status: 500 });

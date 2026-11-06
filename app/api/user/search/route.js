@@ -1,3 +1,4 @@
+import { presentBook } from "@/lib/book-display";
 import { escapeSearch, positiveInt, isObjectId } from "@/lib/catalog-input.mjs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
@@ -21,7 +22,7 @@ export async function GET(req) {
     // --- CASE 1: SEARCH BY ID (For Book Detail Page) ---
     if (id) {
         if (!isObjectId(id)) return NextResponse.json({ success: false, message: "Kitob manzili noto‘g‘ri" }, { status: 400 });
-        const book = await Book.findById(id);
+        const book = presentBook(await Book.findById(id));
         if (!book) {
             return NextResponse.json({ success: false, message: "Kitob topilmadi" }, { status: 404 });
         }
@@ -122,7 +123,7 @@ export async function GET(req) {
 
     return NextResponse.json({
       success: true,
-      books: books.map(book => ({
+      books: books.map(presentBook).map(book => ({
           _id: book._id,
           title: book.title,
           author: book.author,
