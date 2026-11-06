@@ -1,4 +1,4 @@
-> Yangilanish: mustaqil auditdan keyingi holat va bandlar [audit hisobotida](audit-71d7fec-vs-current.md). Order/Rent/stock uchun MongoDB replica set talab qilinadi. Lokal standalone demo buyurtma uchun yetarli emas. Onlayn to‘lov UI’da yopiq, Payme live callback 503 qaytaradi. Eski natijalarni joriy versiyaning to‘liq tekshiruvi deb qabul qilmang.
+> Joriy namoyish tartibi va tekshiruv natijalari: [himoya-runbook.md](himoya-runbook.md). Quyidagi eski bandlar to‘liq joriy holat emas. Order/Rent/stock va kitob almashuvi uchun MongoDB replica set talab qilinadi. Onlayn to‘lov UI’da yopiq. Production manzil `https://kitobdosh-zcet.vercel.app` 2026-11-05 23:52 UTC da `DEPLOYMENT_NOT_FOUND` qaytardi.
 
 # Kitobdosh himoya nazorat ro‘yxati — 2026-11-06
 
@@ -14,7 +14,7 @@ Repo toza `master`dan `fix/defense-stability-2026-11-06` branchiga olindi. AGENT
 - Admin: statistika, kitob yaratish/tahrirlash/o‘chirish, buyurtma va ijara holatlari, foydalanuvchilar, kuryerlar, do‘konlar, promo bannerlar, murojaatlarga javob, sozlamalar.
 - Kuryer: topshiriqlar, olish/yetkazish/qaytarish holatlari, profil.
 - Tashqi integratsiyalar: Google OAuth, Resend, Redis, Cloudinary, Pusher, Payme, xarita.
-- Kitob almashishning mustaqil yakunlangan jarayoni aniqlanmadi. Click to‘lov turi ayrim formalarda bor, lekin alohida ishlaydigan Click integratsiyasi yo‘q. Uni himoyada ishlaydi deb ko‘rsatmang.
+- Kitob almashish shu branchda bor: ikki hisob, taklif, qabul/rad, ikki tomonlama tasdiq, hisoblagich va sharh. Click integratsiyasi yo‘q. Uni himoyada ishlaydi deb ko‘rsatmang.
 
 Bu ro‘yxat mavjud kodni sanaydi; hammasi end-to-end tekshirilgan degani emas.
 
@@ -22,7 +22,7 @@ Bu ro‘yxat mavjud kodni sanaydi; hammasi end-to-end tekshirilgan degani emas.
 
 1. Shu branchni alohida lokal nusxada oching. `npm ci`, `npm test`, `npm run lint`, `npm run build` bajaring. `npm start` uchun build tugagan bo‘lishi kerak. Bir papkada dev va build/start jarayonlarini bir paytning o‘zida ishlatmang.
 2. Faqat alohida localhost MongoDB demo bazasi tayyorlang. Seed uchun `MONGO_URI`, `MONGO_DB_NAME`, `DEMO_PASSWORD`, `DEMO_SEED_CONFIRM` belgilang. Baza nomi `kitobdosh_demo` yoki `kitobdosh_test` bilan boshlansin; tasdiq qiymati `local-demo-only`. `NODE_ENV=production` bilan seed rad etiladi. `npm run seed:demo` mavjud Demo yozuvlarini ko‘paytirmaydi. Production’da ishlatmang.
-3. Demo hisoblar: `demo-user@example.invalid`, `demo-admin@example.invalid`. Parolni `DEMO_PASSWORD` orqali o‘zingiz belgilang. U kodda va hisobotda yozilmaydi. Seed qayta ishlatilsa mavjud hisob parolini almashtirmaydi.
+3. Demo hisoblar: `demo-user@example.invalid`, `demo-reader@example.invalid`, `demo-admin@example.invalid`, `demo-courier@example.invalid` (rol `kurer`). Parolni `DEMO_PASSWORD` orqali o‘zingiz belgilang. U kodda va hisobotda yozilmaydi. Seed qayta ishlatilsa mavjud hisob parolini almashtirmaydi, yetishmayotgan hisoblarni qo‘shadi.
 4. App uchun `MONGO_URI`, `MONGO_DB_NAME`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL` sozlang. `MONGO_DB_NAME` berilmasa avvalgi `feruza_book` nomi saqlanadi. Demo uchun albatta alohida nom bering.
 5. Redis bo‘lmasa katalog bazadan ishlaydi, savatchaning shu qurilma va hisob uchun lokal nusxasi saqlanadi; server sinxronlash xatosi ochiq ko‘rsatiladi. OTP va qurilmalararo savatcha uchun Redis kerak.
 6. Brauzer testini qaytarish: `npx playwright install chromium`, keyin lokal app va demo baza ishlayotgan holatda `DEFENSE_BASE_URL`, `MONGO_URI`, `MONGO_DB_NAME`, `DEMO_PASSWORD` bilan `npm run test:defense`. Test faqat localhost/demo bazani qabul qiladi. Faqat shu bazaga Demo buyurtmalar va kitoblar yozadi.

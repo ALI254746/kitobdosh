@@ -39,7 +39,7 @@ export default function ExchangeBoard({ mobile = false }) {
   </div>;
   return <main className="mx-auto max-w-6xl space-y-7 px-4 py-8 text-slate-800">
     {mobile && <Link className="text-sm font-semibold text-emerald-800" href="/mobile">← Mobil bosh sahifa</Link>}
-    <header><h1 className="text-3xl font-black">Kitob almashish</h1><p className="mt-2 text-slate-600">Kitobingizni e’lon qiling, taklif yuboring va ikki tomon almashuvni tasdiqlang.</p><p className="mt-1 text-sm text-slate-600">Aloqa ma’lumoti faqat taklif qabul qilingandan so‘ng ikki ishtirokchiga ko‘rinadi. Son tasdiqlangan almashuvlarni bildiradi.</p></header>
+    <header><h1 className="text-3xl font-black">Kitob almashish</h1><p className="mt-2 text-slate-600">Kitobingizni e’lon qiling, taklif yuboring va ikki tomon almashuvni tasdiqlang.</p><p className="mt-1 text-sm text-slate-600">Aloqa ma’lumoti faqat taklif qabul qilingandan so‘ng ikki ishtirokchiga ko‘rinadi. Son tasdiqlangan almashuvlarni bildiradi. Ikkinchi tomon yangi taklif yoki tasdiqni ko‘rishi uchun sahifani yangilaydi.</p></header>
     {error && <div role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{error} <button type="button" className="underline" onClick={load}>Qayta urinish</button>{error.includes('kiring') && <> · <Link href="/" className="underline">Kirish</Link></>}</div>}
     {notice && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-800">{notice}</p>}
     {loading ? <p>Yuklanmoqda…</p> : <>
