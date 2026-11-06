@@ -2,7 +2,7 @@
 import { deliveryFee } from "@/lib/checkout-pricing.mjs";
 import { cartItemTotal } from "@/lib/order-input.mjs";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, User, Phone, MapPin, Truck, Wallet,
@@ -252,6 +252,7 @@ const CheckoutContent = () => {
     const { checkoutData, updateCheckoutData } = useCheckout();
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const submittingRef = useRef(false);
 
     const hasRentItems = cartItems?.some(i => i.type === 'rent') || false;
     const totalSteps = hasRentItems ? 6 : 5;
@@ -282,6 +283,8 @@ const CheckoutContent = () => {
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
     const handleSubmitOrder = async () => {
+        if (submittingRef.current) return;
+        submittingRef.current = true;
         setIsSubmitting(true);
         try {
             const formData = new FormData();
@@ -326,6 +329,7 @@ const CheckoutContent = () => {
             console.error("Order Error:", error);
             toast.error("Xatolik yuz berdi");
         } finally {
+            submittingRef.current = false;
             setIsSubmitting(false);
         }
     };

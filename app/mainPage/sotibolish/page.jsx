@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import SafeImage from "../../components/SafeImage";
 import { motion, AnimatePresence } from "framer-motion";
@@ -69,6 +69,7 @@ const SalesModal = ({ isOpen, onClose, book }) => {
     });
     const [showMap, setShowMap] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const submittingRef = useRef(false);
 
     const { darkMode } = useMain();
     
@@ -79,6 +80,8 @@ const SalesModal = ({ isOpen, onClose, book }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submittingRef.current) return;
+        submittingRef.current = true;
         setIsSubmitting(true);
 
         const orderData = {
@@ -120,6 +123,7 @@ const SalesModal = ({ isOpen, onClose, book }) => {
             console.error("CHECKOUT ERROR:", error);
             toast.error("Tarmoq xatosi: " + (error.message || "Noachin xatolik"));
         } finally {
+            submittingRef.current = false;
             setIsSubmitting(false);
         }
     };

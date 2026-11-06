@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,6 +34,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
         deliveryMethod: "pickup" // 'pickup', 'standard'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const submittingRef = useRef(false);
     const { darkMode } = useMain();
 
     if (!isOpen) return null;
@@ -43,6 +44,8 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submittingRef.current) return;
+        submittingRef.current = true;
         setIsSubmitting(true);
 
         const orderData = {
@@ -82,6 +85,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
             toast.error("Tarmoq xatosi");
             console.error(error);
         } finally {
+            submittingRef.current = false;
             setIsSubmitting(false);
         }
     };
