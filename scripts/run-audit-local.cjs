@@ -1,6 +1,7 @@
 const {spawn,spawnSync}=require('child_process');const fs=require('fs');const mongoose=require('mongoose');const cwd=require('path').resolve(__dirname,'..');
 const secret=require('crypto').randomBytes(32).toString('hex');const state=fs.mkdtempSync('/tmp/kitobdosh-audit-');
 const env={...process.env,MONGO_URI:'mongodb://127.0.0.1:27019/kitobdosh_test_audit?replicaSet=demo',MONGO_DB_NAME:'kitobdosh_test_audit',NEXTAUTH_URL:'http://127.0.0.1:3000',DEFENSE_BASE_URL:'http://127.0.0.1:3000',NEXTAUTH_SECRET:secret,DEMO_PASSWORD:secret,PAYME_SECRET_KEY:secret,PAYME_MODE:'sandbox',REDIS_HOST:'127.0.0.1',REDIS_PORT:'26379',MOCK_AUDIT_PATH:state+'/providers.jsonl',MOCK_OTP_PATH:state+'/otp.json',CLOUDINARY_CLOUD_NAME:'demo-mock',CLOUDINARY_API_KEY:'demo-mock',CLOUDINARY_API_SECRET:secret,RESEND_API_KEY:'demo-mock',NODE_ENV:'production'};
+if(process.env.AUDIT_DISABLE_REDIS==='1'){delete env.REDIS_HOST;delete env.REDIS_PORT;delete env.REDIS_PASSWORD;console.log('Redis disabled for application lifecycle test');}
 let mongo,server,redis;const pause=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{const log=fs.openSync('/tmp/kitobdosh-audit-mongo.log','w');mongo=spawn(process.env.MONGOD_BIN || 'mongod',['--dbpath',state,'--bind_ip','127.0.0.1','--port','27019','--nounixsocket','--replSet','demo','--setParameter','diagnosticDataCollectionEnabled=false'],{stdio:['ignore',log,log]});
 for(let i=0;i<80;i++){if(fs.readFileSync('/tmp/kitobdosh-audit-mongo.log','utf8').includes('Waiting for connections'))break;await pause(100)}
@@ -9,6 +10,6 @@ const rlog=fs.openSync('/tmp/kitobdosh-audit-redis.log','w');redis=spawn(process
 const serverLog=fs.openSync('/tmp/kitobdosh-audit-server.log','w');server=spawn(process.execPath,['--require','./tests/mocks/providers.cjs','node_modules/next/dist/bin/next','start','-H','127.0.0.1'],{cwd,env,stdio:['ignore',serverLog,serverLog]});
 for(let i=0;i<100;i++){try{if((await fetch('http://127.0.0.1:3000/api/auth/csrf')).ok)break}catch{}await pause(300)}
 const testFile = process.env.AUDIT_TEST_SCRIPT || 'tests/audit.e2e.cjs';
-if (!['tests/audit.e2e.cjs', 'tests/defense-journey.e2e.cjs'].includes(testFile)) throw new Error('Unknown test script');
+if (!['tests/audit.e2e.cjs', 'tests/defense-journey.e2e.cjs', 'tests/rental-delivery.e2e.cjs'].includes(testFile)) throw new Error('Unknown test script');
 const child=spawn(process.execPath,[testFile],{cwd,env,stdio:'inherit'});process.exitCode=await new Promise(resolve=>child.on('exit',code=>resolve(code === null ? 1 : code)));
 })().catch(e=>{console.error(e.message);process.exitCode=1}).finally(()=>{server?.kill();redis?.kill();mongo?.kill()});

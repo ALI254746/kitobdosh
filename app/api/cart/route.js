@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-import redis from "@/lib/redis";
+import { getCart, saveCartItem, removeCartItem } from "@/lib/cart-store";
 
-// Helper to get helper key
-const getCartKey = (userId) => `cart:${userId}`;
 
 export const dynamic = 'force-dynamic';
 
@@ -15,11 +13,7 @@ export async function GET(req) {
             return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
 
-        const cartKey = getCartKey(session.user.id);
-        const cartData = await redis.hgetall(cartKey);
-
-        // Convert Hash to Array
-        const cartItems = Object.values(cartData).map(item => JSON.parse(item));
+        const cartItems = await getCart(session.user.id);
 
         return NextResponse.json({ success: true, cart: cartItems });
     } catch (error) {
@@ -39,18 +33,11 @@ export async function POST(req) {
         const { item } = body; 
         // item structure expected: { cartId: "...", _id: "...", title: "...", ... }
 
-        if (!item || !item.cartId) {
+        if (!item || typeof item !== "object" || typeof item.cartId !== "string" || !item.cartId.trim() || item.cartId.length > 200) {
             return NextResponse.json({ success: false, message: "Invalid item data" }, { status: 400 });
         }
 
-        const cartKey = getCartKey(session.user.id);
-        
-        // Save to Redis Hash
-        // Field: cartId, Value: JSON string of item
-        await redis.hset(cartKey, item.cartId, JSON.stringify(item));
-        
-        // Optional: Set expire time for cart (e.g., 30 days) to auto-clean old carts
-        await redis.expire(cartKey, 30 * 24 * 60 * 60);
+        await saveCartItem(session.user.id, item);
 
         return NextResponse.json({ success: true, message: "Added to cart" });
     } catch (error) {
@@ -70,10 +57,9 @@ export async function DELETE(req) {
         const cartId = searchParams.get("cartId");
         const clearAll = searchParams.get("clearAll");
 
-        const cartKey = getCartKey(session.user.id);
 
         if (clearAll === 'true') {
-            await redis.del(cartKey);
+            await removeCartItem(session.user.id, null, true);
             return NextResponse.json({ success: true, message: "Cart cleared" });
         }
 
@@ -81,7 +67,7 @@ export async function DELETE(req) {
             return NextResponse.json({ success: false, message: "CartId required" }, { status: 400 });
         }
 
-        await redis.hdel(cartKey, cartId);
+        await removeCartItem(session.user.id, cartId, false);
 
         return NextResponse.json({ success: true, message: "Item removed" });
     } catch (error) {

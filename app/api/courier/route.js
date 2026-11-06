@@ -1,3 +1,4 @@
+import { courierQueries, courierPublicJob } from "@/lib/courier-access.mjs";
 import mongoose from "mongoose";
 import { publicRecord } from "@/lib/server-auth";
 import { isObjectId } from "@/lib/catalog-input.mjs";
@@ -31,18 +32,11 @@ export async function GET() {
         await dbConnect();
 
         const combined = await (async () => {
-            const visible = access.user.role === "admin" ? {} : { $or: [{ courierId: { $in: [access.user.id, new mongoose.Types.ObjectId(access.user.id)] } }, { courierId: { $exists: false } }, { courierId: null }] };
-            // Fetch Approved Rents
-            const rents = await Rent.find({ ...visible,
-                status: 'approved',
-                courierStatus: { $ne: 'delivered' }
-            }).sort({ createdAt: -1 });
-
-            // Fetch Processing Orders
-            const orders = await Order.find({ ...visible,
-                status: 'processing',
-                courierStatus: { $ne: 'delivered' }
-            }).sort({ createdAt: -1 });
+            const filters = courierQueries(access.user);
+            const [rents, orders] = await Promise.all([
+                Rent.find(filters.rents).sort({ createdAt: -1 }).limit(250),
+                Order.find(filters.orders).sort({ createdAt: -1 }).limit(250)
+            ]);
 
             // Map to common structure
             return [
@@ -56,11 +50,15 @@ export async function GET() {
                     phone: r.phone,
                     book: r.bookTitle,
                     author: "Noma'lum",
-                    image: r.bookImage || "https://placehold.co/100x150.png",
+                    image: r.bookImage || "/icon-192x192.png",
                     status: r.courierStatus || 'new',
                     lat: r.lat,
                     lng: r.lng,
-                    createdAt: r.createdAt
+                    createdAt: r.createdAt,
+                    updatedAt: r.updatedAt,
+                    paymentStatus: r.paymentStatus,
+                    totalPrice: r.totalPrice,
+                    timeline: r.courierTimeline || {}
                 })),
                 ...orders.map(o => ({
                     id: o._id?.toString(),
@@ -76,15 +74,16 @@ export async function GET() {
                     status: o.courierStatus || 'new',
                     lat: o.customer.lat,
                     lng: o.customer.lng,
-                    createdAt: o.createdAt
+                    createdAt: o.createdAt,
+                    updatedAt: o.updatedAt,
+                    paymentStatus: o.paymentStatus,
+                    totalPrice: o.totalPrice,
+                    timeline: o.courierTimeline || {}
                 }))
             ].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
         })();
 
-        return NextResponse.json({ success: true, data: combined.map(job => {
-          if (access.user.role !== 'admin' && job.courierId !== access.user.id) return { ...job, phone: undefined, address: undefined, lat: undefined, lng: undefined };
-          return job;
-        }) });
+        return NextResponse.json({ success: true, data: combined.map(job => courierPublicJob(job, access.user)) });
 
     } catch (error) {
         console.error("Courier API Error:", error);
@@ -104,11 +103,14 @@ export async function PUT(req) {
         const current = await Model.findById(id);
         if (!current) return NextResponse.json({ success: false }, { status: 404 });
         if (current.courierId && String(current.courierId) !== userId && access.user.role !== 'admin') return NextResponse.json({ success: false, message: 'Topshiriq sizga tegishli emas' }, { status: 403 });
+        if ((type === "rent" && current.status !== "approved") || (type === "buy" && current.status !== "processing")) {
+            return NextResponse.json({ success: false, message: "Topshiriq hozir yetkazishga tayyor emas" }, { status: 409 });
+        }
         const previous = { accepted: 'new', picked_up: 'accepted', on_way: 'picked_up', delivered: 'on_way' }[status];
         if ((current.courierStatus || 'new') !== previous || (status !== 'accepted' && !current.courierId)) return NextResponse.json({ success: false }, { status: 409 });
         const filter = { _id: id, courierStatus: current.courierStatus || { $in: [null, 'new'] }, courierId: current.courierId || null };
         let updated;
-        const updateData = { courierStatus: status };
+        const updateData = { courierStatus: status, ["courierTimeline." + status]: new Date() };
         if (status === 'accepted') updateData.courierId = userId;
         if (type === 'rent' && status === 'delivered') {
             updateData.status = 'active';
