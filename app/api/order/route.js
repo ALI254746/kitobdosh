@@ -4,7 +4,7 @@ import { createOrder } from '@/lib/create-order';
 import { uploadImage, configureCloudinary, UploadInputError } from '@/lib/uploads';
 import { v2 as cloudinary } from 'cloudinary';
 import Asset from '@/model/UploadAsset';
-import { clearCache } from '@/lib/utils/cache';
+import { clearCache, clearCachePattern } from '@/lib/utils/cache';
 import { requireRole } from "@/lib/require-role";
 import Book from "@/model/Book";
 import { prepareOrder, OrderInputError } from "@/lib/order-input.mjs";
@@ -37,6 +37,7 @@ export async function POST(req) {
     } else payload = await req.json();
     const order = await createOrder(payload, access.user.id, document);
     await clearCache(`profile_full:${access.user.id}`);
+    await clearCachePattern('books_*');
     return NextResponse.json({ success: true, message: 'Buyurtma qabul qilindi. To‘lov kutilmoqda.', data: order });
   } catch (error) {
     if (document) { try { configureCloudinary(); await cloudinary.uploader.destroy(document.publicId, { type: 'authenticated' }); await Asset.deleteOne({ publicId: document.publicId, owner: access.user.id }); } catch {} }
@@ -70,17 +71,53 @@ export async function PUT(req) {
             return NextResponse.json({ success: false, message: "Ma'lumot kam" }, { status: 400 });
         }
 
-        const updateFull = { status };
-        if (status === 'processing') {
-            updateFull.courierStatus = 'new';
-            console.log(`Order API: Order Processing. Setting courierStatus to 'new'. ID: ${id}`);
-        }
-        
-        console.log(`Order API: Updating Order ${id} status to ${status}`);
-        const updatedOrder = await Order.findByIdAndUpdate(id, updateFull, { new: true, runValidators: true });
-
-        if (!updatedOrder) {
-             return NextResponse.json({ success: false, message: "Buyurtma topilmadi" }, { status: 404 });
+        let updatedOrder;
+        if (status === 'cancelled') {
+            const session = await mongoose.startSession();
+            try {
+                await session.withTransaction(async () => {
+                    updatedOrder = await Order.findOneAndUpdate(
+                        { _id: id, status: { $in: ['pending', 'processing'] } },
+                        { $set: { status: 'cancelled' } },
+                        { new: true, session }
+                    );
+                    if (!updatedOrder) return;
+                    const quantities = new Map();
+                    for (const item of updatedOrder.items || []) {
+                        if (!item?.book || !Number.isInteger(item.quantity) || item.quantity < 1) continue;
+                        const key = String(item.book);
+                        quantities.set(key, (quantities.get(key) || 0) + item.quantity);
+                    }
+                    for (const [book, quantity] of quantities) {
+                        await Book.updateOne({ _id: book }, { $inc: { stock: quantity } }, { session });
+                    }
+                    await Rent.updateMany(
+                        { orderId: updatedOrder._id, status: { $in: ['pending', 'approved', 'courier_assigned', 'courier_picked_up'] } },
+                        { $set: { status: 'rejected' } },
+                        { session }
+                    );
+                });
+            } finally {
+                await session.endSession();
+            }
+            if (!updatedOrder) {
+                const existing = await Order.findById(id);
+                if (!existing) return NextResponse.json({ success: false, message: "Buyurtma topilmadi" }, { status: 404 });
+                if (existing.status === 'cancelled') return NextResponse.json({ success: true, data: publicRecord(existing) });
+                return NextResponse.json({ success: false, message: "Yetkazilgan buyurtmani bekor qilib, zaxirani qaytarib bo‘lmaydi" }, { status: 409 });
+            }
+            await clearCachePattern('books_*');
+        } else {
+            const updateFull = { status };
+            if (status === 'processing') {
+                updateFull.courierStatus = 'new';
+                console.log(`Order API: Order Processing. Setting courierStatus to 'new'. ID: ${id}`);
+            }
+            console.log(`Order API: Updating Order ${id} status to ${status}`);
+            updatedOrder = await Order.findByIdAndUpdate(id, updateFull, { new: true, runValidators: true });
+            if (!updatedOrder) {
+                return NextResponse.json({ success: false, message: "Buyurtma topilmadi" }, { status: 404 });
+            }
         }
         
         console.log("Order PUT - Updated Order UserID:", updatedOrder.user);

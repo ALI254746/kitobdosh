@@ -10,8 +10,8 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
  const redis=new Redis({host:'127.0.0.1',port:Number(process.env.REDIS_PORT)});const browser=await chromium.launch();
  const contexts={};const actors={};let passed=0;
  const test=async(number,name,fn)=>{await fn();passed++;console.log(`PASS ${number}: ${name}`)};
- const snapshot=async()=>{const state={};for(const {name} of await db.listCollections().toArray())state[name]=await db.collection(name).find().sort({_id:1}).toArray();return hash(JSON.stringify(state));};
- const deny=async(ctx,path,method,data,status)=>{const before=await snapshot();const res=await ctx.request.fetch(base+path,{method,data});assert.equal(res.status(),status,`${method} ${path}`);assert.equal(await snapshot(),before,'Rejected request changed MongoDB');};
+ const snapshot=async()=>{const state={};const collections=(await db.listCollections().toArray()).sort((a,b)=>a.name.localeCompare(b.name));for(const {name} of collections){const documents=await db.collection(name).find().sort({_id:1}).toArray();if(documents.length)state[name]=documents;}return hash(JSON.stringify(state));};
+ const deny=async(ctx,path,method,data,status)=>{const before=await snapshot();const res=await ctx.request.fetch(base+path,{method,data});assert.equal(res.status(),status,`${method} ${path}`);assert.equal(await snapshot(),before,`Rejected request changed MongoDB documents: ${method} ${path}`);};
  const api=(ctx,path,method='GET',data)=>ctx.request.fetch(base+path,{method,data});
  const id=()=>new mongoose.Types.ObjectId();
  const bookId=id();const fixture={_id:bookId,title:'Demo Audit',author:'Demo Muallif',description:'Demo test',price:30000,stock:100,images:['/demo-book.svg'],category:'Badiiy Adabiyotlar',isRentable:true,rentalPricePerDay:1000,createdAt:new Date()};
@@ -81,9 +81,23 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
   for(const path of ['/api/user/profile','/api/user/favorites','/api/order'])await deny(contexts.user,path,'GET',undefined,401);
   const csrf2=await(await api(contexts.user,'/api/auth/csrf')).json();await contexts.user.request.post(base+'/api/auth/callback/credentials',{form:{csrfToken:csrf2.csrfToken,email:actors.user.email,password:process.env.DEMO_PASSWORD,json:'true'}});
  });
- await test(7,'server price/status, stock, duplicate quantities and invalid input',async()=>{
+ await test(7,'server price/status, stock, duplicate quantities, invalid input and cancel restores stock once',async()=>{
   const res=await api(contexts.user,'/api/order','POST',{...orderPayload,deliveryMethod:'courier',items:[{book:String(bookId),quantity:2,type:'buy',price:1}],totalPrice:1,status:'completed',paymentStatus:'paid'});assert.equal(res.status(),200);const d=(await res.json()).data;assert.equal(d.totalPrice,75000);assert.equal(d.status,'pending');assert.equal(d.paymentStatus,'pending');
   for(const items of [[{book:String(bookId),quantity:-1,type:'buy'}],[{book:String(id()),quantity:1,type:'buy'}],[{book:String(bookId),quantity:70,type:'buy'},{book:String(bookId),quantity:70,type:'buy'}]])await deny(contexts.user,'/api/order','POST',{...orderPayload,items},400);
+  const stockBefore=(await db.collection('books').findOne({_id:bookId})).stock;
+  const cancelTarget=await api(contexts.user,'/api/order','POST',{...orderPayload,items:[{book:String(bookId),quantity:2,type:'buy'}]});assert.equal(cancelTarget.status(),200);
+  const cancelOrder=(await cancelTarget.json()).data;assert.equal((await db.collection('books').findOne({_id:bookId})).stock,stockBefore-2);
+  assert.equal((await api(contexts.admin,'/api/order','PUT',{id:cancelOrder._id,status:'cancelled'})).status(),200);
+  assert.equal((await db.collection('orders').findOne({_id:new mongoose.Types.ObjectId(cancelOrder._id)})).status,'cancelled');
+  assert.equal((await db.collection('books').findOne({_id:bookId})).stock,stockBefore);
+  assert.equal((await api(contexts.admin,'/api/order','PUT',{id:cancelOrder._id,status:'cancelled'})).status(),200);
+  assert.equal((await db.collection('books').findOne({_id:bookId})).stock,stockBefore);
+  const done=await api(contexts.user,'/api/order','POST',orderPayload);const doneId=(await done.json()).data._id;
+  await db.collection('orders').updateOne({_id:new mongoose.Types.ObjectId(doneId)},{$set:{status:'completed'}});
+  const stockDone=(await db.collection('books').findOne({_id:bookId})).stock;
+  assert.equal((await api(contexts.admin,'/api/order','PUT',{id:doneId,status:'cancelled'})).status(),409);
+  assert.equal((await db.collection('orders').findOne({_id:new mongoose.Types.ObjectId(doneId)})).status,'completed');
+  assert.equal((await db.collection('books').findOne({_id:bookId})).stock,stockDone);
  });
  const rentalForm=(extra={})=>({customer:JSON.stringify(orderPayload.customer),items:JSON.stringify([{book:String(bookId),type:'rent',quantity:2,rentDays:3}]),deliveryMethod:'courier',paymentMethod:'cash',passport:{name:'Demo.png',mimeType:'image/png',buffer:png},...extra});
  let rentalId;
@@ -97,6 +111,11 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
   const fail=await contexts.user.request.post(base+'/api/order',{multipart:rentalForm({customer:JSON.stringify({...orderPayload.customer,name:'Demo DB rejection'})})});assert.equal(fail.status(),503);
   assert.equal(await db.collection('orders').countDocuments(),beforeOrders);assert.equal(await db.collection('rents').countDocuments(),beforeRents);assert.equal((await db.collection('books').findOne({_id:bookId})).stock,stock);
   await db.command({collMod:'rents',validator:{}});
+  const extra=await contexts.user.request.post(base+'/api/order',{multipart:rentalForm()});assert.equal(extra.status(),200);const extraOrder=(await extra.json()).data;
+  const extraStock=(await db.collection('books').findOne({_id:bookId})).stock;
+  assert.equal((await api(contexts.admin,'/api/order','PUT',{id:extraOrder._id,status:'cancelled'})).status(),200);
+  assert.equal((await db.collection('books').findOne({_id:bookId})).stock,extraStock+2);
+  assert.equal((await db.collection('rents').findOne({orderId:new mongoose.Types.ObjectId(extraOrder._id)})).status,'rejected');
  });
  await test(9,'online UI choices hidden; sandbox callbacks do not approve rentals',async()=>{
   const page=await contexts.user.newPage();await page.goto(base+'/mobile/components/checkout',{waitUntil:'domcontentloaded'});
@@ -181,6 +200,63 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42
   const cancelled=await mk(['rent'],'cancelled');await deny(contexts.courier,'/api/courier','PUT',{id:String(cancelled.rents[0]),type:'rent',status:'delivered'},409);assert.equal((await db.collection('rents').findOne({_id:cancelled.rents[0]})).status,'approved');
   const guarded=await mk(['rent'],'pending');await deny(contexts.courier2,'/api/courier','PUT',{id:String(guarded.rents[0]),type:'rent',status:'delivered'},403);
   const standalone=await mk(['rent'],'pending');await db.collection('rents').updateOne({_id:standalone.rents[0]},{$unset:{orderId:''}});assert.equal((await deliver('rent',standalone.rents[0])).status(),200);
+ });
+ await test(17,'exchange ownership, two confirmations, reader reviews and contact privacy',async()=>{
+  const create=async(ctx,title,contact)=>{const r=await api(ctx,'/api/exchange','POST',{action:'create',title,author:'Demo Author',condition:'Good',description:'Demo',contact});assert.equal(r.status(),200);return await db.collection('exchange_books').findOne({title});};
+  await deny(contexts.anon,'/api/exchange','GET',undefined,401);
+  await deny(contexts.anon,'/api/exchange','POST',{action:'create',title:'x'},401);
+  const a=await create(contexts.user,'Demo Exchange A','demo-a@example.invalid');const b=await create(contexts.other,'Demo Exchange B','demo-b@example.invalid');
+  let state=await(await api(contexts.courier,'/api/exchange')).json();assert.ok(!JSON.stringify(state).includes('demo-a@example.invalid'));assert.ok(!JSON.stringify(state).includes('demo-b@example.invalid'));
+  await deny(contexts.user,'/api/exchange','POST',{action:'offer',targetId:String(a._id),offeredId:String(b._id)},409);
+  const proposal=await api(contexts.other,'/api/exchange','POST',{action:'offer',targetId:String(a._id),offeredId:String(b._id)});assert.equal(proposal.status(),200);
+  const offer=await db.collection('exchange_offers').findOne({targetId:a._id,offeredId:b._id});
+  state=await(await api(contexts.user,'/api/exchange')).json();assert.ok(!JSON.stringify(state).includes('demo-b@example.invalid'));
+  await deny(contexts.courier,'/api/exchange','PATCH',{action:'accept',id:String(offer._id)},409);
+  await deny(contexts.other,'/api/exchange','PATCH',{action:'accept',id:String(offer._id)},409);
+  assert.equal((await api(contexts.user,'/api/exchange','PATCH',{action:'accept',id:String(offer._id)})).status(),200);
+  assert.ok(JSON.stringify(await(await api(contexts.user,'/api/exchange')).json()).includes('demo-b@example.invalid'));
+  assert.ok(!JSON.stringify(await(await api(contexts.courier,'/api/exchange')).json()).includes('demo-a@example.invalid'));
+  await deny(contexts.other,'/api/exchange','POST',{action:'review',offerId:String(offer._id),rating:5,text:'Demo good'},403);
+  assert.equal((await api(contexts.user,'/api/exchange','PATCH',{action:'confirm',id:String(offer._id)})).status(),200);
+  assert.equal((await db.collection('exchange_books').findOne({_id:a._id})).exchangeCount,0);
+  assert.equal((await api(contexts.other,'/api/exchange','PATCH',{action:'confirm',id:String(offer._id)})).status(),200);
+  const afterA=await db.collection('exchange_books').findOne({_id:a._id}),afterB=await db.collection('exchange_books').findOne({_id:b._id});
+  assert.equal(afterA.exchangeCount,1);assert.equal(afterB.exchangeCount,1);assert.equal(afterA.participants.length,2);assert.equal(afterA.owner,String(actors.other._id));assert.equal(afterB.owner,String(actors.user._id));assert.equal(afterA.contact,'');
+  await deny(contexts.courier,'/api/exchange','POST',{action:'review',offerId:String(offer._id),rating:5,text:'Demo good'},403);
+  assert.equal((await api(contexts.other,'/api/exchange','POST',{action:'review',offerId:String(offer._id),rating:5,text:'Demo good'})).status(),200);
+  await deny(contexts.other,'/api/exchange','POST',{action:'review',offerId:String(offer._id),rating:5,text:'Demo good'},409);
+  await deny(contexts.user,'/api/exchange','PATCH',{action:'relist',id:String(a._id),contact:'demo@example.invalid'},409);
+  assert.equal((await api(contexts.other,'/api/exchange','PATCH',{action:'relist',id:String(a._id),contact:'demo-new@example.invalid'})).status(),200);
+  state=await(await api(contexts.courier,'/api/exchange')).json();const listed=state.data.books.find(x=>x.id===String(a._id));assert.equal(listed.exchangeCount,1);assert.equal(listed.participantsCount,2);assert.equal(listed.reviews[0].text,'Demo good');assert.ok(!JSON.stringify(state).includes('demo-new@example.invalid'));
+  const c=await create(contexts.user,'Demo Exchange C','c@example.invalid');const d=await create(contexts.other,'Demo Exchange D','d@example.invalid');assert.equal((await api(contexts.other,'/api/exchange','POST',{action:'offer',targetId:String(c._id),offeredId:String(d._id)})).status(),200);const cancelled=await db.collection('exchange_offers').findOne({targetId:c._id,offeredId:d._id});assert.equal((await api(contexts.user,'/api/exchange','PATCH',{action:'accept',id:String(cancelled._id)})).status(),200);assert.equal((await api(contexts.other,'/api/exchange','PATCH',{action:'cancel',id:String(cancelled._id)})).status(),200);assert.equal((await db.collection('exchange_books').findOne({_id:c._id})).status,'available');assert.equal((await db.collection('exchange_books').findOne({_id:c._id})).exchangeCount,0);
+  const e=await create(contexts.user,'Demo Exchange E','e@example.invalid'),f=await create(contexts.other,'Demo Exchange F','f@example.invalid');assert.equal((await api(contexts.other,'/api/exchange','POST',{action:'offer',targetId:String(e._id),offeredId:String(f._id)})).status(),200);const simultaneous=await db.collection('exchange_offers').findOne({targetId:e._id,offeredId:f._id});assert.equal((await api(contexts.user,'/api/exchange','PATCH',{action:'accept',id:String(simultaneous._id)})).status(),200);  const confirmed=await Promise.all([api(contexts.user,'/api/exchange','PATCH',{action:'confirm',id:String(simultaneous._id)}),api(contexts.other,'/api/exchange','PATCH',{action:'confirm',id:String(simultaneous._id)})]);assert.deepEqual(confirmed.map(r=>r.status()),[200,200]);assert.equal((await db.collection('exchange_offers').findOne({_id:simultaneous._id})).status,'completed');assert.equal((await db.collection('exchange_books').findOne({_id:e._id})).exchangeCount,1);
+  const g=await create(contexts.user,'Demo Exchange G','g@example.invalid'),h=await create(contexts.other,'Demo Exchange H','h@example.invalid');
+  assert.equal((await api(contexts.other,'/api/exchange','POST',{action:'offer',targetId:String(g._id),offeredId:String(h._id)})).status(),200);
+  const rejectedOffer=await db.collection('exchange_offers').findOne({targetId:g._id,offeredId:h._id});
+  await deny(contexts.other,'/api/exchange','PATCH',{action:'reject',id:String(rejectedOffer._id)},409);
+  assert.equal((await api(contexts.user,'/api/exchange','PATCH',{action:'reject',id:String(rejectedOffer._id)})).status(),200);
+  assert.equal((await db.collection('exchange_offers').findOne({_id:rejectedOffer._id})).status,'rejected');
+  assert.equal((await db.collection('exchange_books').findOne({_id:g._id})).status,'available');
+  assert.equal((await db.collection('exchange_books').findOne({_id:h._id})).status,'available');
+  assert.equal((await db.collection('exchange_books').findOne({_id:g._id})).exchangeCount,0);
+  await deny(contexts.user,'/api/exchange','PATCH',{action:'reject',id:String(rejectedOffer._id)},409);
+ });
+ await test(18,'mobile and desktop exchange interface through two-user review',async()=>{
+  const a=await contexts.user.newPage(),b=await contexts.other.newPage();await a.setViewportSize({width:390,height:844});
+  const shotDir='docs/screenshots/exchange';fs.mkdirSync(shotDir,{recursive:true});
+  const shot=async(page,name)=>page.screenshot({path:`${shotDir}/${name}.png`,fullPage:true});
+  for(const page of [a,b])await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
+  const create=async(page,path,title,contact)=>{await page.goto(base+path,{waitUntil:'domcontentloaded'});await expect(page.getByRole('heading',{name:'Kitobni e’lon qilish'})).toBeVisible();
+   await page.getByLabel('Kitob nomi',{exact:true}).fill(title);await page.getByLabel('Muallif',{exact:true}).fill('Demo UI Author');await page.getByLabel('Kitob holati',{exact:true}).fill('Yaxshi');await page.getByLabel('Aloqa: telefon yoki email',{exact:true}).fill(contact);await page.getByRole('button',{name:'E’lon qilish',exact:true}).click();await expect(page.getByRole('status')).toContainText('Kitob e’lon qilindi');};
+  await create(a,'/mobile/almashish','UI Exchange A','a-ui@example.invalid');await create(b,'/mainPage/almashish','UI Exchange B','b-ui@example.invalid');
+  await shot(a,'01-mobile-listing');await shot(b,'02-desktop-listing');
+  await a.reload({waitUntil:'domcontentloaded'});const card=a.getByRole('heading',{name:'UI Exchange B',exact:true}).locator('..');await card.getByLabel('Taklif qiladigan kitobingiz').selectOption({label:'UI Exchange A'});await card.getByRole('button',{name:'Almashish taklifi'}).click();await expect(a.getByRole('status')).toContainText('Taklif yuborildi');
+  await b.reload({waitUntil:'domcontentloaded'});const offerB=b.locator('div').filter({hasText:'UI Exchange B ↔ UI Exchange A'}).filter({has:b.getByRole('button',{name:'Qabul qilish'})}).last();await offerB.getByRole('button',{name:'Qabul qilish'}).click();await expect(b.getByRole('status')).toContainText('Taklif qabul qilindi');await shot(b,'03-desktop-accepted');
+  await a.reload({waitUntil:'domcontentloaded'});const offerA=a.locator('div').filter({hasText:'UI Exchange B ↔ UI Exchange A'}).filter({has:a.getByRole('button',{name:'Almashuv tugaganini tasdiqlash'})}).last();await offerA.getByRole('button',{name:'Almashuv tugaganini tasdiqlash'}).click();await expect(a.getByRole('status')).toContainText('Tasdiq saqlandi');
+  await b.reload({waitUntil:'domcontentloaded'});const confirmB=b.locator('div').filter({hasText:'UI Exchange B ↔ UI Exchange A'}).filter({has:b.getByRole('button',{name:'Almashuv tugaganini tasdiqlash'})}).last();await confirmB.getByRole('button',{name:'Almashuv tugaganini tasdiqlash'}).click();await expect(b.getByRole('status')).toContainText('Tasdiq saqlandi');
+  await a.reload({waitUntil:'domcontentloaded'});const reviewForm=a.locator('div').filter({hasText:'UI Exchange B ↔ UI Exchange A'}).filter({has:a.getByRole('button',{name:'Sharh yuborish'})}).last();await reviewForm.getByLabel('Sharh',{exact:true}).fill('Demo UI sharh');await reviewForm.getByRole('button',{name:'Sharh yuborish'}).click();await expect(a.getByRole('status')).toContainText('Sharh saqlandi');
+  const received=a.getByRole('heading',{name:'UI Exchange B',exact:true}).locator('..');await expect(received).toContainText('1 marta almashilgan');await expect(received).toContainText('Demo UI sharh');await shot(a,'04-mobile-reviewed');
+  await a.close();await b.close();
  });
  await test(15,'500, network errors and empty catalog are distinct, retry works',async()=>{
   for(const [kind,body] of [['500',null],['network',null],['empty',{success:true,data:[],totalPages:0,totalItems:0}]]){
