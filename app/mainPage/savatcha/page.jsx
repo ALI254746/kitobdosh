@@ -35,6 +35,8 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
         deliveryMethod: "pickup" // 'pickup', 'standard'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [passportFile, setPassportFile] = useState(null);
+    const hasRentItems = cartItems.some(item => item.type === "rent");
     const submittingRef = useRef(false);
     const { darkMode } = useMain();
 
@@ -48,6 +50,13 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
         if (submittingRef.current) return;
         submittingRef.current = true;
         setIsSubmitting(true);
+
+        if (hasRentItems && !passportFile) {
+            toast.error("Ijara uchun hujjat rasmini yuklang.");
+            submittingRef.current = false;
+            setIsSubmitting(false);
+            return;
+        }
 
         const orderData = {
             items: cartItems.map(item => ({
@@ -68,11 +77,13 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
         };
 
         try {
-            const res = await fetch('/api/order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
-            });
+            const body = new FormData();
+            body.append("customer", JSON.stringify(orderData.customer));
+            body.append("items", JSON.stringify(orderData.items));
+            body.append("deliveryMethod", orderData.deliveryMethod);
+            body.append("paymentMethod", "cash");
+            if (hasRentItems) body.append("passport", passportFile);
+            const res = await fetch("/api/order", { method: "POST", body });
             const data = await res.json();
 
             if (data.success) {
@@ -151,6 +162,11 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
                             </div>
                         </div>
 
+                        {hasRentItems && <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase ml-1">Ijara uchun hujjat rasmi</label>
+                            <input required type="file" accept="image/*" onChange={e => setPassportFile(e.target.files?.[0] || null)} className={`w-full rounded-xl border p-3 text-sm ${darkMode ? "bg-slate-700 border-slate-600 text-white" : "bg-gray-50 border-gray-200"}`} />
+                            <p className="text-xs text-gray-400">Hujjat rasmi buyurtmani tasdiqlash uchun kerak bo‘ladi.</p>
+                        </div>}
                         <div className="space-y-2">
                              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Yetkazib berish turi</label>
                              <div className="grid grid-cols-2 gap-3">
@@ -486,11 +502,7 @@ export default function CartPage() {
 
                         <button 
                             onClick={() => {
-                                if (cartItems.some(item => item.type === "rent")) {
-                                    router.push("/mobile/components/checkout");
-                                } else {
-                                    setIsCheckoutOpen(true);
-                                }
+                                setIsCheckoutOpen(true);
                             }}
                             className={`w-full py-4 rounded-2xl font-bold shadow-xl transition-all transform active:scale-95 flex items-center justify-center gap-2
                                 ${darkMode 
