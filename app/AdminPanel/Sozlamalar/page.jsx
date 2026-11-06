@@ -494,7 +494,7 @@ export default function SettingsPage() {
                                         />
                                         <div className="md:col-span-2 opacity-60">
                                              <InputGroup label="Email Manzil" value={adminData?.email || ""} icon={FaEnvelope} darkMode={darkMode} />
-                                             <p className="text-xs ml-1 mt-1 font-medium text-gray-400 italic">Emailni o'zgartirib bo'lmaydi</p>
+                                             <p className="text-xs ml-1 mt-1 font-medium text-gray-400 italic">Emailni o&apos;zgartirib bo&apos;lmaydi</p>
                                         </div>
                                     </div>
 
@@ -608,7 +608,7 @@ export default function SettingsPage() {
                                     <div className="space-y-6">
                                         <div className="flex items-center gap-3">
                                             <FaTelegramPlane className="text-2xl text-[#96C7B9]" />
-                                            <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-800"}`}>Kontakt Ma'lumotlari</h3>
+                                            <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-800"}`}>Kontakt Ma&apos;lumotlari</h3>
                                         </div>
                                         <div className="grid md:grid-cols-2 gap-6 p-6 rounded-3xl bg-white/5 dark:bg-white/5 border border-white/5">
                                             <InputGroup 
@@ -735,7 +735,7 @@ export default function SettingsPage() {
                                               : "bg-[#96C7B9] text-white hover:bg-[#7fae9f] shadow-[#96C7B9]/40"
                                             }
                                         `}>
-                                            <FaSave /> Parolni O'zgartirish
+                                            <FaSave /> Parolni O&apos;zgartirish
                                         </motion.button>
                                     </motion.div>
                                 </form>

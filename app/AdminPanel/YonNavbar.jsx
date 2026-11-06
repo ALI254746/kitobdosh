@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession, signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,6 +21,7 @@ import {
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const menuItems = [
     { name: "Dashboard", icon: <FaChartLine />, href: "/AdminPanel" },
@@ -48,7 +50,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
       name: "Bildirishnomalar",
       icon: <FaBell />,
       href: "/AdminPanel/BildirishNomalar",
-      badge: 5,
+
     },
     {
       name: "Promo Bannerlar",
@@ -147,13 +149,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
         {/* Footer / User Profile */}
         <div className="absolute bottom-0 w-full p-4 border-t border-[#A3ED96]/10 bg-[#163201]/95 backdrop-blur-md">
-            <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group">
+            <button aria-label="Tizimdan chiqish" onClick={() => signOut({ callbackUrl: "/" })} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center border-2 border-[#A3ED96]/30">
                     <span className="font-bold text-white">A</span>
                 </div>
                 <div className="text-left flex-1">
-                    <p className="text-sm font-bold text-white">Admin User</p>
-                    <p className="text-xs text-gray-400">admin@kitobdosh.uz</p>
+                    <p className="text-sm font-bold text-white">{session?.user?.name || "Administrator"}</p>
+                    <p className="text-xs text-gray-400">{session?.user?.email || ""}</p>
                 </div>
                 <FaSignOutAlt className="text-gray-500 group-hover:text-red-400 transition-colors" />
             </button>

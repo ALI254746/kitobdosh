@@ -139,7 +139,7 @@ export default function WalletPage() {
                 ))
               ) : (
                 <div className="p-20 text-center flex flex-col items-center">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Hozircha daromadlar yo'q</p>
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Hozircha daromadlar yo&apos;q</p>
                 </div>
               )}
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,6 +34,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
         deliveryMethod: "pickup" // 'pickup', 'standard'
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const submittingRef = useRef(false);
     const { darkMode } = useMain();
 
     if (!isOpen) return null;
@@ -43,6 +44,8 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submittingRef.current) return;
+        submittingRef.current = true;
         setIsSubmitting(true);
 
         const orderData = {
@@ -82,6 +85,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
             toast.error("Tarmoq xatosi");
             console.error(error);
         } finally {
+            submittingRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -184,7 +188,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
                                      <FaTruck className={`text-2xl ${formData.deliveryMethod === 'standard' ? (darkMode ? 'text-blue-400' : 'text-[#96C7B9]') : 'text-gray-300'}`} />
                                      <div>
                                          <span className={`block font-bold text-sm ${darkMode ? "text-white" : "text-[#1F2937]"}`}>Yetkazib berish</span>
-                                         <span className="text-[10px] items-center text-blue-500 font-bold bg-blue-100 px-2 py-0.5 rounded-full inline-block mt-1">20,000 so'm</span>
+                                         <span className="text-[10px] items-center text-blue-500 font-bold bg-blue-100 px-2 py-0.5 rounded-full inline-block mt-1">20,000 so&apos;m</span>
                                      </div>
                                  </label>
                              </div>
@@ -223,15 +227,15 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
                         `}>
                              <div className={`flex justify-between text-sm mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                                  <span>Mahsulotlar</span>
-                                 <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{subtotal.toLocaleString()} so'm</span>
+                                 <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{subtotal.toLocaleString()} so&apos;m</span>
                              </div>
                              <div className={`flex justify-between text-sm mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                                  <span>Yetkazib berish</span>
-                                 <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{deliveryPrice.toLocaleString()} so'm</span>
+                                 <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{deliveryPrice.toLocaleString()} so&apos;m</span>
                              </div>
                              <div className={`flex justify-between items-center pt-2 border-t mt-2 ${darkMode ? "border-slate-600" : "border-gray-200"}`}>
                                  <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>Jami</span>
-                                 <span className={`text-xl font-black ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>{finalTotal.toLocaleString()} <span className="text-xs text-gray-400">so'm</span></span>
+                                 <span className={`text-xl font-black ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>{finalTotal.toLocaleString()} <span className="text-xs text-gray-400">so&apos;m</span></span>
                              </div>
                         </div>
                     </form>
@@ -250,7 +254,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, clearCart }) => {
                         {isSubmitting ? (
                             <span className="loading loading-spinner loading-sm"></span> // Simple spinner placeholder
                         ) : (
-                            <>Tasdiqlash va To'lash</>
+                            <>Tasdiqlash va To&apos;lash</>
                         )}
                     </button>
                 </div>

@@ -38,13 +38,13 @@ export default function ActiveOrder() {
                  };
 
                  setOrder({
-                     id: active._id,
+                     id: active.id || active._id,
                      type: active.type,
                      customer: active.userName || active.customer,
                      phone: active.userPhone || active.phone,
                      address: active.address || "Toshkent shahar",
                      book: active.bookTitle || active.book,
-                     image: active.bookImage,
+                     image: active.image || active.bookImage,
                      status: map[active.status] || "Qabul qildim",
                      apiStatus: active.status,
                      lat: active.lat,
@@ -121,7 +121,7 @@ export default function ActiveOrder() {
           <div className="w-24 h-24 bg-white dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center text-slate-200 dark:text-slate-700 mb-8 shadow-sm">
               <FaCheckDouble size={40} />
           </div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">Faol topshiriq yo'q</h2>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">Faol topshiriq yo&apos;q</h2>
           <p className="text-slate-400 dark:text-slate-500 mb-10 max-w-xs mx-auto text-xs font-bold uppercase tracking-widest leading-relaxed">Hozirda barcha topshiriqlar bajarilgan yoki yangi buyurtma kutilmoqda.</p>
           <Link href="/KurierPanel/buyurtmalar" className="px-10 py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-slate-200 dark:shadow-none hover:scale-105 active:scale-95 transition-all">
               Yangi buyurtma olish

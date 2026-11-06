@@ -1,3 +1,7 @@
+import mongoose from "mongoose";
+import { publicRecord } from "@/lib/server-auth";
+import { isObjectId } from "@/lib/catalog-input.mjs";
+import { authorize, courierRoles } from "@/lib/server-auth";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Rent from "@/model/Rent";
@@ -16,35 +20,26 @@ export const dynamic = 'force-dynamic';
 const COURIER_CACHE_KEY = 'courier_orders_all';
 
 async function getUserId() {
-    // 1. Check NextAuth Session (Primary)
-    const session = await getServerSession(authOptions);
-    if (session?.user?.id) return session.user.id;
-
-    // 2. Fallback: Custom Cookie Token
-    const cookieStore = await cookies();
-    const token = cookieStore.get("kitobdosh_token")?.value;
-    if (!token) return null;
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        return decoded.userId;
-    } catch (e) {
-        return null;
-    }
+  const session = await getServerSession(authOptions);
+  return session?.user?.id || null;
 }
 
 export async function GET() {
+    const access = await authorize(['admin', ...courierRoles]);
+    if (access.response) return access.response;
     try {
         await dbConnect();
-        
-        const combined = await getOrSetCache(COURIER_CACHE_KEY, async () => {
+
+        const combined = await (async () => {
+            const visible = access.user.role === "admin" ? {} : { $or: [{ courierId: { $in: [access.user.id, new mongoose.Types.ObjectId(access.user.id)] } }, { courierId: { $exists: false } }, { courierId: null }] };
             // Fetch Approved Rents
-            const rents = await Rent.find({ 
+            const rents = await Rent.find({ ...visible,
                 status: 'approved',
-                courierStatus: { $ne: 'delivered' } 
+                courierStatus: { $ne: 'delivered' }
             }).sort({ createdAt: -1 });
 
             // Fetch Processing Orders
-            const orders = await Order.find({ 
+            const orders = await Order.find({ ...visible,
                 status: 'processing',
                 courierStatus: { $ne: 'delivered' }
             }).sort({ createdAt: -1 });
@@ -76,17 +71,20 @@ export async function GET() {
                     address: o.customer.address,
                     phone: o.customer.phone,
                     book: o.items.map(i => i.title).join(", "),
-                    author: "To'plam", 
-                    image: "https://placehold.co/100x150.png?text=Order",
+                    author: "To'plam",
+                    image: o.items?.[0]?.image || "/icon-192x192.png",
                     status: o.courierStatus || 'new',
                     lat: o.customer.lat,
                     lng: o.customer.lng,
                     createdAt: o.createdAt
                 }))
             ].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }, 300); // 5 mins cache
+        })();
 
-        return NextResponse.json({ success: true, data: combined });
+        return NextResponse.json({ success: true, data: combined.map(job => {
+          if (access.user.role !== 'admin' && job.courierId !== access.user.id) return { ...job, phone: undefined, address: undefined, lat: undefined, lng: undefined };
+          return job;
+        }) });
 
     } catch (error) {
         console.error("Courier API Error:", error);
@@ -95,52 +93,73 @@ export async function GET() {
 }
 
 export async function PUT(req) {
+    const access = await authorize(['admin', ...courierRoles]);
+    if (access.response) return access.response;
     try {
         await dbConnect();
-        const { id, type, status, courierId: bodyCourierId } = await req.json();
-        const userId = await getUserId();
-        
-        console.log(`Courier API: Updating ${type} ${id} -> Status: ${status} | CourierID(Body): ${bodyCourierId} | UserID(Token): ${userId}`);
-        
+        const { id, type, status } = await req.json();
+        if (!isObjectId(id) || !['rent', 'buy'].includes(type) || !['accepted', 'picked_up', 'on_way', 'delivered'].includes(status)) return NextResponse.json({ success: false, message: 'Amal noto‘g‘ri' }, { status: 400 });
+        const userId = access.user.id;
+        const Model = type === 'rent' ? Rent : Order;
+        const current = await Model.findById(id);
+        if (!current) return NextResponse.json({ success: false }, { status: 404 });
+        if (current.courierId && String(current.courierId) !== userId && access.user.role !== 'admin') return NextResponse.json({ success: false, message: 'Topshiriq sizga tegishli emas' }, { status: 403 });
+        const previous = { accepted: 'new', picked_up: 'accepted', on_way: 'picked_up', delivered: 'on_way' }[status];
+        if ((current.courierStatus || 'new') !== previous || (status !== 'accepted' && !current.courierId)) return NextResponse.json({ success: false }, { status: 409 });
+        const filter = { _id: id, courierStatus: current.courierStatus || { $in: [null, 'new'] }, courierId: current.courierId || null };
         let updated;
         const updateData = { courierStatus: status };
-        
-        // If accepting, associate the courier
-        if (status === 'accepted' && userId) {
-            updateData.courierId = userId;
-        } else if (bodyCourierId) {
-            updateData.courierId = bodyCourierId;
+        if (status === 'accepted') updateData.courierId = userId;
+        if (type === 'rent' && status === 'delivered') {
+            updateData.status = 'active';
+            if (current.days > 0) {
+                const returnDate = new Date();
+                returnDate.setDate(returnDate.getDate() + current.days);
+                updateData.returnDate = returnDate;
+            }
         }
 
-        if (type === 'rent') {
-             if (status === 'delivered') {
-                 // Fetch current rent to get 'days'
-                 const currentRent = await Rent.findById(id);
-                 if (currentRent && currentRent.days > 0) {
-                     const now = new Date();
-                     const returnDate = new Date(now);
-                     returnDate.setDate(returnDate.getDate() + currentRent.days);
-                     
-                     updateData.status = 'active';
-                     updateData.returnDate = returnDate;
-                     
-                     console.log(`Rent ${id} delivered. Setting returnDate to ${returnDate}`);
-                 } else {
-                     updateData.status = 'active'; // Fallback
-                 }
-             }
-             updated = await Rent.findByIdAndUpdate(id, updateData, { new: true });
-             console.log(`Courier API: Updated Rent ${id}. New CourierStatus: ${updated?.courierStatus}`);
+        if (status !== 'delivered') {
+            updated = await Model.findOneAndUpdate(filter, updateData, { new: true, runValidators: true });
         } else {
-             // If delivered, mark main order as completed
-             if (status === 'delivered') {
-                 updateData.status = 'completed';
-                 console.log(`Courier API: Marking Order ${id} as completed (delivered)`);
-             }
-             updated = await Order.findByIdAndUpdate(id, updateData, { new: true });
-             console.log(`Courier API: Updated Order ${id}. New CourierStatus: ${updated?.courierStatus}`);
+            // Serialize sibling deliveries on the parent document and commit the
+            // delivery and aggregate status together. createOrder already requires
+            // a MongoDB replica set for its own transactions.
+            const session = await mongoose.startSession();
+            try {
+                await session.withTransaction(async () => {
+                    updated = null;
+                    const parentId = type === 'buy' ? current._id : current.orderId;
+                    let parent = null;
+                    if (parentId) {
+                        parent = await Order.findOneAndUpdate(
+                            { _id: parentId, status: { $ne: 'cancelled' } }, { $inc: { deliverySyncVersion: 1 } },
+                            { new: true, session }
+                        );
+                        // Missing legacy parents are allowed, but a cancelled parent
+                        // must not be resurrected by a late courier update.
+                        if (!parent && await Order.exists({ _id: parentId }).session(session)) return;
+                    }
+                    if (type === 'buy' && (!parent || parent.status !== 'processing')) return;
+                    updated = await Model.findOneAndUpdate(filter, updateData, { new: true, runValidators: true, session });
+                    if (!updated || !parent) return;
+
+                    const rentalsExpected = parent.items.filter(item => item.type === 'rent').length;
+                    const rentalsDelivered = rentalsExpected === 0 ||
+                        (await Rent.countDocuments({ orderId: parent._id, courierStatus: 'delivered' }).session(session)) === rentalsExpected;
+                    const hasPurchase = parent.items.some(item => item.type !== 'rent');
+                    const purchaseDelivered = !hasPurchase || (type === 'buy' ? true : parent.courierStatus === 'delivered');
+                    if (rentalsDelivered && purchaseDelivered && ['pending', 'processing'].includes(parent.status)) {
+                        await Order.updateOne({ _id: parent._id, status: { $in: ['pending', 'processing'] } }, { $set: { status: 'completed' } }, { session });
+                        if (type === 'buy') updated.status = 'completed';
+                    }
+                });
+            } finally {
+                await session.endSession();
+            }
         }
 
+        if (!updated) return NextResponse.json({ success: false }, { status: 409 });
         if (updated && updated.user) {
             const STATUS_MESSAGES = {
                 accepted: {
@@ -184,7 +203,7 @@ export async function PUT(req) {
                             orderType: type
                         }
                     });
-                    
+
                     // Trigger Real-time Event via Pusher
                     try {
                         await pusherServer.trigger(`user-${updated.user}`, "status-update", {
@@ -207,9 +226,10 @@ export async function PUT(req) {
 
         if (updated) {
             await clearCache(COURIER_CACHE_KEY);
+            if (updated.user) await clearCache(`profile_full:${updated.user}`);
         }
 
-        return NextResponse.json({ success: true, data: updated });
+        return NextResponse.json({ success: true, data: publicRecord(updated) });
 
     } catch (error) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });

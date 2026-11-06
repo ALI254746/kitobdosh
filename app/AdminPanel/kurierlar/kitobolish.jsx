@@ -238,8 +238,8 @@ export default function PickupTab({ darkMode }) {
                     {currentList.length === 0 && (
                         <tr>
                             <td colSpan="6" className={`px-6 py-12 text-center flex flex-col items-center justify-center ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-                                <p className="mb-2 text-lg font-bold">Ma'lumot topilmadi</p>
-                                <p className="text-sm">Ushbu bo'limda buyurtmalar mavjud emas</p>
+                                <p className="mb-2 text-lg font-bold">Ma&apos;lumot topilmadi</p>
+                                <p className="text-sm">Ushbu bo&apos;limda buyurtmalar mavjud emas</p>
                             </td>
                         </tr>
                     )}

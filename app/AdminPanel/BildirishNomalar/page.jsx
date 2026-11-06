@@ -160,7 +160,7 @@ export default function MessagesPage() {
 
   const getStatusLabel = (status) => {
         if(status === 'replied') return <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Javob berilgan</span>;
-        if(status === 'read') return <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">O'qilgan</span>;
+        if(status === 'read') return <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] uppercase font-bold">O&apos;qilgan</span>;
         return <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] uppercase font-bold">Yangi</span>;
   }
 

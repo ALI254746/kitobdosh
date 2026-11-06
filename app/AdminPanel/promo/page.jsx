@@ -174,7 +174,7 @@ export default function PromoAdmin() {
                                                 ) : (
                                                     <>
                                                         <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-1" />
-                                                        <p className="text-[10px] text-gray-400">Fondagi rasm (Rasm matn ortida chiroyli ko'rinadi)</p>
+                                                        <p className="text-[10px] text-gray-400">Fondagi rasm (Rasm matn ortida chiroyli ko&apos;rinadi)</p>
                                                     </>
                                                 )}
                                             </div>
@@ -193,7 +193,7 @@ export default function PromoAdmin() {
                                             Maslahat
                                         </div>
                                         <p className="text-xs text-blue-700 leading-relaxed">
-                                            Agar rasm yuklasangiz, u bannerning foni (background) bo'lib xizmat qiladi. Matnlar rasmning ustida chiroyli gradient bilan ko'rinadi. Optimal rasm o'lchami: 1000x400px.
+                                            Agar rasm yuklasangiz, u bannerning foni (background) bo&apos;lib xizmat qiladi. Matnlar rasmning ustida chiroyli gradient bilan ko&apos;rinadi. Optimal rasm o&apos;lchami: 1000x400px.
                                         </p>
                                     </div>
                                 </div>
@@ -219,7 +219,7 @@ export default function PromoAdmin() {
                                     className="w-5 h-5 accent-orange-500 cursor-pointer"
                                 />
                                 <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
-                                    Hozir faollashtirish (Asosiy sahifada ko'rsatish)
+                                    Hozir faollashtirish (Asosiy sahifada ko&apos;rsatish)
                                 </label>
                             </div>
                             <div className="flex justify-end gap-3 pt-4 border-t border-gray-50">

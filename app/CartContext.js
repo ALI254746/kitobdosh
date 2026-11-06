@@ -22,16 +22,17 @@ export const CartProvider = ({ children }) => {
   const cartItems = useSelector(selectCartItems);
   const totalPrice = useSelector(selectCartTotal);
 
-  // API Helpers for syncing optimistic updates to server
-  const apiAddItem = async (item) => {
-      if(!session?.user) return;
-      await fetch('/api/cart', { method: 'POST', body: JSON.stringify({ item }) });
+  // Updates are local immediately; synchronization failures are visible.
+  const syncCart = async (url, options) => {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('sync');
+    } catch {
+      toast.error("Savatcha shu qurilmada saqlandi. Server bilan sinxronlash hozir ishlamayapti.", { id: 'cart-sync' });
+    }
   };
-
-  const apiRemoveItem = async (cartId) => {
-      if(!session?.user) return;
-      await fetch(`/api/cart?cartId=${cartId}`, { method: 'DELETE' });
-  };
+  const apiAddItem = item => syncCart('/api/cart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ item }) });
+  const apiRemoveItem = cartId => syncCart(`/api/cart?cartId=${encodeURIComponent(cartId)}`, { method: 'DELETE' });
 
   const addToCart = (product, type = "buy", rentDays = 1) => {
     const cartId = `${product._id}-${type}`;
@@ -85,7 +86,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => {
     dispatch(clearAll());
     if (session?.user) {
-      fetch(`/api/cart?clearAll=true`, { method: 'DELETE' });
+      syncCart('/api/cart?clearAll=true', { method: 'DELETE' });
     }
     toast.success("Yangi bilimlarga joy ochildi! 🧹💎");
   };

@@ -120,8 +120,8 @@ export default function OrdersPage() {
                     <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-300 dark:text-slate-600 mx-auto mb-4">
                         <FaBox size={24} />
                     </div>
-                    <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-lg">Hozircha buyurtmalar yo'q</p>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Yangi topshiriqlar shu yerda paydo bo'ladi</p>
+                    <p className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-lg">Hozircha buyurtmalar yo&apos;q</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Yangi topshiriqlar shu yerda paydo bo&apos;ladi</p>
                 </motion.div>
             )}
           </div>
@@ -156,8 +156,8 @@ function OrderCard({ order, onUpdateStatus }) {
 
             <div className="flex flex-col sm:flex-row gap-6">
                  <div className="w-24 h-32 sm:w-28 sm:h-40 flex-shrink-0 bg-slate-50 dark:bg-slate-700 rounded-3xl overflow-hidden relative shadow-md group-hover:scale-105 transition-transform duration-500">
-                    {order.bookImage ? (
-                        <Image src={order.bookImage} alt="Cover" fill className="object-cover" />
+                    {(order.image || order.bookImage) ? (
+                        <Image src={order.image || order.bookImage} alt="Cover" fill className="object-cover" />
                     ) : (
                         <div className="flex items-center justify-center h-full text-slate-300 dark:text-slate-600"><FaBook size={32} /></div>
                     )}

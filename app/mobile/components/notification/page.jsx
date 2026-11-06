@@ -352,7 +352,7 @@ export default function NotificationPage() {
                                         onClick={() => handleDelete(notif._id)}
                                         className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-left"
                                     >
-                                         <Trash2 size={14} /> O'chirib tashlash
+                                         <Trash2 size={14} /> O&apos;chirib tashlash
                                     </button>
                                 </motion.div>
                             )}
@@ -466,7 +466,7 @@ export default function NotificationPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-black text-gray-900 dark:text-white">{days} kun</p>
-                        <p className="text-xs text-gray-400 dark:text-slate-500">+{days * 1000} so'm</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500">+{days * 1000} so&apos;m</p>
                       </div>
                       {extendDays === days && (
                         <div className="w-5 h-5 bg-[#52C6DA] rounded-full flex items-center justify-center">

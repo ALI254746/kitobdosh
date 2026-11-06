@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import User from "@/model/user";
@@ -7,10 +8,12 @@ import Rent from "@/model/Rent";
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
   try {
     await dbConnect();
     
-    const users = await User.find({}).sort({ createdAt: -1 }).select("-password");
+    const users = await User.find({}).sort({ createdAt: -1 }).select("fullName email avatar role phone createdAt");
     
     // Fetch stats for each user
     const usersWithStats = await Promise.all(users.map(async (u) => {

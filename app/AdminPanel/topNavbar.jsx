@@ -279,7 +279,7 @@ export default function TopNavbar({
                                </div>
                                <div>
                                    <p className="text-sm font-bold">{o.customer?.name || o.fullName}</p>
-                                   <p className="text-[10px] opacity-60">Summa: {o.totalPrice?.toLocaleString()} so'm • {o.status}</p>
+                                   <p className="text-[10px] opacity-60">Summa: {o.totalPrice?.toLocaleString()} so&apos;m • {o.status}</p>
                                </div>
                           </button>
                         ))}
@@ -355,7 +355,7 @@ export default function TopNavbar({
                         onClick={markAllAsRead}
                         className="text-[10px] font-bold uppercase tracking-widest text-[#A3ED96] hover:underline"
                       >
-                        Hammasini o'qildi
+                        Hammasini o&apos;qildi
                       </button>
                     )}
                   </div>
@@ -396,7 +396,7 @@ export default function TopNavbar({
                     ) : (
                       <div className="p-10 text-center opacity-40">
                         <FaBell size={24} className="mx-auto mb-3" />
-                        <p className="text-sm">Hozircha bildirishnomalar yo'q</p>
+                        <p className="text-sm">Hozircha bildirishnomalar yo&apos;q</p>
                       </div>
                     )}
                   </div>
@@ -406,7 +406,7 @@ export default function TopNavbar({
                       onClick={() => { handleResultClick('/AdminPanel/BildirishNomalar'); setShowNotifications(false); }}
                       className="text-xs font-bold text-[#A3ED96] hover:opacity-80 transition-all flex items-center justify-center gap-2 mx-auto"
                     >
-                      Barchasini ko'rish <FaHistory size={10} />
+                      Barchasini ko&apos;rish <FaHistory size={10} />
                     </button>
                   </div>
                 </motion.div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import SafeImage from "../../components/SafeImage";
 import { motion, AnimatePresence } from "framer-motion";
@@ -69,6 +69,7 @@ const SalesModal = ({ isOpen, onClose, book }) => {
     });
     const [showMap, setShowMap] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const submittingRef = useRef(false);
 
     const { darkMode } = useMain();
     
@@ -79,6 +80,8 @@ const SalesModal = ({ isOpen, onClose, book }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submittingRef.current) return;
+        submittingRef.current = true;
         setIsSubmitting(true);
 
         const orderData = {
@@ -120,6 +123,7 @@ const SalesModal = ({ isOpen, onClose, book }) => {
             console.error("CHECKOUT ERROR:", error);
             toast.error("Tarmoq xatosi: " + (error.message || "Noachin xatolik"));
         } finally {
+            submittingRef.current = false;
             setIsSubmitting(false);
         }
     };
@@ -162,7 +166,7 @@ const SalesModal = ({ isOpen, onClose, book }) => {
                             <div className={`flex items-center gap-2 text-xs font-bold ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>
                                 1 dona
                                 <span className="text-gray-500">|</span>
-                                {book.price.toLocaleString()} so'm
+                                {book.price.toLocaleString()} so&apos;m
                             </div>
                         </div>
                     </div>
@@ -204,14 +208,14 @@ const SalesModal = ({ isOpen, onClose, book }) => {
                         </div>
 
                         <div className="space-y-2">
-                             <label className="text-xs font-bold text-gray-400 uppercase ml-1">To'lov turi</label>
+                             <label className="text-xs font-bold text-gray-400 uppercase ml-1">To&apos;lov turi</label>
                              <div className="grid grid-cols-1">
                                  <label className={`relative cursor-pointer p-3 rounded-2xl border-2 transition-all flex flex-col items-center text-center gap-2 border-[#96C7B9] bg-[#F0FDF8]
                                  `}>
                                      <FaMoneyBillWave className="text-2xl text-[#96C7B9]" />
                                      <div>
                                          <span className={`block font-bold text-sm ${darkMode ? "text-white" : "text-[#1F2937]"}`}>Qabul qilganda (Naqd / Karta)</span>
-                                         <span className="text-[10px] items-center text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full inline-block mt-1">To'lov kuryerga yoki do'konda qilinadi</span>
+                                         <span className="text-[10px] items-center text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-full inline-block mt-1">To&apos;lov kuryerga yoki do&apos;konda qilinadi</span>
                                      </div>
                                  </label>
                              </div>
@@ -255,7 +259,7 @@ const SalesModal = ({ isOpen, onClose, book }) => {
                                      <FaTruck className={`text-2xl ${formData.deliveryMethod === 'standard' ? (darkMode ? 'text-blue-400' : 'text-[#96C7B9]') : 'text-gray-300'}`} />
                                      <div>
                                          <span className={`block font-bold text-sm ${darkMode ? "text-white" : "text-[#1F2937]"}`}>Yetkazib berish</span>
-                                         <span className="text-[10px] items-center text-blue-500 font-bold bg-blue-100 px-2 py-0.5 rounded-full inline-block mt-1">20,000 so'm</span>
+                                         <span className="text-[10px] items-center text-blue-500 font-bold bg-blue-100 px-2 py-0.5 rounded-full inline-block mt-1">20,000 so&apos;m</span>
                                      </div>
                                  </label>
                              </div>
@@ -325,15 +329,15 @@ const SalesModal = ({ isOpen, onClose, book }) => {
                         `}>
                              <div className={`flex justify-between text-sm mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                                  <span>Kitob narxi</span>
-                                 <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{book.price.toLocaleString()} so'm</span>
+                                 <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{book.price.toLocaleString()} so&apos;m</span>
                              </div>
                              <div className={`flex justify-between text-sm mb-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
                                  <span>Yetkazib berish</span>
-                                 <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{deliveryPrice.toLocaleString()} so'm</span>
+                                 <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>{deliveryPrice.toLocaleString()} so&apos;m</span>
                              </div>
                              <div className={`flex justify-between items-center pt-2 border-t mt-2 ${darkMode ? "border-slate-600" : "border-gray-200"}`}>
                                  <span className={`font-bold ${darkMode ? "text-white" : "text-[#1F2937]"}`}>Jami</span>
-                                 <span className={`text-xl font-black ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>{finalTotal.toLocaleString()} <span className="text-xs text-gray-500">so'm</span></span>
+                                 <span className={`text-xl font-black ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>{finalTotal.toLocaleString()} <span className="text-xs text-gray-500">so&apos;m</span></span>
                              </div>
                         </div>
                     </form>
@@ -352,7 +356,7 @@ const SalesModal = ({ isOpen, onClose, book }) => {
                         {isSubmitting ? (
                             <span className="loading loading-spinner loading-sm"></span>
                         ) : (
-                            <>Tasdiqlash va To'lash</>
+                            <>Tasdiqlash va To&apos;lash</>
                         )}
                     </button>
                 </div>
@@ -459,9 +463,10 @@ const BookCard = ({ book, onBuyNow, isLiked, onToggleLike, onViewReviews }) => {
         
         <div className="flex items-center justify-between mt-auto">
             <Link href={`/book/${book._id}`}>
-                <span className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>{book.price.toLocaleString()} so'm</span>
+                <span className={`text-2xl font-black ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>{book.price.toLocaleString()} so&apos;m</span>
             </Link>
             <button 
+                aria-label={`${book.title} kitobini xarid qilish`}
                 onClick={() => onBuyNow(book)}
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-md
                     ${darkMode 
@@ -490,7 +495,7 @@ export default function MarketPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   
   // API Call with params
-  const { data: booksData, isLoading: booksLoading } = useGetBooksQuery({
+  const { data: booksData, isLoading: booksLoading, isError: booksError, refetch } = useGetBooksQuery({
     page,
     limit,
     category: filterCategory,
@@ -633,7 +638,7 @@ export default function MarketPage() {
       {/* CONTENT GRID */}
       <main className="max-w-7xl mx-auto px-6 py-10">
         <AnimatePresence mode="wait">
-             {booksLoading ? (
+             {booksError ? (<div role="alert" className="p-8 text-center"><p>Katalogni yuklab bo‘lmadi. Tarmoqni tekshiring.</p><button onClick={refetch} className="px-6 py-3 rounded-xl border mt-4">Qayta urinish</button></div>) : booksLoading ? (
                  <motion.div 
                    key="skeleton"
                    initial={{ opacity: 0 }}
@@ -661,7 +666,7 @@ export default function MarketPage() {
                      {allBooks.length === 0 && (
                          <div className="col-span-full text-center py-20">
                              <h3 className="text-xl font-bold text-gray-400">Kitoblar topilmadi 😔</h3>
-                             <p className="text-gray-400 mt-2">Boshqa so'z bilan qidirib ko'ring yoki filterni o'zgartiring.</p>
+                             <p className="text-gray-400 mt-2">Boshqa so&apos;z bilan qidirib ko&apos;ring yoki filterni o&apos;zgartiring.</p>
                          </div>
                      )}
                   </motion.div>
@@ -843,8 +848,8 @@ const BookReviewsModal = ({ book, onClose, darkMode }) => {
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-center opacity-30">
                             <FaStar className="text-6xl mb-4" />
-                            <p className="font-bold text-lg">Hozircha taqrizlar yo'q</p>
-                            <p className="text-sm">Birinchilardan bo'lib fikr qoldiring!</p>
+                            <p className="font-bold text-lg">Hozircha taqrizlar yo&apos;q</p>
+                            <p className="text-sm">Birinchilardan bo&apos;lib fikr qoldiring!</p>
                         </div>
                     )}
                 </div>

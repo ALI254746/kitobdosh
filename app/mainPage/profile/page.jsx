@@ -500,7 +500,7 @@ function ProfileContent() {
                      <button 
                         className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 bg-white text-[#5a8a7d] hover:bg-[#D1F0E0]`}
                      >
-                        <FaUserPlus /> Do'st Bo'lish
+                        <FaUserPlus /> Do&apos;st Bo&apos;lish
                      </button>
                   </div>
               )}
@@ -617,7 +617,7 @@ function ProfileContent() {
                                     </div>
                                     <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                                 </label>
-                                <p className={`text-xs mt-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Rasmni o'zgartirish uchun bosing</p>
+                                <p className={`text-xs mt-2 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Rasmni o&apos;zgartirish uchun bosing</p>
                             </div>
 
                             {/* Inputs */}
@@ -645,7 +645,7 @@ function ProfileContent() {
                                             className={`w-full pl-10 pr-4 py-3 rounded-xl font-medium outline-none border transition-all appearance-none ${darkMode ? "bg-slate-800 border-slate-700 text-white" : "bg-gray-50 border-gray-200"}`}
                                         >
                                             <option value="student">Talaba 🎓</option>
-                                            <option value="teacher">O'qituvchi 👨‍🏫</option>
+                                            <option value="teacher">O&apos;qituvchi 👨‍🏫</option>
                                             <option value="other">Boshqa</option>
                                         </select>
                                     </div>
@@ -696,7 +696,7 @@ function ProfileContent() {
                             </div>
 
                             <div>
-                                <label className={`block text-sm font-bold mb-2 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>O'zingiz haqingizda (Bio)</label>
+                                <label className={`block text-sm font-bold mb-2 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>O&apos;zingiz haqingizda (Bio)</label>
                                 <textarea 
                                     rows="3"
                                     placeholder="Qisqacha ma'lumot qoldiring..."
@@ -856,7 +856,7 @@ const TrackingList = ({ trackingItems, darkMode }) => {
                         
                         {item.courierStatus === 'on_way' && (
                             <div className="mt-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm text-center font-medium animate-pulse border border-blue-100 dark:border-blue-800">
-                                <FaTruck className="inline mr-2 text-lg" /> Kuryer yo'lda! Buyurtmangiz yaqin orada yetib boradi.
+                                <FaTruck className="inline mr-2 text-lg" /> Kuryer yo&apos;lda! Buyurtmangiz yaqin orada yetib boradi.
                             </div>
                         )}
                     </div>
@@ -948,7 +948,7 @@ const RentalsList = ({ rentals, darkMode, setReviewItem, setShowReviewModal }) =
                             <span>Muddati:</span> <span className={`font-bold ${darkMode ? "text-white" : "text-slate-800"}`}>{rent.days} kun</span>
                         </div>
                         <div className={`flex justify-between ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
-                            <span>Narx:</span> <span className={`font-bold ${darkMode ? "text-white" : "text-slate-800"}`}>{rent.totalPrice?.toLocaleString()} so'm</span>
+                            <span>Narx:</span> <span className={`font-bold ${darkMode ? "text-white" : "text-slate-800"}`}>{rent.totalPrice?.toLocaleString()} so&apos;m</span>
                         </div>
                         {rent.status === 'returned' && (
                             <button 
@@ -1008,7 +1008,7 @@ const OrdersList = ({ orders, darkMode, setReviewItem, setShowReviewModal }) => 
                      </div>
                      <div className="text-right">
                          <span className={`block text-xl font-black mb-1 ${darkMode ? "text-white" : "text-slate-800"}`}>
-                             {order.totalPrice?.toLocaleString()} so'm
+                             {order.totalPrice?.toLocaleString()} so&apos;m
                          </span>
                          <StatusBadge status={order.status} />
                      </div>
@@ -1019,9 +1019,10 @@ const OrdersList = ({ orders, darkMode, setReviewItem, setShowReviewModal }) => 
 }
 
 const NotificationsList = ({ notifications, markAllRead, darkMode, setNotifications, refreshData }) => {
+    const [extendingNotif, setExtendingNotif] = useState(null);
     if(!notifications.length) return <EmptyState label="Xabarlar yo'q" icon={FaBell} darkMode={darkMode} />
 
-    const [extendingNotif, setExtendingNotif] = useState(null);
+
 
     const handleAction = async (notifId, action, data, days = 1) => {
         const toastId = toast.loading("Jarayonda...");
@@ -1169,7 +1170,7 @@ const NotificationsList = ({ notifications, markAllRead, darkMode, setNotificati
                          </div>
                          <div>
                              <h3 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-slate-800'}`}>
-                                 {notifications.filter(n => !n.isRead).length} ta o'qilmagan xabar
+                                 {notifications.filter(n => !n.isRead).length} ta o&apos;qilmagan xabar
                              </h3>
                              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                  Yangi bildirishnomalaringiz bor
@@ -1179,7 +1180,7 @@ const NotificationsList = ({ notifications, markAllRead, darkMode, setNotificati
                      <button 
                         onClick={markAllRead} 
                         className="px-4 py-2 rounded-xl bg-[#96C7B9] text-white text-xs font-bold hover:bg-[#5a8a7d] transition-all active:scale-95 shadow-lg">
-                         Hammasini o'qildi
+                         Hammasini o&apos;qildi
                      </button>
                  </motion.div>
              )}

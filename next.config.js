@@ -1,14 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
   experimental: {
+    serverComponentsExternalPackages: ["cloudinary", "resend"],
     missingSuspenseWithCSRBailout: false,
   },
   images: {
+    // Legacy renter documents must never be read by the image optimizer.
+    localPatterns: [
+      { pathname: '/icon-*.png' },
+      { pathname: '/demo-book.svg' },
+      { pathname: '/uploads/avatars/**' },
+    ],
     remotePatterns: [
       {
         protocol: "https",

@@ -154,8 +154,8 @@ export default function OrderTrackingPage() {
               <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm">
                   <FaMapMarkedAlt size={32} className="text-gray-300" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900 mb-2">Faol kuzatuvlar yo'q</h1>
-              <p className="text-gray-500 mb-8 max-w-[240px]">Hozircha sizda yo'lda bo'lgan yoki tasdiqlanishini kutayotgan buyurtmalar yo'q.</p>
+              <h1 className="text-xl font-bold text-gray-900 mb-2">Faol kuzatuvlar yo&apos;q</h1>
+              <p className="text-gray-500 mb-8 max-w-[240px]">Hozircha sizda yo&apos;lda bo&apos;lgan yoki tasdiqlanishini kutayotgan buyurtmalar yo&apos;q.</p>
               <Link href="/mobile" className="px-6 py-3 bg-[#52C6DA] text-white font-bold rounded-2xl shadow-lg ring-4 ring-[#52C6DA]/10">
                   Asosiy sahifaga qaytish
               </Link>
@@ -291,7 +291,7 @@ export default function OrderTrackingPage() {
                             <Truck size={20} className="animate-bounce" />
                          </div>
                          <p className="text-xs font-bold leading-relaxed">
-                            Kuryer hozirgina yo'lga chiqdi. Kitobingiz tez orada siz bilan bo'ladi!
+                            Kuryer hozirgina yo&apos;lga chiqdi. Kitobingiz tez orada siz bilan bo&apos;ladi!
                          </p>
                       </div>
                   </motion.div>

@@ -64,7 +64,7 @@ const RentalModal = ({ isOpen, onClose, rentalData }) => {
     lat: null,
     lng: null,
     passport: null,
-    payment: "payme"
+    payment: "cash"
   });
   const [showMap, setShowMap] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,12 +106,8 @@ const RentalModal = ({ isOpen, onClose, rentalData }) => {
         data.append("bookImage", book.images?.[0] || "");
         data.append("days", days);
         data.append("totalPrice", totalPrice);
-        if (formData.lat && formData.lng) {
-            data.append("lat", formData.lat);
-            data.append("lng", formData.lng);
-        }
 
-        if (formData.lat && formData.lng) {
+        if (formData.lat != null && formData.lng != null) {
             data.append("lat", formData.lat);
             data.append("lng", formData.lng);
         }
@@ -173,7 +169,7 @@ const RentalModal = ({ isOpen, onClose, rentalData }) => {
                         <div className={`flex items-center gap-2 text-xs font-bold ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>
                             <FaClock /> {days} kun
                             <span className="text-gray-500">|</span>
-                            Jami: {totalPrice.toLocaleString()} so'm
+                            Jami: {totalPrice.toLocaleString()} so&apos;m
                         </div>
                     </div>
                 </div>
@@ -281,7 +277,7 @@ const RentalModal = ({ isOpen, onClose, rentalData }) => {
                     </div>
 
                     <div className="space-y-1">
-                        <label className={`text-xs font-bold ml-1 ${darkMode ? "text-gray-300" : "text-gray-500"}`}>To'lov Turi</label>
+                        <label className={`text-xs font-bold ml-1 ${darkMode ? "text-gray-300" : "text-gray-500"}`}>To&apos;lov Turi</label>
                         <div className="p-3 rounded-xl border-2 border-[#96C7B9] bg-[#D1F0E0]/20 flex items-center justify-center gap-2">
                              <FaMoneyBillWave className="text-[#96C7B9]" />
                              <span className={`font-bold text-sm ${darkMode ? "text-white" : "text-[#1F2937]"}`}>Qabulda (Naqd / Karta)</span>
@@ -299,9 +295,9 @@ const RentalModal = ({ isOpen, onClose, rentalData }) => {
                         ${darkMode ? "bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30" : "bg-[#1F2937] text-white hover:bg-[#96C7B9] shadow-gray-200"}
                     `}
                 >         
-                    <span>To'lov Qilish</span>
+                    <span>Ijara so‘rovini yuborish</span>
                     <span className="bg-white/20 px-2 py-0.5 rounded text-xs">
-                        {totalPrice.toLocaleString()} so'm
+                        {totalPrice.toLocaleString()} so&apos;m
                     </span>
                 </button>
             </div>
@@ -413,7 +409,7 @@ const RentalBookCard = ({ book, onRentNow, isLiked, onToggleLike, onViewReviews 
             <Link href={`/book/${book._id}`}>
                 <div>
                     <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-400"}`}>Kuniga:</p>
-                    <span className={`text-xl font-black ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>{book.rentalPricePerDay?.toLocaleString()} <span className={`text-sm ${darkMode ? "text-gray-300" : "text-[#1F2937]"}`}>so'm</span></span>
+                    <span className={`text-xl font-black ${darkMode ? "text-blue-400" : "text-[#96C7B9]"}`}>{book.rentalPricePerDay?.toLocaleString()} <span className={`text-sm ${darkMode ? "text-gray-300" : "text-[#1F2937]"}`}>so&apos;m</span></span>
                 </div>
             </Link>
             <button 
@@ -443,7 +439,7 @@ export default function RentPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   
   // API Call with params
-  const { data: booksData, isLoading: booksLoading } = useGetBooksQuery({
+  const { data: booksData, isLoading: booksLoading, isError: booksError, refetch } = useGetBooksQuery({
     page,
     limit,
     category: filterCategory,
@@ -591,7 +587,7 @@ export default function RentPage() {
       {/* CONTENT */}
       <main className="max-w-7xl mx-auto px-6 py-10">
          <AnimatePresence mode="wait">
-            {booksLoading ? (
+            {booksError ? (<div role="alert" className="p-8 text-center"><p>Katalogni yuklab bo‘lmadi. Tarmoqni tekshiring.</p><button onClick={refetch} className="px-6 py-3 rounded-xl border mt-4">Qayta urinish</button></div>) : booksLoading ? (
                 <motion.div 
                    key="skeleton"
                    initial={{ opacity: 0 }}
@@ -621,7 +617,7 @@ export default function RentPage() {
                    {allBooks.length === 0 && (
                        <div className="col-span-full text-center py-20">
                            <h3 className="text-xl font-bold text-gray-400">Kitoblar topilmadi 😔</h3>
-                           <p className="text-gray-400 mt-2">Boshqa so'z bilan qidirib ko'ring yoki filterni o'zgartiring.</p>
+                           <p className="text-gray-400 mt-2">Boshqa so&apos;z bilan qidirib ko&apos;ring yoki filterni o&apos;zgartiring.</p>
                        </div>
                    )}
                 </motion.div>
@@ -801,8 +797,8 @@ const BookReviewsModal = ({ book, onClose, darkMode }) => {
                     ) : (
                         <div className="flex flex-col items-center justify-center py-20 text-center opacity-30">
                             <FaStar className="text-6xl mb-4" />
-                            <p className="font-bold text-lg">Hozircha taqrizlar yo'q</p>
-                            <p className="text-sm">Birinchilardan bo'lib fikr qoldiring!</p>
+                            <p className="font-bold text-lg">Hozircha taqrizlar yo&apos;q</p>
+                            <p className="text-sm">Birinchilardan bo&apos;lib fikr qoldiring!</p>
                         </div>
                     )}
                 </div>

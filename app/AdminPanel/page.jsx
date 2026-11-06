@@ -319,7 +319,7 @@ export default function DashboardPage() {
          <motion.div variants={itemVariants}>
             <div className={`p-6 rounded-2xl border flex items-center justify-between ${darkMode ? "bg-red-900/20 border-red-500/30 text-red-200" : "bg-red-50 border-red-100 text-red-900"}`}>
                 <div>
-                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Ijara muddati o'tgan</span>
+                    <span className="text-xs uppercase font-bold tracking-wider opacity-70">Ijara muddati o&apos;tgan</span>
                     <h3 className="text-3xl font-black mt-1">{stats?.overdueRentals || 0} ta</h3>
                 </div>
                 <FaExclamationTriangle className="text-4xl opacity-50" />
@@ -380,7 +380,7 @@ export default function DashboardPage() {
                 />
             ))}
             {(!stats?.topReaders || stats.topReaders.length === 0) && (
-                <p className="text-center text-gray-500 py-10">Ma'lumot yo'q</p>
+                <p className="text-center text-gray-500 py-10">Ma&apos;lumot yo&apos;q</p>
             )}
           </div>
           <button className={`w-full mt-6 py-3 rounded-xl text-sm font-bold border transition-all

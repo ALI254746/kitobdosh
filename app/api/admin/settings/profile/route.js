@@ -1,3 +1,5 @@
+import { publicRecord } from "@/lib/server-auth";
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import User from "@/model/user";
@@ -14,17 +16,21 @@ async function getAdmin() {
 }
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         const admin = await getAdmin();
         if (!admin) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
         
-        return NextResponse.json({ success: true, data: admin });
+        return NextResponse.json({ success: true, data: publicRecord(admin) });
     } catch (error) {
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
 }
 
 export async function PUT(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         const admin = await getAdmin();
         if (!admin) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });

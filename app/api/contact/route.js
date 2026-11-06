@@ -1,3 +1,4 @@
+import { authorize, courierRoles } from "@/lib/server-auth";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import ContactMessage from "@/model/ContactMessage";
@@ -9,21 +10,8 @@ import { authOptions } from "@/lib/authOptions";
 
 // Helper to get User ID
 async function getUserId() {
-    // 1. Check Custom Token
-    const cookieStore = await cookies();
-    const token = cookieStore.get("kitobdosh_token")?.value;
-    if (token) {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            return decoded.userId;
-        } catch (e) {}
-    }
-
-    // 2. Check NextAuth Session
-    const session = await getServerSession(authOptions);
-    if (session?.user?.id) return session.user.id;
-
-    return null;
+  const session = await getServerSession(authOptions);
+  return session?.user?.id || null;
 }
 
 export async function POST(req) {
@@ -35,6 +23,8 @@ export async function POST(req) {
     // We can distinguish by a specific flag or separate endpoint, but keeping it simple here:
     // If 'replyToMessageId' and 'replyText' are present, handle as reply.
     if (data.action === 'reply') {
+        const session = await getServerSession(authOptions);
+        if (session?.user?.role !== 'admin') return NextResponse.json({ success: false, message: 'Ruxsat yo‘q' }, { status: 403 });
         const { messageId, replyText, userId } = data;
         
         if (!userId) {
@@ -81,6 +71,8 @@ export async function POST(req) {
 }
 
 export async function GET(req) {
+    const access = await authorize(['admin']);
+    if (access.response) return access.response;
   try {
     await dbConnect();
     // Populate user if needed, or just fetch basic data
@@ -93,6 +85,8 @@ export async function GET(req) {
 }
 
 export async function PUT(req) {
+    const access = await authorize(['admin']);
+    if (access.response) return access.response;
     try {
         await dbConnect();
         const { id, updates } = await req.json();
@@ -108,6 +102,8 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
+    const access = await authorize(['admin']);
+    if (access.response) return access.response;
     try {
         await dbConnect();
         const { id } = await req.json();

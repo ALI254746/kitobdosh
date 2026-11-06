@@ -1,3 +1,4 @@
+import { escapeSearch, positiveInt, isObjectId } from "@/lib/catalog-input.mjs";
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
@@ -10,15 +11,16 @@ export async function GET(req) {
     const id = searchParams.get("id");
     const query = searchParams.get("q") || "";
     const category = searchParams.get("category") || "";
-    const page = parseInt(searchParams.get("page")) || 1;
-    const limit = parseInt(searchParams.get("limit")) || 10;
-    const sort = searchParams.get("sort") || "createdAt";
+    const page = positiveInt(searchParams.get("page"), 1, 10000);
+    const limit = positiveInt(searchParams.get("limit"), 10, 100);
+    const sort = ["createdAt", "price", "title", "averageRating"].includes(searchParams.get("sort")) ? searchParams.get("sort") : "createdAt";
     const type = searchParams.get("type"); // 'rent' or 'sale'
 
     await dbConnect();
 
     // --- CASE 1: SEARCH BY ID (For Book Detail Page) ---
     if (id) {
+        if (!isObjectId(id)) return NextResponse.json({ success: false, message: "Kitob manzili noto‘g‘ri" }, { status: 400 });
         const book = await Book.findById(id);
         if (!book) {
             return NextResponse.json({ success: false, message: "Kitob topilmadi" }, { status: 404 });
@@ -33,7 +35,10 @@ export async function GET(req) {
                 category: book.category,
                 price: book.price,
                 rentalPrice: book.rentalPricePerDay,
-                rating: book.averageRating || 5.0,
+                rentalPricePerDay: book.rentalPricePerDay,
+                stock: book.stock,
+                pages: book.pages,
+                rating: book.averageRating || 0,
                 description: book.description,
                 isRentable: book.isRentable
             }],
@@ -42,7 +47,7 @@ export async function GET(req) {
     }
 
     // --- 1. CONSTRUCT FILTER ---
-    const bookRegex = new RegExp(query, "i");
+    const bookRegex = new RegExp(escapeSearch(query), "i");
     let bookFilter = {
       $and: [
           {
@@ -57,7 +62,7 @@ export async function GET(req) {
     };
 
     if (category && category !== "Asosiy") {
-        bookFilter.$and.push({ category: new RegExp(category, "i") });
+        bookFilter.$and.push({ category: new RegExp(escapeSearch(category), "i") });
     }
 
     // Filter by type: 'rent' maps to isRentable: true, 'sale' maps to isRentable: false
@@ -78,7 +83,7 @@ export async function GET(req) {
             .sort({ [sort]: -1 })
             .skip(skip)
             .limit(limit)
-            .select("title author images category price rentalPricePerDay averageRating isRentable"),
+            .select("title author images category price rentalPricePerDay averageRating isRentable stock pages"),
         Book.countDocuments(bookFilter)
     ]);
 
@@ -94,22 +99,21 @@ export async function GET(req) {
         }));
 
         // FOYDALANUVCHILARNI QIDIRISH (User modelidan)
-        const userRegex = new RegExp(query, "i");
+        const userRegex = new RegExp(escapeSearch(query), "i");
         const foundUsers = await User.find({
             $or: [
                 { fullName: userRegex },
-                { email: userRegex }
+                { fullName: userRegex }
             ]
         })
-        .select("fullName avatar email")
+        .select("fullName avatar")
         .limit(5)
         .lean();
 
         const userObjects = foundUsers.map(user => ({
             _id: user._id,
-            name: user.fullName || user.email.split('@')[0],
+            name: user.fullName || 'Kitobxon',
             avatar: user.avatar,
-            email: user.email,
             type: 'user'
         }));
 
@@ -126,7 +130,10 @@ export async function GET(req) {
           category: book.category,
           price: book.price,
           rentalPrice: book.rentalPricePerDay,
-          rating: book.averageRating || 5.0,
+                rentalPricePerDay: book.rentalPricePerDay,
+                stock: book.stock,
+                pages: book.pages,
+          rating: book.averageRating || 0,
           isRentable: book.isRentable
       })),
       people: people,

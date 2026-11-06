@@ -9,26 +9,8 @@ import { authOptions } from "@/lib/authOptions";
 
 // Helper to get User ID
 async function getUserId() {
-    // 1. Try extracting from custom cookie (Legacy/Register flow)
-    const cookieStore = await cookies();
-    const token = cookieStore.get("kitobdosh_token")?.value;
-    
-    if (token) {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            return decoded.userId;
-        } catch (e) {
-            // Token invalid, proceed to check Session
-        }
-    }
-
-    // 2. Try getting NextAuth session
-    const session = await getServerSession(authOptions);
-    if (session?.user?.id) {
-        return session.user.id;
-    }
-
-    return null;
+  const session = await getServerSession(authOptions);
+  return session?.user?.id || null;
 }
 
 export async function POST(req) {

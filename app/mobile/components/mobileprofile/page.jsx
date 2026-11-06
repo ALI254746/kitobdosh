@@ -48,16 +48,17 @@ export default function MobileProfilePage() {
                 const orders = data.data.orders || [];
                 const rentals = data.data.rentals || [];
 
-                setUserData(u);
+                setUserData({ ...u, orders, rentals });
 
                 // Calculate Stats
                 const completedOrders = orders.filter(o => o.status === 'completed').length;
                 const completedRentals = rentals.filter(r => r.status === 'returned').length;
                 
                 setStats({
+                    orders: orders.length,
                     read: completedOrders + completedRentals,
                     handovers: rentals.length,
-                    traces: orders.length + rentals.length, 
+                    traces: orders.length + rentals.filter(r => !orders.some(o => String(o._id) === String(r.orderId))).length,
                     thoughts: (data.data.reviews || []).length,
                     favorites: (u.favorites || []).length
                 });
@@ -117,7 +118,7 @@ export default function MobileProfilePage() {
   const profileDisplay = {
       name: userData.fullName || userData.email.split('@')[0],
       username: userData.email.split('@')[0],
-      avatar: userData.avatar || `https://ui-avatars.com/api/?name=${userData.fullName || userData.email}&background=52C6DA&color=fff`,
+      avatar: userData.avatar || "",
       bio: userData.bio || "",
       isFikrdosh: userData.role === 'admin',
       id: userData._id || userData.id
@@ -233,7 +234,7 @@ const HeaderSection = ({ user, onEdit }) => {
     <div className="pt-8 pb-4 px-6 flex items-center justify-between">
       <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-[#52C6DA]/10 flex items-center justify-center overflow-hidden">
-                <Image src={user.avatar} alt={user.name} width={48} height={48} className="object-cover" unoptimized />
+                {user.avatar ? <Image src={user.avatar} alt={user.name} width={48} height={48} className="object-cover" unoptimized /> : <span aria-label="Profil rasmi yo‘q" className="font-black text-[#52C6DA]">{user.name.charAt(0).toUpperCase()}</span>}
           </div>
           <div>
               <h1 className="text-lg font-black text-slate-900 dark:text-white leading-tight">Salom, {user.name.split(' ')[0]}! ✨</h1>
@@ -281,7 +282,7 @@ const DashboardView = ({ user, stats, onEdit, setActiveTab }) => {
                     <div className="w-10 h-10 rounded-xl bg-[#52C6DA]/10 flex items-center justify-center text-[#52C6DA] mb-3">
                         <ShoppingBag size={20} />
                     </div>
-                    <span className="block text-2xl font-black text-slate-900 dark:text-white">{stats.read}</span>
+                    <span className="block text-2xl font-black text-slate-900 dark:text-white">{stats.orders || 0}</span>
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Jami buyurtmalar</span>
                 </div>
                 <div 
@@ -323,7 +324,7 @@ const DashboardView = ({ user, stats, onEdit, setActiveTab }) => {
             <div className="bg-slate-900 dark:bg-white p-5 rounded-[2.5rem] text-white dark:text-slate-900 flex items-center justify-between shadow-xl">
                 <div>
                    <h4 className="text-lg font-black leading-tight">Shaxsiy Profilingiz</h4>
-                   <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Ma'lumotlarni tahrirlash</p>
+                   <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Ma&apos;lumotlarni tahrirlash</p>
                 </div>
                 <button 
                    onClick={onEdit}
@@ -337,9 +338,10 @@ const DashboardView = ({ user, stats, onEdit, setActiveTab }) => {
 };
 
 const OrdersHistoryView = ({ rentals = [], orders = [] }) => {
+  const rentalOrderIds = new Set(rentals.map(r => String(r.orderId)));
   const allTransactions = [
     ...rentals.map(r => ({ ...r, txType: 'rent' })),
-    ...orders.map(o => ({ ...o, txType: 'buy' }))
+    ...orders.filter(o => !rentalOrderIds.has(String(o._id)) || o.items?.some(i => i.type === 'buy')).map(o => ({ ...o, txType: 'buy' }))
   ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   if (allTransactions.length === 0) return (
@@ -385,6 +387,10 @@ const OrdersHistoryView = ({ rentals = [], orders = [] }) => {
 const StatusBadge = ({ status }) => {
   const configs = {
     pending: { color: "text-amber-500 bg-amber-50", icon: <Clock size={10}/>, label: "Kutilmoqda" },
+    processing: { color: "text-blue-500 bg-blue-50", icon: <Clock size={10}/>, label: "Jarayonda" },
+    approved: { color: "text-blue-500 bg-blue-50", icon: <CheckCircle2 size={10}/>, label: "Tasdiqlangan" },
+    active: { color: "text-green-500 bg-green-50", icon: <CheckCircle2 size={10}/>, label: "Ijara faol" },
+    rejected: { color: "text-red-500 bg-red-50", icon: <AlertCircle size={10}/>, label: "Rad etilgan" },
     completed: { color: "text-green-500 bg-green-50", icon: <CheckCircle2 size={10}/>, label: "Yetkazildi" },
     returned: { color: "text-blue-500 bg-blue-50", icon: <CheckCircle2 size={10}/>, label: "Qaytarildi" },
     cancelled: { color: "text-red-500 bg-red-50", icon: <AlertCircle size={10}/>, label: "Bekor qilindi" },
@@ -585,7 +591,7 @@ const EditProfileModal = ({ user, onClose, onSave }) => {
                             <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
                         </label>
                     </div>
-                    <span className="text-xs font-bold text-[#52C6DA]">Rasm o'zgartirish</span>
+                    <span className="text-xs font-bold text-[#52C6DA]">Rasm o&apos;zgartirish</span>
                 </div>
 
                 {/* Inputs */}
@@ -613,14 +619,14 @@ const EditProfileModal = ({ user, onClose, onSave }) => {
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Mashg'ulot</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Mashg&apos;ulot</label>
                             <select 
                                 className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-3 px-4 text-xs font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-[#52C6DA] transition-all appearance-none"
                                 value={formData.occupation}
                                 onChange={(e) => setFormData({...formData, occupation: e.target.value})}
                             >
                                 <option value="student">Talaba</option>
-                                <option value="teacher">O'qituvchi</option>
+                                <option value="teacher">O&apos;qituvchi</option>
                                 <option value="courier">Kuryer</option>
                                 <option value="other">Boshqa</option>
                             </select>
@@ -668,7 +674,7 @@ const EditProfileModal = ({ user, onClose, onSave }) => {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">O'zingiz haqingizda (Bio)</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">O&apos;zingiz haqingizda (Bio)</label>
                         <textarea 
                             className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 px-5 text-sm font-bold text-slate-800 dark:text-white focus:ring-2 focus:ring-[#52C6DA] transition-all min-h-[80px] resize-none"
                             value={formData.bio}

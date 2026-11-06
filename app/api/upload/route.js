@@ -1,84 +1,29 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { NextResponse } from 'next/server';
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
+import { authorize, courierRoles } from '@/lib/server-auth';
+import { dbConnect } from '@/lib/db.Connect';
+import Asset from '@/model/UploadAsset';
+import { uploadImage, configureCloudinary, UploadInputError } from '@/lib/uploads';
 export async function POST(req) {
+  const access = await authorize(); if (access.response) return access.response;
   try {
-    const formData = await req.formData();
-    const file = formData.get('file');
-    const folder = formData.get('folder') || 'kitobdosh'; // Default folder
-
-    if (!file) {
-      return NextResponse.json({ success: false, message: 'Fayl topilmadi' }, { status: 400 });
-    }
-
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Upload to Cloudinary
-    const result = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          folder: folder,
-          resource_type: 'auto', // Automatically detect file type
-          transformation: [
-            { width: 1000, height: 1000, crop: 'limit' }, // Max size
-            { quality: 'auto' }, // Auto quality
-            { fetch_format: 'auto' } // Auto format (WebP if supported)
-          ]
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(buffer);
-    });
-
-    return NextResponse.json({
-      success: true,
-      url: result.secure_url,
-      publicId: result.public_id,
-      width: result.width,
-      height: result.height
-    });
-
-  } catch (error) {
-    console.error('Cloudinary Upload Error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      message: error.message 
-    }, { status: 500 });
-  }
+    const data = await req.formData(); const folder = data.get('folder') || 'kitobdosh';
+    const allowed = access.user.role === 'admin' ? ['kitobdosh','books','promo-banners','returns'] : courierRoles.includes(access.user.role) ? ['kitobdosh','returns'] : ['kitobdosh'];
+    if (!allowed.includes(folder)) return NextResponse.json({ success: false, message: 'Rasm papkasi uchun ruxsat yo‘q' }, { status: 403 });
+    await dbConnect();
+    const asset = await uploadImage(data.get('file'), access.user.id, folder);
+    return NextResponse.json({ success: true, url: asset.url, publicId: asset.publicId });
+  } catch (error) { return NextResponse.json({ success: false, message: error instanceof UploadInputError ? error.message : 'Rasmni yuklab bo‘lmadi' }, { status: error instanceof UploadInputError ? 400 : 503 }); }
 }
-
-// DELETE endpoint to remove images
 export async function DELETE(req) {
+  const access = await authorize(); if (access.response) return access.response;
   try {
     const { publicId } = await req.json();
-
-    if (!publicId) {
-      return NextResponse.json({ success: false, message: 'Public ID topilmadi' }, { status: 400 });
-    }
-
-    const result = await cloudinary.uploader.destroy(publicId);
-
-    return NextResponse.json({
-      success: true,
-      result: result
-    });
-
-  } catch (error) {
-    console.error('Cloudinary Delete Error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      message: error.message 
-    }, { status: 500 });
-  }
+    if (typeof publicId !== 'string' || !publicId) return NextResponse.json({ success: false }, { status: 400 });
+    await dbConnect();
+    const asset = await Asset.findOne({ publicId, private: false });
+    if (!asset || (access.user.role !== 'admin' && String(asset.owner) !== access.user.id)) return NextResponse.json({ success: false }, { status: 403 });
+    configureCloudinary(); await cloudinary.uploader.destroy(publicId);
+    await asset.deleteOne(); return NextResponse.json({ success: true });
+  } catch { return NextResponse.json({ success: false, message: 'Rasmni o‘chirib bo‘lmadi' }, { status: 503 }); }
 }

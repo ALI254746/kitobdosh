@@ -4,7 +4,7 @@
 
 ### API Key
 ```
-RESEND_API_KEY=re_cRtWwyLk_GHPsSzUh33GbKanUKxzLhcyA
+RESEND_API_KEY=<RESEND_API_KEY>
 ```
 
 ## 🧪 Test Qilish (Local)
@@ -61,7 +61,7 @@ Barcha yuborilgan emaillarni ko'rish uchun:
 
 ### 1. Vercel Dashboard → Environment Variables:
 ```
-RESEND_API_KEY=re_cRtWwyLk_GHPsSzUh33GbKanUKxzLhcyA
+RESEND_API_KEY=<RESEND_API_KEY>
 ```
 
 ### 2. Deploy:

@@ -141,7 +141,7 @@ export default function NotificationsPage() {
             <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-[2.5rem] flex items-center justify-center text-slate-200 dark:text-slate-700 mx-auto mb-6">
               <FaBell size={32} />
             </div>
-            <h3 className="font-black text-slate-900 dark:text-white text-xl mb-2 tracking-tight uppercase">Xabarlar yo'q</h3>
+            <h3 className="font-black text-slate-900 dark:text-white text-xl mb-2 tracking-tight uppercase">Xabarlar yo&apos;q</h3>
             <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest">Sizda hozircha bildirishnomalar mavjud emas.</p>
           </div>
         )}

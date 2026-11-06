@@ -1,3 +1,4 @@
+import { uploadImage, UploadInputError } from "@/lib/uploads";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Order from "@/model/Order";
@@ -21,67 +22,12 @@ export async function GET(req) {
   try {
     await dbConnect();
     
-    // 1. Get Session from NextAuth
     const session = await getServerSession(authOptions);
-    let currentUserId = session?.user?.id;
-    
-    console.log("🔍 DEBUG PROFILE API:");
-    console.log("- Session:", session ? "FOUND" : "NULL");
-    if(session) console.log("- UserID form Session:", session.user.id);
-
-    // 2. Fallback: Custom 'kitobdosh_token' (for Email/Password logins)
-    if (!currentUserId) {
-        try {
-            const cookieStore = await cookies();
-            const token = cookieStore.get("kitobdosh_token")?.value;
-            console.log("- Kitobdosh Token Cookie:", token ? "FOUND" : "NULL");
-            
-            if (token) {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                currentUserId = decoded.userId;
-                console.log("- UserID from Token:", currentUserId);
-            }
-        } catch (e) {
-            console.error("- Custom token error:", e.message);
-        }
-    }
-
-    // 3. Fallback: NextAuth Token (if session failed but token exists)
-    if (!currentUserId) {
-        const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-        console.log("- NextAuth Token (raw):", token ? "FOUND" : "NULL");
-        currentUserId = token?.sub;
-        if(currentUserId) console.log("- UserID from NextAuth Token:", currentUserId);
-    }
-
-    // 2. Determine Target User (defaults to current)
-    const url = new URL(req.url);
-    const queryUserId = url.searchParams.get("userId");
-    let targetUserId = queryUserId || currentUserId;
-
-    console.log("- Target User ID:", targetUserId);
-
-    if (!targetUserId) {
-         console.log("❌ AUTENTIFIKATSIYA XATOSI: Foydalanuvchi aniqlanmadi.");
-         return NextResponse.json({ success: false, message: "Unauthorized: Please login again" }, { status: 401 });
-    }
-
-    // Fix: If ID is not a valid MongoDB ObjectId (e.g. Google Sub ID), try to resolve via Email
-    const mongoose = require("mongoose");
-    if (!mongoose.Types.ObjectId.isValid(targetUserId)) {
-        console.log(`⚠️ UserID "${targetUserId}" invalid ObjectId. Attempting email lookup...`);
-        
-        if (session?.user?.email) {
-             const userByEmail = await User.findOne({ email: session.user.email }).select("_id");
-             if (userByEmail) {
-                 targetUserId = userByEmail._id.toString();
-                 console.log("✅ Resolved real UserID:", targetUserId);
-             } else {
-                 console.log("❌ Could not resolve UserID via email.");
-             }
-        }
-    }
-
+    const currentUserId = session?.user?.id;
+    if (!currentUserId) return NextResponse.json({ success: false, message: 'Avval tizimga kiring' }, { status: 401 });
+    const queryUserId = new URL(req.url).searchParams.get('userId');
+    if (queryUserId && queryUserId !== currentUserId) return NextResponse.json({ success: false, message: 'Bu profil uchun ruxsat yo‘q' }, { status: 403 });
+    const targetUserId = currentUserId;
     const isOwner = currentUserId === targetUserId;
     const CACHE_KEY = `profile_full:${targetUserId}`;
 
@@ -94,8 +40,8 @@ export async function GET(req) {
 
             // Parallel Fetching for speed
             const [orders, rentals, userWithFavs, reviews] = await Promise.all([
-                Order.find({ user: targetUserId }).sort({ createdAt: -1 }).populate('items.book').lean(),
-                Rent.find({ user: targetUserId }).sort({ createdAt: -1 }).lean(),
+                Order.find({ user: targetUserId }).sort({ createdAt: -1 }).select('-passportUrl -passportCloudinaryId -passportAssetId -passportFormat').populate('items.book').lean(),
+                Rent.find({ user: targetUserId }).select('-passportUrl -passportCloudinaryId -passportAssetId -passportFormat').sort({ createdAt: -1 }).lean(),
                 User.findById(targetUserId).populate('favorites').lean(),
                 Review.find({ user: targetUserId }).sort({ createdAt: -1 }).populate('book').lean()
             ]);
@@ -164,27 +110,10 @@ export async function PUT(req) {
         if (avatarUrl) updateData.avatar = avatarUrl;
         if (avatarCloudinaryId) updateData.avatarCloudinaryId = avatarCloudinaryId;
 
-        // Handle Avatar Upload via Cloudinary
-        if (file && file instanceof File) {
-            const { v2: cloudinary } = await import('cloudinary');
-            cloudinary.config({
-                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-                api_key: process.env.CLOUDINARY_API_KEY,
-                api_secret: process.env.CLOUDINARY_API_SECRET
-            });
-
-            const buffer = Buffer.from(await file.arrayBuffer());
-            const uploadResult = await new Promise((resolve, reject) => {
-                cloudinary.uploader.upload_stream(
-                    { folder: 'kitobdosh/avatars', resource_type: 'auto' },
-                    (error, result) => {
-                        if (error) reject(error);
-                        else resolve(result);
-                    }
-                ).end(buffer);
-            });
-            updateData.avatar = uploadResult.secure_url;
-            updateData.avatarCloudinaryId = uploadResult.public_id;
+        if (file && typeof file.arrayBuffer === 'function' && file.size) {
+            const result = await uploadImage(file, userId, 'kitobdosh');
+            updateData.avatar = result.url;
+            updateData.avatarCloudinaryId = result.publicId;
         }
 
         const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true }).select("-password");
@@ -196,6 +125,6 @@ export async function PUT(req) {
 
     } catch (error) {
         console.error("Profile Update Error:", error);
-        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, message: "Profilni saqlab bo‘lmadi" }, { status: error instanceof UploadInputError ? 400 : 503 });
     }
 }

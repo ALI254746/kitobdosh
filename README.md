@@ -1,3 +1,13 @@
+# Kitobdosh
+
+Next.js 14, React 18, MongoDB/Mongoose va NextAuth asosidagi kitob katalogi, xarid va ijara platformasi.
+
+2026-11-06 himoyasi uchun avval [joriy runbook](docs/himoya-runbook.md), keyin [namoyish ro‘yxati](docs/defense-checklist.md) va [tekshiruv hisoboti](docs/verification-report.md)ga qarang. Tashqi xizmatlarning sozlanishi ularning end-to-end ishlashi tasdiqlanganini anglatmaydi.
+
+`npm ci`, `npm test`, `npm run lint`, `npm run build`. Alohida lokal demo bazada `npm run seed:demo`; kerakli environment nomlari va xavfsiz cheklovlar yuqoridagi hujjatda berilgan. Production bazasida seed ishlatmang.
+
+---
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started

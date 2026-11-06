@@ -66,6 +66,7 @@ export default function DiscountCard() {
   return (
     <div className="p-4 px-3">
       <SerachBar />
+      <Link href="/mobile/almashish" className="my-4 block rounded-2xl bg-emerald-700 px-4 py-3 text-center font-bold text-white">Kitob almashish va sharhlar</Link>
       {homeData?.promos?.length > 0 && (
         <div className="relative w-screen -ml-4 overflow-hidden">
           <div 

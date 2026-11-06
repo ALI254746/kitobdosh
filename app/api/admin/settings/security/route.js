@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import User from "@/model/user";
@@ -6,6 +7,8 @@ import { authOptions } from "@/lib/authOptions";
 import bcrypt from "bcryptjs";
 
 export async function PUT(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         const session = await getServerSession(authOptions);
         if (!session || session.user.role !== 'admin') {

@@ -1,3 +1,14 @@
+import { publicRecord } from "@/lib/server-auth";
+import { authorize } from '@/lib/server-auth';
+import { createOrder } from '@/lib/create-order';
+import { uploadImage, configureCloudinary, UploadInputError } from '@/lib/uploads';
+import { v2 as cloudinary } from 'cloudinary';
+import Asset from '@/model/UploadAsset';
+import { clearCache, clearCachePattern } from '@/lib/utils/cache';
+import { requireRole } from "@/lib/require-role";
+import Book from "@/model/Book";
+import { prepareOrder, OrderInputError } from "@/lib/order-input.mjs";
+import { isObjectId } from "@/lib/catalog-input.mjs";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import Order from "@/model/Order";
@@ -11,137 +22,36 @@ import { authOptions } from "@/lib/authOptions";
 import mongoose from 'mongoose';
 
 export async function POST(req) {
+  const access = await authorize(); if (access.response) return access.response;
+  let document;
   try {
     await dbConnect();
-    
-    let payload = {};
-    const contentType = req.headers.get("content-type") || "";
-
-    if (contentType.includes("multipart/form-data")) {
-        const formData = await req.formData();
-        const customer = JSON.parse(formData.get("customer") || "{}");
-        const items = JSON.parse(formData.get("items") || "[]");
-        const passportFile = formData.get("passport");
-
-        payload = {
-            customer,
-            items,
-            deliveryMethod: formData.get("deliveryMethod"),
-            paymentMethod: formData.get("paymentMethod"),
-            totalPrice: Number(formData.get("totalPrice")),
-        };
-
-        // Handle Passport Upload to Cloudinary
-        if (passportFile && passportFile.size > 0) {
-            const { v2: cloudinary } = await import('cloudinary');
-            cloudinary.config({
-                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-                api_key: process.env.CLOUDINARY_API_KEY,
-                api_secret: process.env.CLOUDINARY_API_SECRET
-            });
-
-            const bytes = await passportFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-
-            const uploadResult = await new Promise((resolve, reject) => {
-                cloudinary.uploader.upload_stream(
-                    {
-                        folder: 'kitobdosh/passports',
-                        resource_type: 'auto'
-                    },
-                    (error, result) => {
-                        if (error) reject(error);
-                        else resolve(result);
-                    }
-                ).end(buffer);
-            });
-            payload.passportUrl = uploadResult.secure_url;
-            payload.passportCloudinaryId = uploadResult.public_id;
-        }
-    } else {
-        payload = await req.json();
-    }
-
-    // 1. Auth Check: Session
-    const session = await getServerSession(authOptions);
-    let userId = session?.user?.id;
-
-    // 2. Fallback: Token
-    if (!userId) {
-        try {
-            const cookieStore = await cookies();
-            const token = cookieStore.get("kitobdosh_token")?.value;
-            
-            if (token) {
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded.userId;
-            }
-        } catch (e) {
-            console.error("DEBUG: Token error", e);
-        }
-    }
-
-    if (!userId) {
-         return NextResponse.json({ success: false, message: "Iltimos, avval tizimga kiring!" }, { status: 401 });
-    }
-
-    const finalOrderData = {
-        ...payload,
-        user: userId
-    };
-
-    const newOrder = new Order(finalOrderData);
-    await newOrder.save();
-    
-    // 3. For RENTAL items: Create records in Rent collection for Admin Panel visibility
-    const rentalItems = finalOrderData.items.filter(i => i.type === 'rent');
-    if (rentalItems.length > 0) {
-        for (const item of rentalItems) {
-            try {
-                await Rent.create({
-                    user: userId,
-                    book: item.book,
-                    bookTitle: item.title,
-                    bookImage: item.image || "", // Try to pass image in checkout or fetch later
-                    fullName: finalOrderData.customer.name,
-                    phone: finalOrderData.customer.phone,
-                    address: finalOrderData.customer.address,
-                    passportUrl: finalOrderData.passportUrl || "",
-                    days: item.rentDays || 1,
-                    totalPrice: item.price,
-                    paymentMethod: finalOrderData.paymentMethod,
-                    status: 'pending',
-                    orderId: newOrder._id // Cross-reference
-                });
-            } catch (rentError) {
-                console.error("Error creating Rent entry for order item:", rentError);
-            }
-        }
-    }
-
-    // Notify Admins
-    try {
-        await pusherServer.trigger("admin-channel", "new-order", {
-            message: "Yangi buyurtma keldi!",
-            orderId: newOrder._id,
-            customer: newOrder.customer?.name || "Noma'lum",
-            totalPrice: newOrder.totalPrice
-        });
-    } catch (pusherError) {
-        console.error("Pusher Admin Trigger Error:", pusherError);
-    }
-
-    return NextResponse.json({ success: true, message: "Buyurtma qabul qilindi", data: newOrder });
+    let payload;
+    if ((req.headers.get('content-type') || '').includes('multipart/form-data')) {
+      const form = await req.formData();
+      payload = { customer: JSON.parse(form.get('customer') || '{}'), items: JSON.parse(form.get('items') || '[]'), deliveryMethod: form.get('deliveryMethod'), paymentMethod: form.get('paymentMethod') };
+      // Validate before any external upload; private storage identifiers are server-owned.
+      const books = await Book.find({ _id: { $in: (Array.isArray(payload.items) ? payload.items : []).filter(i => isObjectId(i.book)).map(i => i.book) } }).lean();
+      prepareOrder(payload, books);
+      if (payload.items.some(i => i.type === 'rent')) document = await uploadImage(form.get('passport'), access.user.id, 'kitobdosh/passports', true);
+    } else payload = await req.json();
+    const order = await createOrder(payload, access.user.id, document);
+    await clearCache(`profile_full:${access.user.id}`);
+    await clearCachePattern('books_*');
+    return NextResponse.json({ success: true, message: 'Buyurtma qabul qilindi. To‘lov kutilmoqda.', data: order });
   } catch (error) {
-    console.error("Order API Error:", error);
-    return NextResponse.json({ success: false, message: "Xatolik yuz berdi: " + error.message }, { status: 500 });
+    if (document) { try { configureCloudinary(); await cloudinary.uploader.destroy(document.publicId, { type: 'authenticated' }); await Asset.deleteOne({ publicId: document.publicId, owner: access.user.id }); } catch {} }
+    const invalid = error instanceof OrderInputError || error instanceof UploadInputError || error instanceof SyntaxError || error.name === 'ValidationError';
+    return NextResponse.json({ success: false, message: invalid ? 'Buyurtma maydonlari yoki hujjat rasmi noto‘g‘ri' : 'Buyurtmani saqlab bo‘lmadi. Qayta urinib ko‘ring.' }, { status: invalid ? 400 : 503 });
   }
 }
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
-        const orders = await Order.find().populate('user', 'email').sort({ createdAt: -1 });
+        const orders = await Order.find().select('-passportUrl -passportCloudinaryId -passportAssetId').populate('user', 'email').sort({ createdAt: -1 });
         return NextResponse.json({ success: true, data: orders });
     } catch (error) {
         console.error("Order GET Error:", error);
@@ -150,26 +60,64 @@ export async function GET() {
 }
 
 export async function PUT(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
     try {
         await dbConnect();
         const { id, status } = await req.json();
         console.log(`Order PUT - Updating Order ${id} to ${status}`);
 
-        if (!id || !status) {
+        if (!isObjectId(id) || !['pending', 'processing', 'completed', 'cancelled'].includes(status)) {
             return NextResponse.json({ success: false, message: "Ma'lumot kam" }, { status: 400 });
         }
 
-        const updateFull = { status };
-        if (status === 'processing') {
-            updateFull.courierStatus = 'new';
-            console.log(`Order API: Order Processing. Setting courierStatus to 'new'. ID: ${id}`);
-        }
-        
-        console.log(`Order API: Updating Order ${id} status to ${status}`);
-        const updatedOrder = await Order.findByIdAndUpdate(id, updateFull, { new: true });
-
-        if (!updatedOrder) {
-             return NextResponse.json({ success: false, message: "Buyurtma topilmadi" }, { status: 404 });
+        let updatedOrder;
+        if (status === 'cancelled') {
+            const session = await mongoose.startSession();
+            try {
+                await session.withTransaction(async () => {
+                    updatedOrder = await Order.findOneAndUpdate(
+                        { _id: id, status: { $in: ['pending', 'processing'] } },
+                        { $set: { status: 'cancelled' } },
+                        { new: true, session }
+                    );
+                    if (!updatedOrder) return;
+                    const quantities = new Map();
+                    for (const item of updatedOrder.items || []) {
+                        if (!item?.book || !Number.isInteger(item.quantity) || item.quantity < 1) continue;
+                        const key = String(item.book);
+                        quantities.set(key, (quantities.get(key) || 0) + item.quantity);
+                    }
+                    for (const [book, quantity] of quantities) {
+                        await Book.updateOne({ _id: book }, { $inc: { stock: quantity } }, { session });
+                    }
+                    await Rent.updateMany(
+                        { orderId: updatedOrder._id, status: { $in: ['pending', 'approved', 'courier_assigned', 'courier_picked_up'] } },
+                        { $set: { status: 'rejected' } },
+                        { session }
+                    );
+                });
+            } finally {
+                await session.endSession();
+            }
+            if (!updatedOrder) {
+                const existing = await Order.findById(id);
+                if (!existing) return NextResponse.json({ success: false, message: "Buyurtma topilmadi" }, { status: 404 });
+                if (existing.status === 'cancelled') return NextResponse.json({ success: true, data: publicRecord(existing) });
+                return NextResponse.json({ success: false, message: "Yetkazilgan buyurtmani bekor qilib, zaxirani qaytarib bo‘lmaydi" }, { status: 409 });
+            }
+            await clearCachePattern('books_*');
+        } else {
+            const updateFull = { status };
+            if (status === 'processing') {
+                updateFull.courierStatus = 'new';
+                console.log(`Order API: Order Processing. Setting courierStatus to 'new'. ID: ${id}`);
+            }
+            console.log(`Order API: Updating Order ${id} status to ${status}`);
+            updatedOrder = await Order.findByIdAndUpdate(id, updateFull, { new: true, runValidators: true });
+            if (!updatedOrder) {
+                return NextResponse.json({ success: false, message: "Buyurtma topilmadi" }, { status: 404 });
+            }
         }
         
         console.log("Order PUT - Updated Order UserID:", updatedOrder.user);
@@ -219,7 +167,8 @@ export async function PUT(req) {
              console.log("Order PUT - Skipping Notification (No User or Status mismatch)");
         }
 
-        return NextResponse.json({ success: true, data: updatedOrder });
+        if (updatedOrder.user) await clearCache(`profile_full:${updatedOrder.user}`);
+        return NextResponse.json({ success: true, data: publicRecord(updatedOrder) });
     } catch (error) {
         console.error("Order PUT Error:", error);
         return NextResponse.json({ success: false, message: error.message }, { status: 500 });

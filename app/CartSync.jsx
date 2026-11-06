@@ -1,50 +1,43 @@
 'use client';
-
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSession } from 'next-auth/react';
 import { setCartItems, selectCartItems } from '../lib/features/cart/cartSlice';
 
 export default function CartSync() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const dispatch = useDispatch();
   const cartItems = useSelector(selectCartItems);
-  const isInitialLoad = useRef(true);
-
-  // 1. Initial Load from Server or LocalStorage
+  const [loadedKey, setLoadedKey] = useState(null);
+  const generation = useRef(0);
+  const key = session?.user?.id ? `kitobdosh_cart:${session.user.id}` : 'kitobdosh_cart';
   useEffect(() => {
-    const loadCart = async () => {
-      if (session?.user) {
+    if (status === 'loading') return;
+    const current = ++generation.current;
+    setLoadedKey(null);
+    const load = async () => {
+      let items = [];
+      try {
+        const saved = JSON.parse(localStorage.getItem(key) || '[]');
+        if (Array.isArray(saved)) items = saved;
+      } catch { /* Invalid local backup must not crash the page. */ }
+      if (session?.user?.id) {
         try {
           const res = await fetch('/api/cart');
           const data = await res.json();
-          if (data.success) {
-            dispatch(setCartItems(data.cart));
-          }
-        } catch (error) {
-          console.error("Failed to load cart from server", error);
-        }
-      } else {
-        const savedCart = localStorage.getItem("kitobdosh_cart");
-        if (savedCart) {
-          try {
-            dispatch(setCartItems(JSON.parse(savedCart)));
-          } catch (e) {
-            console.error("Failed to parse cart from localStorage", e);
-          }
-        }
+          if (res.ok && data.success && Array.isArray(data.cart)) items = data.cart;
+        } catch { /* Preserve this user's local backup when sync is unavailable. */ }
       }
-      isInitialLoad.current = false;
+      if (current !== generation.current) return;
+      dispatch(setCartItems(items));
+      setLoadedKey(key);
     };
-    loadCart();
-  }, [session, dispatch]);
-
-  // 2. Sync with LocalStorage (only if not logged in)
+    load();
+    return () => { generation.current++; };
+  }, [key, status, session?.user?.id, dispatch]);
   useEffect(() => {
-    if (!isInitialLoad.current && !session?.user) {
-      localStorage.setItem("kitobdosh_cart", JSON.stringify(cartItems));
-    }
-  }, [cartItems, session]);
-
-  return null; // This component handles side effects only
+    if (loadedKey !== key) return;
+    try { localStorage.setItem(key, JSON.stringify(cartItems)); } catch {}
+  }, [cartItems, key, loadedKey]);
+  return null;
 }

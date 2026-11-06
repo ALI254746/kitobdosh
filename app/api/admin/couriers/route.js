@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/require-role";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/db.Connect";
 import User from "@/model/user";
@@ -10,6 +11,8 @@ export const dynamic = 'force-dynamic';
 // ... GET function (unchanged) ...
 
 export async function POST(req) {
+  const denied = await requireRole();
+  if (denied) return denied;
   try {
     await dbConnect();
     const { fullName, email, password, phone } = await req.json();
@@ -43,7 +46,7 @@ export async function POST(req) {
         occupation: 'courier' // Additional info
     });
 
-    return NextResponse.json({ success: true, data: newCourier }, { status: 201 });
+    return NextResponse.json({ success: true, data: { _id: newCourier._id, fullName: newCourier.fullName, email: newCourier.email, phone: newCourier.phone, role: newCourier.role } }, { status: 201 });
 
   } catch (error) {
     console.error("Create Courier Error:", error);
@@ -52,6 +55,8 @@ export async function POST(req) {
 }
 
 export async function GET() {
+  const denied = await requireRole();
+  if (denied) return denied;
   try {
     await dbConnect();
     

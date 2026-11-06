@@ -39,7 +39,7 @@ const RequestCard = ({ request, updateStatus, darkMode }) => {
                  </div>
                  <div className="flex-1 overflow-hidden">
                      <h4 className={`font-bold text-sm truncate ${darkMode ? "text-white" : "text-gray-900"}`}>{request.bookTitle}</h4>
-                     <p className={`text-xs truncate ${darkMode ? "text-[#A3ED96]/70" : "text-gray-500"}`}>Jami: {request.totalPrice?.toLocaleString()} so'm</p>
+                     <p className={`text-xs truncate ${darkMode ? "text-[#A3ED96]/70" : "text-gray-500"}`}>Jami: {request.totalPrice?.toLocaleString()} so&apos;m</p>
                      
                      <div className="flex items-center gap-2 mt-2">
                         <FaUser className="text-gray-400 text-xs" />
@@ -56,11 +56,12 @@ const RequestCard = ({ request, updateStatus, darkMode }) => {
                 <div className="flex items-center gap-2">
                     <FaMapMarkerAlt className="text-blue-500" /> <span className="truncate">{request.address}</span>
                 </div>
-                {request.passportUrl && (
-                    <a href={request.passportUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-400 hover:underline">
-                        <FaFileAlt /> Pasportni ko'rish
-                    </a>
-                )}
+                <button className="flex items-center gap-2 text-blue-400 hover:underline" onClick={async () => {
+                  const response = await fetch(`/api/rent/${request._id}/document`);
+                  const data = await response.json();
+                  if (response.ok && data.url) window.open(data.url, '_blank', 'noopener,noreferrer');
+                  else toast.error("Hujjatni ochib bo‘lmadi. Eski hujjat uchun kirish siyosatini administrator tekshirsin.");
+                }}>Hujjatni ko‘rish</button>
             </div>
 
             {/* Footer Stats */}
@@ -125,7 +126,7 @@ const KanbanColumn = ({ status, items, updateStatus, darkMode }) => {
                  ))}
                  {items.length === 0 && (
                      <div className={`text-center py-4 text-xs italic ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
-                        Bo'sh
+                        Bo&apos;sh
                      </div>
                  )}
              </div>
@@ -139,6 +140,7 @@ export default function RentRequestsPage() {
   const { darkMode } = useAdmin();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [monthLabel, setMonthLabel] = useState("");
   
   const fetchRequests = async () => {
       try {
@@ -156,6 +158,7 @@ export default function RentRequestsPage() {
   };
 
   useEffect(() => {
+    setMonthLabel(new Date().toLocaleDateString("uz-UZ", { month: "long", year: "numeric", timeZone: "Asia/Tashkent" }));
     fetchRequests();
   }, []);
 
@@ -186,7 +189,7 @@ export default function RentRequestsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
             <h1 className={`text-3xl font-black tracking-tight mb-2 ${darkMode ? "text-white" : "text-[#163201]"}`}>
-                Ijara So'rovlari
+                Ijara So&apos;rovlari
             </h1>
             <p className={`text-sm ${darkMode ? "text-[#A3ED96]/60" : "text-gray-500"}`}>
                 Joriy va yakunlangan ijara holati
@@ -196,7 +199,7 @@ export default function RentRequestsPage() {
            {/* Quick Stats or Actions could go here */}
            <div className={`px-4 py-2 rounded-xl flex items-center gap-2 font-bold ${darkMode ? "bg-white/10 text-white" : "bg-white shadow text-gray-700"}`}>
                 <FaCalendarAlt className="text-[#A3ED96]" />
-                <span>{new Date().toLocaleDateString('uz-UZ', { month: 'long', year: 'numeric' })}</span>
+                <span>{monthLabel}</span>
            </div>
       </div>
 

@@ -112,7 +112,7 @@ const OrderCard = ({ order, darkMode, onUpdateStatus }) => {
                              </div>
                              {order.deliveryMethod === 'standard' && (
                                  <div className="flex items-center gap-2 text-blue-500 font-bold">
-                                     <FaTruck className="text-xs" /> Yetkazib berish (20,000 so'm)
+                                     <FaTruck className="text-xs" /> Yetkazib berish (20,000 so&apos;m)
                                  </div>
                              )}
                               {order.deliveryMethod === 'pickup' && (
@@ -141,9 +141,9 @@ const OrderCard = ({ order, darkMode, onUpdateStatus }) => {
                         ))}
                     </div>
                     <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-200/20">
-                        <span className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Jami To'lov</span>
+                        <span className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Jami To&apos;lov</span>
                         <span className={`text-xl font-black ${darkMode ? "text-[#A3ED96]" : "text-[#163201]"}`}>
-                            {order.totalPrice.toLocaleString()} <span className="text-sm opacity-50">so'm</span>
+                            {order.totalPrice.toLocaleString()} <span className="text-sm opacity-50">so&apos;m</span>
                         </span>
                     </div>
                 </div>
@@ -257,7 +257,7 @@ export default function BooksAndOrdersPage() {
                                 </p>
                                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
                                     Mijoz: {data.customer} <br/>
-                                    Summa: {data.totalPrice?.toLocaleString()} so'm
+                                    Summa: {data.totalPrice?.toLocaleString()} so&apos;m
                                 </p>
                             </div>
                         </div>
@@ -504,7 +504,7 @@ export default function BooksAndOrdersPage() {
                          {orders.length === 0 && (
                              <div className="text-center py-20 opacity-50">
                                  <FaBox className="text-4xl mx-auto mb-4" />
-                                 <p>Hozircha buyurtmalar yo'q</p>
+                                 <p>Hozircha buyurtmalar yo&apos;q</p>
                              </div>
                          )}
                      </AnimatePresence>

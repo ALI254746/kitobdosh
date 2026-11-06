@@ -212,7 +212,7 @@ export default function KurierControl({ darkMode }) {
   if(couriers.length === 0) {
       return (
           <div className={`text-center py-10 opacity-50 ${darkMode ? "text-white" : "text-gray-500"}`}>
-              <p>Hozircha kuryerlar yo'q</p>
+              <p>Hozircha kuryerlar yo&apos;q</p>
           </div>
       )
   }
@@ -272,7 +272,7 @@ export default function KurierControl({ darkMode }) {
                                 />
                             </div>
                             <div>
-                                <label className={`block text-xs font-bold mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Email (Agar o'zgartirilsa)</label>
+                                <label className={`block text-xs font-bold mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Email (Agar o&apos;zgartirilsa)</label>
                                 <input 
                                     type="email" 
                                     placeholder="Emailni o'zgartirish uchun kiriting..."
@@ -280,7 +280,7 @@ export default function KurierControl({ darkMode }) {
                                     value={editForm.email}
                                     onChange={e => setEditForm({...editForm, email: e.target.value})}
                                 />
-                                <p className="text-[10px] opacity-60 mt-1">Hozirgi emaili saqlanib qolishi uchun bo'sh qoldiring yoki to'ldiring.</p>
+                                <p className="text-[10px] opacity-60 mt-1">Hozirgi emaili saqlanib qolishi uchun bo&apos;sh qoldiring yoki to&apos;ldiring.</p>
                             </div>
                             <div>
                                 <label className={`block text-xs font-bold mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>Yangi Parol</label>

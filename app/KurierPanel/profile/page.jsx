@@ -178,7 +178,7 @@ export default function ProfilePage() {
                     <FaStar size={10} /> {user?.role === 'admin' ? 'Administrator' : 'Professional Kuryer'}
                 </div>
                 <h2 className="text-4xl font-black text-white dark:text-slate-900 tracking-tight leading-none mb-2 text-balance">{user?.fullName || "Ism kiritilmagan"}</h2>
-                <p className="text-white/40 dark:text-slate-400 font-bold text-xs uppercase tracking-[0.2em] mb-6">Toshkent, O'zbekiston</p>
+                <p className="text-white/40 dark:text-slate-400 font-bold text-xs uppercase tracking-[0.2em] mb-6">Toshkent, O&apos;zbekiston</p>
                 
                 <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                      <button onClick={() => setIsEditModalOpen(true)} className="flex items-center gap-3 bg-white/10 dark:bg-slate-900/5 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white dark:text-slate-900 hover:bg-white dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white transition-all transform active:scale-95">
@@ -230,7 +230,7 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between mb-10">
               <div>
                   <h3 className="font-black text-xl text-slate-900 dark:text-white uppercase tracking-tight">Ish Faoliyati</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">So'nggi 30 kunlik tahlil</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">So&apos;nggi 30 kunlik tahlil</p>
               </div>
               <div className="w-12 h-12 bg-slate-50 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-[#96C7B9] shadow-sm">
                   <FaChartLine />
@@ -285,7 +285,7 @@ export default function ProfilePage() {
                   <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-xl transition-transform group-hover:scale-110">
                       <FaWallet className="text-green-500" />
                   </div>
-                  <span className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-sm">Hamyon va To'lovlar</span>
+                  <span className="font-black text-slate-900 dark:text-white uppercase tracking-tight text-sm">Hamyon va To&apos;lovlar</span>
               </div>
               <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-300 dark:text-slate-600 group-hover:bg-slate-900 dark:group-hover:bg-white group-hover:text-white dark:group-hover:text-slate-900 transition-all">
                   <FaChevronRight size={12} />
